@@ -756,26 +756,43 @@ function updateExitSignals() {
 
 function updateWinrateDisplay() {
     fetch('/api/winrate_data')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             const winrateDisplay = document.getElementById('winrate-display');
             if (winrateDisplay) {
-                const winrate = data.winrate || 0;
-                const totalOps = data.total_operations || 0;
+                const winrate = data && typeof data.winrate !== 'undefined' ? data.winrate : 0;
+                const totalOps = data && data.total_operations ? data.total_operations : 0;
                 
                 winrateDisplay.innerHTML = `
                     <h4 class="text-success mb-1">${winrate.toFixed(1)}%</h4>
                     <p class="small text-muted mb-0">${totalOps} operaciones</p>
                     <div class="progress mt-2" style="height: 6px;">
-                        <div class="progress-bar bg-success" style="width: ${winrate}%"></div>
+                        <div class="progress-bar bg-success" style="width: ${Math.min(winrate, 100)}%"></div>
                     </div>
                 `;
             }
         })
         .catch(error => {
             console.error('Error actualizando winrate:', error);
+            // Fallback para evitar errores en UI
+            const winrateDisplay = document.getElementById('winrate-display');
+            if (winrateDisplay) {
+                winrateDisplay.innerHTML = `
+                    <h4 class="text-secondary mb-1">0.0%</h4>
+                    <p class="small text-muted mb-0">0 operaciones</p>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-secondary" style="width: 0%"></div>
+                    </div>
+                `;
+            }
         });
 }
+
 
 function loadCryptoRiskClassification() {
     fetch('/api/crypto_risk_classification')
