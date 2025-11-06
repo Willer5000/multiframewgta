@@ -519,25 +519,45 @@
         }
 
         // Función para actualizar el winrate
-        function updateWinrateDisplay() {
-            fetch('/api/winrate')
-                .then(response => response.json())
-                .then(data => {
-                    const winrateElement = document.getElementById('winrate-display');
-                    if (winrateElement) {
-                        winrateElement.innerHTML = `
-                            <h3 class="text-info mb-2">${data.global_winrate.toFixed(1)}%</h3>
-                            <p class="small mb-1">Operaciones: ${data.total_operations}</p>
-                            <p class="small mb-0">Ganadas: ${data.winning_operations}</p>
-                            ${data.avg_win_pct ? `<p class="small mb-0">Avg Win: ${data.avg_win_pct.toFixed(2)}%</p>` : ''}
-                            ${data.avg_loss_pct ? `<p class="small mb-0">Avg Loss: ${data.avg_loss_pct.toFixed(2)}%</p>` : ''}
-                        `;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error actualizando winrate:', error);
-                });
-        }
+       function updateWinrateDisplay() {
+    fetch('/api/winrate_data')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            const winrateElement = document.getElementById('winrate-display');
+            if (winrateElement && data) {
+                const winrate = data.winrate || 0;
+                const totalOps = data.total_operations || 0;
+                const winningOps = data.winning_operations || 0;
+                
+                winrateElement.innerHTML = `
+                    <h4 class="text-success mb-1">${winrate.toFixed(1)}%</h4>
+                    <p class="small text-muted mb-0">${totalOps} operaciones</p>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-success" style="width: ${Math.min(winrate, 100)}%"></div>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error actualizando winrate:', error);
+            // Fallback para evitar errores en UI
+            const winrateElement = document.getElementById('winrate-display');
+            if (winrateElement) {
+                winrateElement.innerHTML = `
+                    <h4 class="text-secondary mb-1">0.0%</h4>
+                    <p class="small text-muted mb-0">0 operaciones</p>
+                    <div class="progress mt-2" style="height: 6px;">
+                        <div class="progress-bar bg-secondary" style="width: 0%"></div>
+                    </div>
+                `;
+            }
+        });
+}
 
         // Función para descargar reporte de estrategias
         function downloadStrategyReport() {
