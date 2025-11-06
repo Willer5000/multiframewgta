@@ -1087,7 +1087,7 @@ class TradingIndicator:
 
     
     
-      def generate_signals_professional(self, symbol, interval, di_period=14, adx_threshold=25, 
+        def generate_signals_professional(self, symbol, interval, di_period=14, adx_threshold=25, 
                                    sr_period=50, rsi_length=20, bb_multiplier=2.0, leverage=15):
         """GENERACIÓN DE SEÑALES PROFESIONAL - SISTEMA COMPLETO MEJORADO"""
         try:
