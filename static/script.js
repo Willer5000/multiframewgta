@@ -389,27 +389,41 @@ function updateMarketSummary(data) {
     const summaryElement = document.getElementById('market-summary');
     if (!summaryElement) return;
     
+    // Validar que data existe y tiene las propiedades necesarias
+    if (!data) {
+        summaryElement.innerHTML = `
+            <div class="alert alert-warning text-center">
+                <h6><i class="fas fa-exclamation-triangle me-2"></i>Datos no disponibles</h6>
+                <p class="small mb-0">No se pudieron cargar los datos del mercado</p>
+            </div>
+        `;
+        return;
+    }
+    
     const multiTF = data.multi_timeframe_analysis || {};
+    const signal = data.signal || 'NEUTRAL';
+    const signalScore = data.signal_score || 0;
+    const currentPrice = data.current_price || 0;
     
     summaryElement.innerHTML = `
         <div class="fade-in">
             <div class="row text-center mb-3">
                 <div class="col-6">
-                    <div class="card bg-dark border-${data.signal === 'LONG' ? 'success' : data.signal === 'SHORT' ? 'danger' : 'secondary'}">
+                    <div class="card bg-dark border-${signal === 'LONG' ? 'success' : signal === 'SHORT' ? 'danger' : 'secondary'}">
                         <div class="card-body py-2">
                             <small class="text-muted">Señal</small>
-                            <h5 class="mb-0 text-${data.signal === 'LONG' ? 'success' : data.signal === 'SHORT' ? 'danger' : 'muted'}">
-                                ${data.signal}
+                            <h5 class="mb-0 text-${signal === 'LONG' ? 'success' : signal === 'SHORT' ? 'danger' : 'muted'}">
+                                ${signal}
                             </h5>
                         </div>
                     </div>
                 </div>
                 <div class="col-6">
-                    <div class="card bg-dark border-${data.signal_score >= 70 ? 'success' : 'warning'}">
+                    <div class="card bg-dark border-${signalScore >= 70 ? 'success' : 'warning'}">
                         <div class="card-body py-2">
                             <small class="text-muted">Score</small>
-                            <h5 class="mb-0 text-${data.signal_score >= 70 ? 'success' : 'warning'}">
-                                ${data.signal_score.toFixed(0)}%
+                            <h5 class="mb-0 text-${signalScore >= 70 ? 'success' : 'warning'}">
+                                ${signalScore.toFixed(0)}%
                             </h5>
                         </div>
                     </div>
@@ -419,7 +433,7 @@ function updateMarketSummary(data) {
             <div class="mb-3">
                 <h6><i class="fas fa-dollar-sign me-2"></i>Precio Actual</h6>
                 <div class="d-flex justify-content-between align-items-center">
-                    <span class="fs-6 fw-bold">$${formatPriceForDisplay(data.current_price)}</span>
+                    <span class="fs-6 fw-bold">$${formatPriceForDisplay(currentPrice)}</span>
                     <small class="text-muted">USDT</small>
                 </div>
             </div>
