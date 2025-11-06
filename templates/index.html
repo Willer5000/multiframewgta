@@ -50,11 +50,11 @@
 
     <div class="container-fluid mt-4">
         <div class="row">
-            <!-- Panel de Control Mejorado -->
+            <!-- Panel de Control -->
             <div class="col-lg-2">
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Configuración Pro</h6>
+                        <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Configuración Profesional</h6>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
@@ -88,6 +88,8 @@
                                 <option value="8h">8 Horas</option>
                                 <option value="12h">12 Horas</option>
                                 <option value="1D">1 Día</option>
+                                <option value="3D">3 Días</option>
+                                <option value="1W">1 Semana</option>
                             </select>
                         </div>
 
@@ -103,7 +105,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">Soportes/Resistencias</label>
-                            <input type="number" class="form-control bg-dark text-white" id="sr-period" min="10" max="200" value="20">
+                            <input type="number" class="form-control bg-dark text-white" id="sr-period" min="10" max="200" value="50">
                         </div>
 
                         <div class="mb-3">
@@ -117,7 +119,19 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Apalancamiento Base</label>
+                            <label class="form-label">Filtro Volumen</label>
+                            <select class="form-select bg-dark text-white" id="volume-filter">
+                                <option value="Todos">Todos</option>
+                                <option value="Muy Alto">Muy Alto</option>
+                                <option value="Alto">Alto</option>
+                                <option value="Medio">Medio</option>
+                                <option value="Bajo">Bajo</option>
+                                <option value="Muy Bajo">Muy Bajo</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Apalancamiento</label>
                             <select class="form-select bg-dark text-white" id="leverage">
                                 <option value="5">x5</option>
                                 <option value="10">x10</option>
@@ -214,7 +228,7 @@
                                 <i class="fas fa-chart-network fa-2x"></i>
                             </div>
                             <h6>Willer Gianni Torrico Arispe</h6>
-                            <p class="small text-muted">Trader Profesional & Desarrollador</p>
+                            <p class="small text-muted">Trader Profesional & Analista Multi-Temporalidad</p>
                             <p class="small text-muted">© 2025 MULTI-TIMEFRAME CRYPTO WGTA PRO</p>
                             <a href="https://github.com/Willer5000" target="_blank" class="btn btn-outline-light btn-sm">
                                 <i class="fab fa-github me-1"></i>GitHub
@@ -222,30 +236,30 @@
                         </div>
                         <div class="mt-3">
                             <p class="small">
-                                <strong>Experiencia:</strong> 15+ años en mercados financieros. 
-                                Especialización en análisis multi-temporalidad y sistemas algorítmicos.
+                                <strong>Especialización:</strong> 15+ años en análisis técnico, 
+                                sistemas algorítmicos y gestión de riesgo multi-temporalidad.
                             </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Contenido Principal Mejorado -->
+            <!-- Contenido Principal -->
             <div class="col-lg-8">
-                <!-- Mapa de Oportunidades -->
+                <!-- Gráfico de Dispersión MEJORADO -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0">Mapa de Oportunidades - Análisis Multi-Temporalidad (Sistema Pro)</h5>
+                        <h5 class="mb-0">Mapa de Oportunidades - Análisis Multi-Temporalidad</h5>
                     </div>
                     <div class="card-body">
                         <div id="scatter-chart" style="height: 400px;"></div>
                     </div>
                 </div>
 
-                <!-- Gráfico de Velas con Zoom Mejorado -->
+                <!-- Gráfico de Velas -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0" id="chart-title">Gráfico de Velas Profesional</h5>
+                        <h5 class="mb-0" id="chart-title">Análisis de Precio Multi-Temporalidad</h5>
                         <div class="btn-group">
                             <button class="btn btn-sm btn-outline-secondary" onclick="downloadReport()">
                                 <i class="fas fa-download me-1"></i>Reporte Completo
@@ -257,7 +271,7 @@
                     </div>
                 </div>
 
-                <!-- Fuerza de Tendencia Maverick -->
+                <!-- Gráfico Fuerza de Tendencia Maverick -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -272,23 +286,23 @@
                                 <i class="fas fa-info-circle me-1"></i>
                                 <strong>🟢 VERDE:</strong> Fuerza creciente (Operar) | 
                                 <strong>🔴 ROJO:</strong> Fuerza decreciente (Evitar) |
-                                <strong>❌ ZONAS ROJAS:</strong> NO OPERAR (Obligatorio)
+                                <strong>❌ ZONA ROJA:</strong> NO OPERAR (Filtro Obligatorio)
                             </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- RSI Maverick vs Tradicional -->
+                <!-- Gráfico RSI Maverick -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0">RSI Maverick vs Tradicional - Análisis Comparativo</h5>
+                        <h5 class="mb-0">RSI Modificado Maverick (%B) con Divergencias</h5>
                     </div>
                     <div class="card-body">
-                        <div id="rsi-comparison-chart" style="height: 300px;"></div>
+                        <div id="rsi-maverick-chart" style="height: 300px;"></div>
                     </div>
                 </div>
 
-                <!-- ADX + DMI -->
+                <!-- Gráfico ADX + DMI -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">ADX con DMI (+D y -D) - Fuerza y Dirección</h5>
@@ -298,41 +312,46 @@
                     </div>
                 </div>
 
-                <!-- MACD -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">MACD - Momentum y Señales</h5>
+                <!-- Gráfico Auxiliar Seleccionable -->
+                <div class="card bg-dark border-secondary">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Indicadores Complementarios</h5>
+                        <select class="form-select form-select-sm bg-dark text-white w-auto" id="aux-indicator">
+                            <option value="rsi">RSI Tradicional</option>
+                            <option value="macd" selected>MACD</option>
+                            <option value="squeeze">Squeeze Momentum</option>
+                            <option value="whale">Ballenas (12H/1D)</option>
+                        </select>
                     </div>
                     <div class="card-body">
-                        <div id="macd-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Squeeze Momentum Mejorado -->
-                <div class="card bg-dark border-info mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Squeeze Momentum - Compresión y Expansión</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="squeeze-chart" style="height: 300px;"></div>
-                        <div class="mt-2">
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Momentum positivo | 
-                                <strong>🔴 ROJO:</strong> Momentum negativo |
-                                <strong>🟡 AMARILLO:</strong> Períodos de compresión (Squeeze)
-                            </small>
-                        </div>
+                        <div id="aux-chart" style="height: 300px;"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Panel Derecho - Resumen del Mercado Mejorado -->
+            <!-- Panel Derecho - Resumen del Mercado -->
             <div class="col-lg-2">
+                <!-- Confirmación Multi-Temporalidad -->
+                <div class="card bg-dark border-info mb-4">
+                    <div class="card-header bg-info bg-opacity-25">
+                        <h6 class="mb-0"><i class="fas fa-layer-group me-2"></i>Confirmación Multi-TF</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="multi-timeframe-analysis">
+                            <div class="text-center py-2">
+                                <div class="spinner-border spinner-border-sm text-info" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 mb-0 small">Analizando temporalidades...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Resumen del Mercado -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Resumen del Mercado</h5>
+                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Resumen Profesional</h5>
                     </div>
                     <div class="card-body">
                         <div id="market-summary">
@@ -346,10 +365,10 @@
                     </div>
                 </div>
 
-                <!-- Análisis de Señal Pro -->
+                <!-- Análisis de Señal -->
                 <div class="card bg-dark border-info mb-4">
                     <div class="card-header bg-info bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-analytics me-2"></i>Análisis de Señal Pro</h5>
+                        <h5 class="mb-0"><i class="fas fa-analytics me-2"></i>Análisis de Señal</h5>
                     </div>
                     <div class="card-body">
                         <div id="signal-analysis">
@@ -394,24 +413,10 @@
                     </div>
                 </div>
 
-                <!-- Análisis Multi-Temporalidad -->
-                <div class="card bg-dark border-teal mb-4">
-                    <div class="card-header bg-teal bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Multi-Temporalidad</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="multi-timeframe-analysis">
-                            <div class="text-center py-3">
-                                <p class="text-muted mb-0">Analizando temporalidades...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Señales LONG Confirmadas -->
                 <div class="card bg-dark border-success mb-4">
                     <div class="card-header bg-success bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-arrow-up me-2"></i>Señales LONG (Score ≥ 75%)</h5>
+                        <h5 class="mb-0"><i class="fas fa-arrow-up me-2"></i>Señales LONG (≥75%)</h5>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -437,7 +442,7 @@
                 <!-- Señales SHORT Confirmadas -->
                 <div class="card bg-dark border-danger">
                     <div class="card-header bg-danger bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-arrow-down me-2"></i>Señales SHORT (Score ≥ 80%)</h5>
+                        <h5 class="mb-0"><i class="fas fa-arrow-down me-2"></i>Señales SHORT (≥80%)</h5>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -463,12 +468,12 @@
         </div>
     </div>
 
-    <!-- Modal para Detalles de Señal Mejorado -->
+    <!-- Modal para Detalles de Señal -->
     <div class="modal fade" id="signalModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content bg-dark">
                 <div class="modal-header">
-                    <h5 class="modal-title">Análisis Completo de Señal - MULTI-TIMEFRAME PRO</h5>
+                    <h5 class="modal-title">Análisis Profesional Completo - MULTI-TIMEFRAME</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="signal-details">
@@ -498,12 +503,12 @@
                     const calendarInfo = document.getElementById('calendar-info');
                     if (calendarInfo) {
                         const scalpingStatus = data.is_scalping_time ? 
-                            '<span class="text-success">🟢 ACTIVO</span>' : 
-                            '<span class="text-danger">🔴 INACTIVO</span>';
+                            '<span class="text-success">🟢 HORARIO SCALPING ACTIVO</span>' : 
+                            '<span class="text-danger">🔴 HORARIO SCALPING INACTIVO</span>';
                         
                         calendarInfo.innerHTML = `
                             <small class="text-muted">
-                                📅 ${data.day_of_week} | Scalping 15m/30m: ${scalpingStatus} | Horario: 4am-4pm L-V
+                                📅 ${data.date} | Scalping 15m/30m: ${scalpingStatus} | Horario: 4am-4pm L-V
                             </small>
                         `;
                     }
@@ -517,22 +522,18 @@
                 });
         }
 
-        // Función para actualizar winrate
+        // Función para actualizar el winrate
         function updateWinrateDisplay() {
             fetch('/api/winrate_data')
                 .then(response => response.json())
                 .then(data => {
-                    const winrateDisplay = document.getElementById('winrate-display');
-                    if (winrateDisplay && data.winrate_data) {
-                        const winrate = data.winrate_data.global_winrate;
-                        const totalOps = data.winrate_data.total_operations;
-                        
-                        winrateDisplay.innerHTML = `
-                            <h3 class="text-success mb-1">${winrate.toFixed(1)}%</h3>
-                            <p class="small text-muted mb-0">${totalOps} operaciones</p>
-                            <div class="progress mt-2" style="height: 8px;">
-                                <div class="progress-bar bg-success" style="width: ${winrate}%"></div>
-                            </div>
+                    const winrateElement = document.getElementById('winrate-display');
+                    if (winrateElement) {
+                        winrateElement.innerHTML = `
+                            <h4 class="text-success mb-1">${data.winrate.toFixed(1)}%</h4>
+                            <p class="small text-muted mb-0">
+                                ${data.successful_operations}/${data.total_operations} operaciones
+                            </p>
                         `;
                     }
                 })
@@ -543,36 +544,10 @@
 
         // Función para descargar reporte de estrategias
         function downloadStrategyReport() {
-            fetch('/api/winrate_data')
-                .then(response => response.json())
-                .then(data => {
-                    // Crear contenido del reporte
-                    let reportContent = "REPORTE DE ESTRATEGIAS - MULTI-TIMEFRAME CRYPTO WGTA PRO\n\n";
-                    reportContent += `Winrate Global: ${data.winrate_data.global_winrate.toFixed(1)}%\n`;
-                    reportContent += `Total Operaciones: ${data.winrate_data.total_operations}\n\n`;
-                    
-                    if (data.strategy_recommendations.top_strategies) {
-                        reportContent += "TOP ESTRATEGIAS:\n";
-                        data.strategy_recommendations.top_strategies.forEach((strategy, index) => {
-                            reportContent += `${index + 1}. Winrate: ${strategy.winrate.toFixed(1)}% | Count: ${strategy.count} | Score Prom: ${strategy.avg_score.toFixed(1)}\n`;
-                        });
-                    }
-                    
-                    // Crear y descargar archivo
-                    const blob = new Blob([reportContent], { type: 'text/plain' });
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `estrategias_${new Date().toISOString().split('T')[0]}.txt`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                })
-                .catch(error => {
-                    console.error('Error generando reporte de estrategias:', error);
-                    showNotification('Error generando reporte de estrategias', 'danger');
-                });
+            const symbol = currentSymbol || 'BTC-USDT';
+            const interval = document.getElementById('interval-select').value;
+            const url = `/api/generate_report?symbol=${symbol}&interval=${interval}`;
+            window.open(url, '_blank');
         }
 
         // Actualizar el reloj cada segundo
