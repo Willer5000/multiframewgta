@@ -236,8 +236,8 @@ function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsi
             return response.json();
         })
         .then(data => {
-            if (!data) {
-                throw new Error('No data received from server');
+            if (!data || typeof data !== 'object') {
+                throw new Error('Invalid data received from server');
             }
             currentData = data;
             renderCandleChart(data);
@@ -246,12 +246,29 @@ function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsi
             updateSignalAnalysis(data);
         })
         .catch(error => {
-            console.error('Error:', error);
+            console.error('Error loading chart data:', error);
             showError('Error al cargar datos: ' + error.message);
-            // Mostrar datos de ejemplo o estado de error
-            showLoadingState();
+            
+            // Crear datos de fallback para evitar que la interfaz se rompa
+            const fallbackData = {
+                symbol: symbol,
+                current_price: 0,
+                signal: 'NEUTRAL',
+                signal_score: 0,
+                entry: 0,
+                stop_loss: 0,
+                take_profit: [0],
+                data: [],
+                indicators: {},
+                multi_timeframe_analysis: {}
+            };
+            
+            currentData = fallbackData;
+            updateMarketSummary(fallbackData);
+            updateSignalAnalysis(fallbackData);
         });
 }
+
 
 function renderCandleChart(data) {
     const chartElement = document.getElementById('candle-chart');
