@@ -42,7 +42,7 @@
             </a>
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="/manual">
-                    <i class="fas fa-book me-1"></i>Manual Profesional
+                    <i class="fas fa-book me-1"></i>Manual
                 </a>
             </div>
         </div>
@@ -54,7 +54,7 @@
             <div class="col-lg-2">
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Configuración Profesional</h6>
+                        <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Configuración</h6>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
@@ -100,7 +100,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">ADX Mínimo</label>
-                            <input type="number" class="form-control bg-dark text-white" id="adx-threshold" min="5" max="95" value="20">
+                            <input type="number" class="form-control bg-dark text-white" id="adx-threshold" min="5" max="95" value="25">
                         </div>
 
                         <div class="mb-3">
@@ -116,18 +116,6 @@
                         <div class="mb-3">
                             <label class="form-label">BB Multiplier</label>
                             <input type="number" class="form-control bg-dark text-white" id="bb-multiplier" min="1.0" max="3.0" step="0.1" value="2.0">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Filtro Volumen</label>
-                            <select class="form-select bg-dark text-white" id="volume-filter">
-                                <option value="Todos">Todos</option>
-                                <option value="Muy Alto">Muy Alto</option>
-                                <option value="Alto">Alto</option>
-                                <option value="Medio">Medio</option>
-                                <option value="Bajo">Bajo</option>
-                                <option value="Muy Bajo">Muy Bajo</option>
-                            </select>
                         </div>
 
                         <div class="mb-3">
@@ -194,24 +182,26 @@
                         </div>
 
                         <button class="btn btn-primary w-100" onclick="updateCharts()">
-                            <i class="fas fa-sync-alt me-2"></i>Actualizar Análisis
+                            <i class="fas fa-sync-alt me-2"></i>Actualizar
                         </button>
                     </div>
                 </div>
 
                 <!-- Winrate Global del Sistema -->
-                <div class="card bg-dark border-success mb-4">
-                    <div class="card-header bg-success bg-opacity-25">
+                <div class="card bg-dark border-info mb-4">
+                    <div class="card-header bg-info bg-opacity-25">
                         <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Winrate Global</h6>
                     </div>
                     <div class="card-body text-center">
                         <div id="winrate-display">
-                            <div class="spinner-border spinner-border-sm text-success" role="status">
-                                <span class="visually-hidden">Cargando...</span>
+                            <div class="text-center py-2">
+                                <div class="spinner-border spinner-border-sm text-info" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 mb-0 small">Calculando winrate...</p>
                             </div>
-                            <p class="mt-2 mb-1 small">Calculando winrate...</p>
                         </div>
-                        <button class="btn btn-sm btn-outline-success w-100 mt-2" onclick="downloadStrategyReport()">
+                        <button class="btn btn-sm btn-outline-info w-100 mt-2" onclick="downloadStrategyReport()">
                             <i class="fas fa-download me-1"></i>Reporte Estrategias
                         </button>
                     </div>
@@ -220,7 +210,7 @@
                 <!-- Información del Autor -->
                 <div class="card bg-dark border-secondary">
                     <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-user me-2"></i>Especialista</h6>
+                        <h6 class="mb-0"><i class="fas fa-user me-2"></i>Autor</h6>
                     </div>
                     <div class="card-body">
                         <div class="text-center">
@@ -228,7 +218,7 @@
                                 <i class="fas fa-chart-network fa-2x"></i>
                             </div>
                             <h6>Willer Gianni Torrico Arispe</h6>
-                            <p class="small text-muted">Trader Profesional & Analista Multi-Temporalidad</p>
+                            <p class="small text-muted">Especialista en Análisis Multi-Timeframe</p>
                             <p class="small text-muted">© 2025 MULTI-TIMEFRAME CRYPTO WGTA PRO</p>
                             <a href="https://github.com/Willer5000" target="_blank" class="btn btn-outline-light btn-sm">
                                 <i class="fab fa-github me-1"></i>GitHub
@@ -236,8 +226,8 @@
                         </div>
                         <div class="mt-3">
                             <p class="small">
-                                <strong>Especialización:</strong> 15+ años en análisis técnico, 
-                                sistemas algorítmicos y gestión de riesgo multi-temporalidad.
+                                <strong>Experiencia:</strong> 15+ años en trading algorítmico y análisis técnico.
+                                Especialización en sistemas multi-temporalidad y gestión de riesgo.
                             </p>
                         </div>
                     </div>
@@ -249,7 +239,7 @@
                 <!-- Gráfico de Dispersión MEJORADO -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0">Mapa de Oportunidades - Análisis Multi-Temporalidad</h5>
+                        <h5 class="mb-0">Mapa de Oportunidades - Análisis Multi-Temporalidad (Sistema Profesional)</h5>
                     </div>
                     <div class="card-body">
                         <div id="scatter-chart" style="height: 400px;"></div>
@@ -259,7 +249,7 @@
                 <!-- Gráfico de Velas -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0" id="chart-title">Análisis de Precio Multi-Temporalidad</h5>
+                        <h5 class="mb-0" id="chart-title">Gráfico de Velas</h5>
                         <div class="btn-group">
                             <button class="btn btn-sm btn-outline-secondary" onclick="downloadReport()">
                                 <i class="fas fa-download me-1"></i>Reporte Completo
@@ -271,12 +261,42 @@
                     </div>
                 </div>
 
+                <!-- Gráfico de Ballenas CORREGIDO -->
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Indicador Ballenas (SOLO 12H/1D)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="whale-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- Gráfico ADX + DMI MEJORADO -->
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">ADX con DMI (+D y -D)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="adx-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- Gráfico RSI Maverick -->
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">RSI Modificado Maverick (%B)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="rsi-maverick-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
                 <!-- Gráfico Fuerza de Tendencia Maverick -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
                             <i class="fas fa-chart-line me-2"></i>
-                            Fuerza de Tendencia Maverick - Indicador Obligatorio
+                            Fuerza de Tendencia Maverick - Ancho Bandas Bollinger %
                         </h5>
                     </div>
                     <div class="card-body">
@@ -286,41 +306,21 @@
                                 <i class="fas fa-info-circle me-1"></i>
                                 <strong>🟢 VERDE:</strong> Fuerza creciente (Operar) | 
                                 <strong>🔴 ROJO:</strong> Fuerza decreciente (Evitar) |
-                                <strong>❌ ZONA ROJA:</strong> NO OPERAR (Filtro Obligatorio)
+                                <strong>❌ X ROJO:</strong> Zona de NO OPERAR
                             </small>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Gráfico RSI Maverick -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">RSI Modificado Maverick (%B) con Divergencias</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="rsi-maverick-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Gráfico ADX + DMI -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">ADX con DMI (+D y -D) - Fuerza y Dirección</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="adx-chart" style="height: 300px;"></div>
                     </div>
                 </div>
 
                 <!-- Gráfico Auxiliar Seleccionable -->
                 <div class="card bg-dark border-secondary">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Indicadores Complementarios</h5>
+                        <h5 class="mb-0">Indicador Auxiliar</h5>
                         <select class="form-select form-select-sm bg-dark text-white w-auto" id="aux-indicator">
                             <option value="rsi">RSI Tradicional</option>
                             <option value="macd" selected>MACD</option>
                             <option value="squeeze">Squeeze Momentum</option>
-                            <option value="whale">Ballenas (12H/1D)</option>
+                            <option value="rsi_traditional">RSI Tradicional Avanzado</option>
                         </select>
                     </div>
                     <div class="card-body">
@@ -331,27 +331,37 @@
 
             <!-- Panel Derecho - Resumen del Mercado -->
             <div class="col-lg-2">
-                <!-- Confirmación Multi-Temporalidad -->
-                <div class="card bg-dark border-info mb-4">
-                    <div class="card-header bg-info bg-opacity-25">
-                        <h6 class="mb-0"><i class="fas fa-layer-group me-2"></i>Confirmación Multi-TF</h6>
+                <!-- Índice de Miedo y Codicia -->
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-brain me-2"></i>Sentimiento del Mercado</h6>
                     </div>
                     <div class="card-body">
-                        <div id="multi-timeframe-analysis">
+                        <div id="fear-greed-index">
                             <div class="text-center py-2">
-                                <div class="spinner-border spinner-border-sm text-info" role="status">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
                                     <span class="visually-hidden">Cargando...</span>
                                 </div>
-                                <p class="mt-2 mb-0 small">Analizando temporalidades...</p>
+                                <p class="mt-2 mb-0 small">Cargando índice...</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Recomendaciones de Mercado -->
+                <div id="market-recommendations" class="mb-4">
+                    <div class="text-center py-2">
+                        <div class="spinner-border spinner-border-sm text-info" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="mt-2 mb-0 small">Analizando mercado...</p>
                     </div>
                 </div>
 
                 <!-- Resumen del Mercado -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Resumen Profesional</h5>
+                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Resumen del Mercado</h5>
                     </div>
                     <div class="card-body">
                         <div id="market-summary">
@@ -379,7 +389,7 @@
                     </div>
                 </div>
 
-                <!-- Alertas de Entrada -->
+                <!-- Alertas de Scalping -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header bg-warning bg-opacity-25">
                         <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Alertas de Entrada</h5>
@@ -413,10 +423,10 @@
                     </div>
                 </div>
 
-                <!-- Señales LONG Confirmadas -->
+                <!-- Señales LONG -->
                 <div class="card bg-dark border-success mb-4">
                     <div class="card-header bg-success bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-arrow-up me-2"></i>Señales LONG (≥75%)</h5>
+                        <h5 class="mb-0"><i class="fas fa-arrow-up me-2"></i>Señales LONG Confirmadas</h5>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -439,10 +449,10 @@
                     </div>
                 </div>
 
-                <!-- Señales SHORT Confirmadas -->
+                <!-- Señales SHORT -->
                 <div class="card bg-dark border-danger">
                     <div class="card-header bg-danger bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-arrow-down me-2"></i>Señales SHORT (≥80%)</h5>
+                        <h5 class="mb-0"><i class="fas fa-arrow-down me-2"></i>Señales SHORT Confirmadas</h5>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -473,7 +483,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content bg-dark">
                 <div class="modal-header">
-                    <h5 class="modal-title">Análisis Profesional Completo - MULTI-TIMEFRAME</h5>
+                    <h5 class="modal-title">Detalles de Señal - Análisis Completo</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="signal-details">
@@ -498,20 +508,6 @@
                 .then(data => {
                     document.getElementById('bolivia-clock').textContent = data.time;
                     document.getElementById('bolivia-date').textContent = data.date;
-                    
-                    // Actualizar información del calendario
-                    const calendarInfo = document.getElementById('calendar-info');
-                    if (calendarInfo) {
-                        const scalpingStatus = data.is_scalping_time ? 
-                            '<span class="text-success">🟢 HORARIO SCALPING ACTIVO</span>' : 
-                            '<span class="text-danger">🔴 HORARIO SCALPING INACTIVO</span>';
-                        
-                        calendarInfo.innerHTML = `
-                            <small class="text-muted">
-                                📅 ${data.date} | Scalping 15m/30m: ${scalpingStatus} | Horario: 4am-4pm L-V
-                            </small>
-                        `;
-                    }
                 })
                 .catch(error => {
                     console.error('Error actualizando reloj:', error);
@@ -524,16 +520,17 @@
 
         // Función para actualizar el winrate
         function updateWinrateDisplay() {
-            fetch('/api/winrate_data')
+            fetch('/api/winrate')
                 .then(response => response.json())
                 .then(data => {
                     const winrateElement = document.getElementById('winrate-display');
                     if (winrateElement) {
                         winrateElement.innerHTML = `
-                            <h4 class="text-success mb-1">${data.winrate.toFixed(1)}%</h4>
-                            <p class="small text-muted mb-0">
-                                ${data.successful_operations}/${data.total_operations} operaciones
-                            </p>
+                            <h3 class="text-info mb-2">${data.global_winrate.toFixed(1)}%</h3>
+                            <p class="small mb-1">Operaciones: ${data.total_operations}</p>
+                            <p class="small mb-0">Ganadas: ${data.winning_operations}</p>
+                            ${data.avg_win_pct ? `<p class="small mb-0">Avg Win: ${data.avg_win_pct.toFixed(2)}%</p>` : ''}
+                            ${data.avg_loss_pct ? `<p class="small mb-0">Avg Loss: ${data.avg_loss_pct.toFixed(2)}%</p>` : ''}
                         `;
                     }
                 })
@@ -544,9 +541,7 @@
 
         // Función para descargar reporte de estrategias
         function downloadStrategyReport() {
-            const symbol = currentSymbol || 'BTC-USDT';
-            const interval = document.getElementById('interval-select').value;
-            const url = `/api/generate_report?symbol=${symbol}&interval=${interval}`;
+            const url = '/api/strategy_report';
             window.open(url, '_blank');
         }
 
@@ -556,7 +551,7 @@
         // Actualizar winrate cada 30 segundos
         setInterval(updateWinrateDisplay, 30000);
         
-        // Inicializar al cargar la página
+        // Inicializar el reloj y winrate al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             updateBoliviaClock();
             updateWinrateDisplay();
