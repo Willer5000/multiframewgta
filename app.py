@@ -1085,7 +1085,9 @@ class TradingIndicator:
         
         return min(score, 100), fulfilled_conditions
 
-    def generate_signals_professional(self, symbol, interval, di_period=14, adx_threshold=25, 
+    
+    
+      def generate_signals_professional(self, symbol, interval, di_period=14, adx_threshold=25, 
                                    sr_period=50, rsi_length=20, bb_multiplier=2.0, leverage=15):
         """GENERACIÓN DE SEÑALES PROFESIONAL - SISTEMA COMPLETO MEJORADO"""
         try:
@@ -1139,18 +1141,18 @@ class TradingIndicator:
             
             # Preparar datos para evaluación
             analysis_data = {
-                'close': close,
-                'adx': adx,
-                'plus_di': plus_di,
-                'minus_di': minus_di,
+                'close': close.tolist() if hasattr(close, 'tolist') else list(close),
+                'adx': adx.tolist() if hasattr(adx, 'tolist') else list(adx),
+                'plus_di': plus_di.tolist() if hasattr(plus_di, 'tolist') else list(plus_di),
+                'minus_di': minus_di.tolist() if hasattr(minus_di, 'tolist') else list(minus_di),
                 'bullish_divergence_maverick': bullish_div_maverick,
                 'bearish_divergence_maverick': bearish_div_maverick,
                 'bullish_divergence_traditional': bullish_div_traditional,
                 'bearish_divergence_traditional': bearish_div_traditional,
-                'macd_histogram': macd_histogram,
+                'macd_histogram': macd_histogram.tolist() if hasattr(macd_histogram, 'tolist') else list(macd_histogram),
                 'squeeze_momentum': squeeze_data['squeeze_momentum'],
-                'ma_50': ma_50,
-                'ma_200': ma_200,
+                'ma_50': ma_50.tolist() if hasattr(ma_50, 'tolist') else list(ma_50),
+                'ma_200': ma_200.tolist() if hasattr(ma_200, 'tolist') else list(ma_200),
                 'whale_active': whale_data['whale_active'],
                 'whale_pump': whale_data['whale_pump'],
                 'whale_dump': whale_data['whale_dump'],
@@ -1191,6 +1193,7 @@ class TradingIndicator:
                     'score': signal_score
                 }
             
+            # Convertir todos los arrays numpy a listas para JSON
             return {
                 'symbol': symbol,
                 'current_price': current_price,
@@ -1223,30 +1226,30 @@ class TradingIndicator:
                 'indicators': {
                     'whale_pump': whale_data['whale_pump'][-50:],
                     'whale_dump': whale_data['whale_dump'][-50:],
-                    'adx': adx[-50:].tolist(),
-                    'plus_di': plus_di[-50:].tolist(),
-                    'minus_di': minus_di[-50:].tolist(),
+                    'adx': adx[-50:].tolist() if hasattr(adx, 'tolist') else list(adx[-50:]),
+                    'plus_di': plus_di[-50:].tolist() if hasattr(plus_di, 'tolist') else list(plus_di[-50:]),
+                    'minus_di': minus_di[-50:].tolist() if hasattr(minus_di, 'tolist') else list(minus_di[-50:]),
                     'di_cross_bullish': di_cross_bullish[-50:],
                     'di_cross_bearish': di_cross_bearish[-50:],
                     'rsi_maverick': rsi_maverick[-50:],
-                    'rsi_traditional': rsi_traditional[-50:],
+                    'rsi_traditional': rsi_traditional[-50:].tolist() if hasattr(rsi_traditional, 'tolist') else list(rsi_traditional[-50:]),
                     'bullish_divergence_maverick': bullish_div_maverick[-50:],
                     'bearish_divergence_maverick': bearish_div_maverick[-50:],
                     'bullish_divergence_traditional': bullish_div_traditional[-50:],
                     'bearish_divergence_traditional': bearish_div_traditional[-50:],
-                    'macd': macd[-50:].tolist(),
-                    'macd_signal': macd_signal[-50:].tolist(),
-                    'macd_histogram': macd_histogram[-50:].tolist(),
+                    'macd': macd[-50:].tolist() if hasattr(macd, 'tolist') else list(macd[-50:]),
+                    'macd_signal': macd_signal[-50:].tolist() if hasattr(macd_signal, 'tolist') else list(macd_signal[-50:]),
+                    'macd_histogram': macd_histogram[-50:].tolist() if hasattr(macd_histogram, 'tolist') else list(macd_histogram[-50:]),
                     'squeeze_on': squeeze_data['squeeze_on'][-50:],
                     'squeeze_off': squeeze_data['squeeze_off'][-50:],
                     'squeeze_momentum': squeeze_data['squeeze_momentum'][-50:],
-                    'ma_9': ma_9[-50:].tolist(),
-                    'ma_21': ma_21[-50:].tolist(),
-                    'ma_50': ma_50[-50:].tolist(),
-                    'ma_200': ma_200[-50:].tolist(),
-                    'bb_upper': bb_upper[-50:].tolist(),
-                    'bb_middle': bb_middle[-50:].tolist(),
-                    'bb_lower': bb_lower[-50:].tolist(),
+                    'ma_9': ma_9[-50:].tolist() if hasattr(ma_9, 'tolist') else list(ma_9[-50:]),
+                    'ma_21': ma_21[-50:].tolist() if hasattr(ma_21, 'tolist') else list(ma_21[-50:]),
+                    'ma_50': ma_50[-50:].tolist() if hasattr(ma_50, 'tolist') else list(ma_50[-50:]),
+                    'ma_200': ma_200[-50:].tolist() if hasattr(ma_200, 'tolist') else list(ma_200[-50:]),
+                    'bb_upper': bb_upper[-50:].tolist() if hasattr(bb_upper, 'tolist') else list(bb_upper[-50:]),
+                    'bb_middle': bb_middle[-50:].tolist() if hasattr(bb_middle, 'tolist') else list(bb_middle[-50:]),
+                    'bb_lower': bb_lower[-50:].tolist() if hasattr(bb_lower, 'tolist') else list(bb_lower[-50:]),
                     'trend_strength': trend_strength_data['trend_strength'][-50:],
                     'bb_width': trend_strength_data['bb_width'][-50:],
                     'no_trade_zones': trend_strength_data['no_trade_zones'][-50:],
@@ -1259,6 +1262,8 @@ class TradingIndicator:
         except Exception as e:
             print(f"Error en generate_signals_professional para {symbol}: {e}")
             return self._create_empty_signal(symbol)
+
+
 
     def _create_empty_signal(self, symbol):
         """Crear señal vacía en caso de error"""
@@ -1571,6 +1576,18 @@ def get_risk_classification(symbol):
                 return "Memecoin"
     return "Medio Riesgo"
 
+
+def safe_convert_to_list(self, data):
+        """Convertir datos a lista de forma segura para JSON"""
+        if data is None:
+            return []
+        if hasattr(data, 'tolist'):
+            return data.tolist()
+        if isinstance(data, (list, tuple)):
+            return list(data)
+        return [data]
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -1597,11 +1614,22 @@ def get_signals():
             rsi_length, bb_multiplier, leverage
         )
         
+        # Asegurar que todos los datos sean serializables
+        if signal_data and 'data' in signal_data:
+            # Convertir cualquier array numpy restante en la data
+            for record in signal_data['data']:
+                for key, value in record.items():
+                    if hasattr(value, 'tolist'):
+                        record[key] = value.tolist()
+        
         return jsonify(signal_data)
         
     except Exception as e:
         print(f"Error en /api/signals: {e}")
-        return jsonify({'error': 'Error interno del servidor'}), 500
+        # Retornar una señal vacía pero válida
+        empty_signal = indicator._create_empty_signal(request.args.get('symbol', 'BTC-USDT'))
+        return jsonify(empty_signal)
+        
 
 @app.route('/api/multiple_signals')
 def get_multiple_signals():
