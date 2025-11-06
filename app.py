@@ -16,6 +16,31 @@ import telegram
 import asyncio
 from threading import Thread
 import pytz
+import signal
+import functools
+
+class TimeoutError(Exception):
+    pass
+
+def timeout(seconds=10, error_message="Timeout"):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            def timeout_handler(signum, frame):
+                raise TimeoutError(error_message)
+            
+            # Set up signal handler
+            old_handler = signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(seconds)
+            
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                signal.alarm(0)
+                signal.signal(signal.SIGALRM, old_handler)
+            return result
+        return wrapper
+    return decorator
 
 app = Flask(__name__)
 
@@ -1625,6 +1650,7 @@ def get_multiple_signals():
         return jsonify({'error': 'Error interno del servidor'}), 500
 
 @app.route('/api/scatter_data_improved')
+@timeout(seconds=8, error_message="Scatter data calculation timeout")
 def get_scatter_data_improved():
     """Endpoint para datos del scatter plot mejorado"""
     try:
@@ -1747,6 +1773,28 @@ def get_strategy_report():
     except Exception as e:
         print(f"Error en /api/strategy_report: {e}")
         return jsonify({})
+
+@app.route('/api/winrate_data')
+def get_winrate_data():
+    """Endpoint para obtener datos de winrate (compatibilidad con frontend)"""
+    try:
+        winrate_data = performance_tracker.get_winrate()
+        return jsonify({
+            'winrate': winrate_data.get('global_winrate', 0),
+            'total_operations': winrate_data.get('total_operations', 0),
+            'winning_operations': winrate_data.get('winning_operations', 0),
+            'avg_win_pct': winrate_data.get('avg_win_pct', 0),
+            'avg_loss_pct': winrate_data.get('avg_loss_pct', 0)
+        })
+    except Exception as e:
+        print(f"Error en /api/winrate_data: {e}")
+        return jsonify({
+            'winrate': 0, 
+            'total_operations': 0, 
+            'winning_operations': 0,
+            'avg_win_pct': 0,
+            'avg_loss_pct': 0
+        })
 
 @app.route('/api/generate_report')
 def generate_report():
