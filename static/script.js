@@ -229,8 +229,16 @@ function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsi
     });
     
     fetch(`/api/signals?${params}`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            if (!data) {
+                throw new Error('No data received from server');
+            }
             currentData = data;
             renderCandleChart(data);
             renderTrendStrengthChart(data);
@@ -240,6 +248,8 @@ function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsi
         .catch(error => {
             console.error('Error:', error);
             showError('Error al cargar datos: ' + error.message);
+            // Mostrar datos de ejemplo o estado de error
+            showLoadingState();
         });
 }
 
