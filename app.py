@@ -17,32 +17,16 @@ import asyncio
 from threading import Thread
 import pytz
 from collections import deque
-import statistics
+import sqlite3
+import traceback
 
 app = Flask(__name__)
 
-# NUEVAS CREDENCIALES TELEGRAM
+# Nueva configuración Telegram
 TELEGRAM_BOT_TOKEN = "8007748376:AAHIW8n9b-BtA378g4gF-0-D2mOhn495Q0g"
 TELEGRAM_CHAT_ID = "-1003229814161"
 
-# JERARQUÍA TEMPORAL COMPLETA Y OBLIGATORIA
-TIMEFRAME_HIERARCHY = {
-    '15m': {'mayor': '1h', 'media': '30m', 'menor': '5m'},
-    '30m': {'mayor': '2h', 'media': '1h', 'menor': '15m'},
-    '1h': {'mayor': '4h', 'media': '2h', 'menor': '30m'},
-    '2h': {'mayor': '8h', 'media': '4h', 'menor': '1h'},
-    '4h': {'mayor': '12h', 'media': '8h', 'menor': '2h'},
-    '8h': {'mayor': '1D', 'media': '12h', 'menor': '4h'},
-    '12h': {'mayor': '3D', 'media': '1D', 'menor': '8h'},
-    '1D': {'mayor': '3D', 'media': '1D', 'menor': '12h'},
-    '3D': {'mayor': '1W', 'media': '3D', 'menor': '1D'},
-    '1W': {'mayor': '1M', 'media': '1W', 'menor': '3D'}
-}
-
-# ESTRATEGIAS PERMITIDAS (sin 3D y 1W para trading)
-TRADING_TIMEFRAMES = ['15m', '30m', '1h', '2h', '4h', '8h', '12h', '1D']
-
-# CONFIGURACIÓN ÓPTIMA DE 75 CRYPTOMONEDAS
+# Configuración optimizada - 75 criptomonedas top de Bitget
 CRYPTO_SYMBOLS = [
     # Bajo Riesgo (25) - Top market cap
     "BTC-USDT", "ETH-USDT", "BNB-USDT", "SOL-USDT", "XRP-USDT",
@@ -65,126 +49,169 @@ CRYPTO_SYMBOLS = [
     "RSR-USDT", "C98-USDT", "HFT-USDT", "METIS-USDT", "ZRX-USDT",
     
     # Memecoins (5) - Top memes
-    "DOGE-USDT", "SHIB-USDT", "FLOKI-USDT", "PEPE-USDT", "BONK-USDT"
+    "DOGE-USDT", "SHIB-USDT", "FLOKI-USDT", "PEPE2-USDT", "BONK-USDT"
 ]
 
+# Clasificación de riesgo optimizada
 CRYPTO_RISK_CLASSIFICATION = {
-    "bajo": CRYPTO_SYMBOLS[:25],
-    "medio": CRYPTO_SYMBOLS[25:50],
-    "alto": CRYPTO_SYMBOLS[50:70],
-    "memecoins": CRYPTO_SYMBOLS[70:]
+    "bajo": [
+        "BTC-USDT", "ETH-USDT", "BNB-USDT", "SOL-USDT", "XRP-USDT",
+        "ADA-USDT", "AVAX-USDT", "DOT-USDT", "LINK-USDT", "MATIC-USDT",
+        "ATOM-USDT", "LTC-USDT", "BCH-USDT", "ETC-USDT", "XLM-USDT",
+        "FIL-USDT", "ALGO-USDT", "ICP-USDT", "VET-USDT", "MANA-USDT",
+        "SAND-USDT", "AXS-USDT", "THETA-USDT", "XTZ-USDT", "EOS-USDT"
+    ],
+    "medio": [
+        "NEAR-USDT", "FTM-USDT", "EGLD-USDT", "HBAR-USDT", "GRT-USDT",
+        "GALA-USDT", "ENJ-USDT", "CHZ-USDT", "BAT-USDT", "ZIL-USDT",
+        "IOTA-USDT", "ONE-USDT", "IOST-USDT", "WAVES-USDT", "KAVA-USDT",
+        "RUNE-USDT", "CRV-USDT", "MKR-USDT", "COMP-USDT", "AAVE-USDT",
+        "UNI-USDT", "SNX-USDT", "SUSHI-USDT", "YFI-USDT", "1INCH-USDT"
+    ],
+    "alto": [
+        "APE-USDT", "GMT-USDT", "GAL-USDT", "OP-USDT", "ARB-USDT",
+        "MAGIC-USDT", "RNDR-USDT", "IMX-USDT", "LDO-USDT", "STX-USDT",
+        "APT-USDT", "BLUR-USDT", "PEPE-USDT", "LINA-USDT", "TRB-USDT",
+        "RSR-USDT", "C98-USDT", "HFT-USDT", "METIS-USDT", "ZRX-USDT"
+    ],
+    "memecoins": [
+        "DOGE-USDT", "SHIB-USDT", "FLOKI-USDT", "PEPE2-USDT", "BONK-USDT"
+    ]
 }
 
-class OperationTracker:
-    """Sistema de tracking de operaciones para cálculo de winrate"""
-    def __init__(self, max_operations=200):
-        self.operations = deque(maxlen=max_operations)
-        self.winrate_data = {
-            'total_operations': 0,
-            'winning_operations': 0,
-            'global_winrate': 0.0,
-            'timeframe_winrates': {},
-            'symbol_winrates': {},
-            'strategy_performance': {}
-        }
-    
-    def add_operation(self, symbol, timeframe, signal_type, entry_price, exit_price, outcome, score, conditions):
-        """Añadir operación al historial"""
-        operation = {
-            'symbol': symbol,
-            'timeframe': timeframe,
-            'signal_type': signal_type,
-            'entry_price': entry_price,
-            'exit_price': exit_price,
-            'outcome': outcome,  # 'win', 'loss', 'breakeven'
-            'score': score,
-            'conditions': conditions,
-            'timestamp': datetime.now(),
-            'pnl_percent': ((exit_price - entry_price) / entry_price * 100) if signal_type == 'LONG' else ((entry_price - exit_price) / entry_price * 100)
-        }
-        
-        self.operations.append(operation)
-        self._update_winrate()
-    
-    def _update_winrate(self):
-        """Actualizar métricas de winrate"""
-        if not self.operations:
-            return
-        
-        wins = sum(1 for op in self.operations if op['outcome'] == 'win')
-        total = len(self.operations)
-        
-        self.winrate_data['total_operations'] = total
-        self.winrate_data['winning_operations'] = wins
-        self.winrate_data['global_winrate'] = (wins / total * 100) if total > 0 else 0.0
-        
-        # Winrate por timeframe
-        timeframes = set(op['timeframe'] for op in self.operations)
-        for tf in timeframes:
-            tf_ops = [op for op in self.operations if op['timeframe'] == tf]
-            tf_wins = sum(1 for op in tf_ops if op['outcome'] == 'win')
-            self.winrate_data['timeframe_winrates'][tf] = (tf_wins / len(tf_ops) * 100) if tf_ops else 0.0
-        
-        # Winrate por símbolo
-        symbols = set(op['symbol'] for op in self.operations)
-        for symbol in symbols:
-            symbol_ops = [op for op in self.operations if op['symbol'] == symbol]
-            symbol_wins = sum(1 for op in symbol_ops if op['outcome'] == 'win')
-            self.winrate_data['symbol_winrates'][symbol] = (symbol_wins / len(symbol_ops) * 100) if symbol_ops else 0.0
-    
-    def get_strategy_recommendations(self):
-        """Generar recomendaciones de estrategia basadas en performance"""
-        if not self.operations:
-            return {"message": "No hay datos suficientes para análisis"}
-        
-        # Analizar combinaciones de condiciones exitosas
-        successful_conditions = {}
-        
-        for op in self.operations:
-            if op['outcome'] == 'win':
-                condition_key = str(sorted(op['conditions']))
-                if condition_key not in successful_conditions:
-                    successful_conditions[condition_key] = []
-                successful_conditions[condition_key].append(op)
-        
-        # Ordenar por winrate
-        strategy_performance = []
-        for conditions, ops in successful_conditions.items():
-            winrate = len(ops) / len([op for op in self.operations if str(sorted(op['conditions'])) == conditions]) * 100
-            strategy_performance.append({
-                'conditions': conditions,
-                'winrate': winrate,
-                'count': len(ops),
-                'avg_score': statistics.mean([op['score'] for op in ops])
-            })
-        
-        strategy_performance.sort(key=lambda x: x['winrate'], reverse=True)
-        
-        return {
-            'top_strategies': strategy_performance[:5],
-            'global_winrate': self.winrate_data['global_winrate'],
-            'total_operations': self.winrate_data['total_operations']
-        }
+# JERARQUÍA TEMPORAL COMPLETA Y OBLIGATORIA
+TIMEFRAME_HIERARCHY = {
+    '15m': {'mayor': '1h', 'media': '30m', 'menor': '5m'},
+    '30m': {'mayor': '2h', 'media': '1h', 'menor': '15m'},
+    '1h': {'mayor': '4h', 'media': '2h', 'menor': '30m'},
+    '2h': {'mayor': '8h', 'media': '4h', 'menor': '1h'},
+    '4h': {'mayor': '12h', 'media': '8h', 'menor': '2h'},
+    '8h': {'mayor': '1D', 'media': '12h', 'menor': '4h'},
+    '12h': {'mayor': '3D', 'media': '1D', 'menor': '8h'},
+    '1D': {'mayor': '3D', 'media': '1D', 'menor': '12h'},
+    '3D': {'mayor': '1W', 'media': '3D', 'menor': '1D'},
+    '1W': {'mayor': '1M', 'media': '1W', 'menor': '3D'}
+}
+
+# UMBRALES DE SCORE MEJORADOS
+SCORE_THRESHOLDS = {
+    'LONG': 75,
+    'SHORT': 80
+}
 
 class TradingIndicator:
     def __init__(self):
         self.cache = {}
         self.alert_cache = {}
         self.active_signals = {}
-        self.operation_tracker = OperationTracker()
         self.bolivia_tz = pytz.timezone('America/La_Paz')
-        self.whale_timeframes = ['12h', '1D']  # SOLO estos timeframes para Ballenas
-    
+        
+        # SISTEMA DE TRACKING MEJORADO
+        self.operation_history = deque(maxlen=1000)
+        self.winrate_data = {
+            'total_operations': 0,
+            'successful_operations': 0,
+            'winrate': 0.0,
+            'strategy_performance': {}
+        }
+        
+        # Inicializar base de datos en memoria para tracking
+        self.init_tracking_db()
+
+    def init_tracking_db(self):
+        """Inicializar base de datos para tracking de operaciones"""
+        try:
+            self.conn = sqlite3.connect(':memory:', check_same_thread=False)
+            self.cursor = self.conn.cursor()
+            self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS operations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    symbol TEXT,
+                    timeframe TEXT,
+                    signal_type TEXT,
+                    entry_price REAL,
+                    exit_price REAL,
+                    pnl REAL,
+                    status TEXT,
+                    timestamp DATETIME,
+                    score REAL,
+                    conditions TEXT
+                )
+            ''')
+            self.conn.commit()
+        except Exception as e:
+            print(f"Error inicializando base de datos: {e}")
+
+    def track_operation(self, symbol, timeframe, signal_type, entry_price, score, conditions):
+        """Registrar nueva operación en el sistema de tracking"""
+        try:
+            self.cursor.execute('''
+                INSERT INTO operations (symbol, timeframe, signal_type, entry_price, score, conditions, timestamp, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (symbol, timeframe, signal_type, entry_price, score, json.dumps(conditions), datetime.now(), 'active'))
+            self.conn.commit()
+            return self.cursor.lastrowid
+        except Exception as e:
+            print(f"Error registrando operación: {e}")
+            return None
+
+    def update_operation_outcome(self, operation_id, exit_price, pnl, status):
+        """Actualizar resultado de operación"""
+        try:
+            self.cursor.execute('''
+                UPDATE operations SET exit_price = ?, pnl = ?, status = ?
+                WHERE id = ?
+            ''', (exit_price, pnl, status, operation_id))
+            self.conn.commit()
+            
+            # Actualizar winrate global
+            self.calculate_winrate()
+            
+        except Exception as e:
+            print(f"Error actualizando operación: {e}")
+
+    def calculate_winrate(self):
+        """Calcular winrate global del sistema"""
+        try:
+            self.cursor.execute('''
+                SELECT COUNT(*), SUM(CASE WHEN pnl > 0 THEN 1 ELSE 0 END) 
+                FROM operations WHERE status = 'closed'
+            ''')
+            result = self.cursor.fetchone()
+            
+            total_operations = result[0] or 0
+            successful_operations = result[1] or 0
+            
+            if total_operations > 0:
+                winrate = (successful_operations / total_operations) * 100
+            else:
+                winrate = 0.0
+            
+            self.winrate_data = {
+                'total_operations': total_operations,
+                'successful_operations': successful_operations,
+                'winrate': winrate
+            }
+            
+            return winrate
+            
+        except Exception as e:
+            print(f"Error calculando winrate: {e}")
+            return 0.0
+
     def get_bolivia_time(self):
+        """Obtener hora actual de Bolivia"""
         return datetime.now(self.bolivia_tz)
-    
+
     def is_scalping_time(self):
+        """Verificar si es horario de scalping"""
         now = self.get_bolivia_time()
-        if now.weekday() >= 5:
+        if now.weekday() >= 5:  # Sábado o Domingo
             return False
         return 4 <= now.hour < 16
 
     def calculate_remaining_time(self, interval, current_time):
+        """Calcular tiempo restante para el cierre de la vela"""
         if interval == '15m':
             next_close = current_time.replace(minute=current_time.minute // 15 * 15, second=0, microsecond=0) + timedelta(minutes=15)
             return (next_close - current_time).total_seconds() <= 450
@@ -237,6 +264,7 @@ class TradingIndicator:
         return False
 
     def get_kucoin_data(self, symbol, interval, limit=100):
+        """Obtener datos de KuCoin con manejo robusto de errores"""
         try:
             cache_key = f"{symbol}_{interval}_{limit}"
             if cache_key in self.cache:
@@ -247,11 +275,11 @@ class TradingIndicator:
             interval_map = {
                 '15m': '15min', '30m': '30min', '5m': '5min', '1h': '1hour',
                 '2h': '2hour', '4h': '4hour', '8h': '8hour', '12h': '12hour',
-                '1D': '1day', '3D': '3day', '1W': '1week'
+                '1D': '1day', '3D': '3day', '1W': '1week', '1M': '1month'
             }
             
             kucoin_interval = interval_map.get(interval, '1hour')
-            url = f"https://api.kucoin.com/api/v1/market/candles?symbol={symbol}&type={kucoin_interval}"
+            url = f"https://api.kucoin.com/api/v1/market/candles?symbol={symbol.replace('-', '')}&type={kucoin_interval}"
             
             response = requests.get(url, timeout=15)
             
@@ -284,6 +312,7 @@ class TradingIndicator:
         return df
 
     def generate_sample_data(self, limit, interval, symbol):
+        """Generar datos de ejemplo más realistas"""
         np.random.seed(42)
         base_price = 50000 if 'BTC' in symbol else 3000 if 'ETH' in symbol else 100
         dates = pd.date_range(end=datetime.now(), periods=limit, freq=interval)
@@ -307,19 +336,21 @@ class TradingIndicator:
         return df
 
     def calculate_sma(self, prices, period):
-        if len(prices) < period:
+        """Calcular SMA manualmente con validación"""
+        if len(prices) == 0 or period <= 0:
             return np.zeros_like(prices)
-        
+            
         sma = np.zeros_like(prices)
         for i in range(len(prices)):
             start_idx = max(0, i - period + 1)
             window = prices[start_idx:i+1]
             valid_values = window[~np.isnan(window)]
-            sma[i] = np.mean(valid_values) if len(valid_values) > 0 else prices[i] if i < len(prices) and not np.isnan(prices[i]) else 0
+            sma[i] = np.mean(valid_values) if len(valid_values) > 0 else (prices[i] if i < len(prices) and not np.isnan(prices[i]) else 0)
         
         return sma
 
     def calculate_ema(self, prices, period):
+        """Calcular EMA manualmente"""
         if len(prices) == 0 or period <= 0:
             return np.zeros_like(prices)
             
@@ -335,7 +366,28 @@ class TradingIndicator:
         
         return ema
 
+    def calculate_bollinger_bands(self, prices, period=20, multiplier=2):
+        """Calcular Bandas de Bollinger manualmente"""
+        if len(prices) < period:
+            return np.zeros_like(prices), np.zeros_like(prices), np.zeros_like(prices)
+        
+        sma = self.calculate_sma(prices, period)
+        std = np.zeros_like(prices)
+        
+        for i in range(len(prices)):
+            if i >= period - 1:
+                window = prices[i-period+1:i+1]
+                std[i] = np.std(window)
+            else:
+                std[i] = 0
+        
+        upper = sma + (std * multiplier)
+        lower = sma - (std * multiplier)
+        
+        return upper, sma, lower
+
     def calculate_rsi(self, prices, period=14):
+        """Calcular RSI tradicional manualmente"""
         if len(prices) < period + 1:
             return np.zeros_like(prices)
         
@@ -364,6 +416,7 @@ class TradingIndicator:
         return rsi
 
     def calculate_macd(self, prices, fast=12, slow=26, signal=9):
+        """Calcular MACD manualmente"""
         if len(prices) < slow:
             return np.zeros_like(prices), np.zeros_like(prices), np.zeros_like(prices)
         
@@ -377,6 +430,7 @@ class TradingIndicator:
         return macd_line, signal_line, histogram
 
     def calculate_adx(self, high, low, close, period=14):
+        """Calcular ADX, +DI, -DI manualmente"""
         n = len(high)
         if n < period:
             return np.zeros(n), np.zeros(n), np.zeros(n)
@@ -422,66 +476,8 @@ class TradingIndicator:
         
         return adx, plus_di, minus_di
 
-    def calculate_squeeze_momentum(self, high, low, close, length=20, mult=2):
-        """Calcular Squeeze Momentum (LazyBear)"""
-        try:
-            n = len(close)
-            
-            # Calcular Bandas de Bollinger
-            basis = self.calculate_sma(close, length)
-            dev = mult * np.array([np.std(close[max(0, i-length+1):i+1]) for i in range(n)])
-            upper_bb = basis + dev
-            lower_bb = basis - dev
-            
-            # Calcular Keltner Channel
-            tr = np.zeros(n)
-            tr[0] = high[0] - low[0]
-            for i in range(1, n):
-                tr1 = high[i] - low[i]
-                tr2 = abs(high[i] - close[i-1])
-                tr3 = abs(low[i] - close[i-1])
-                tr[i] = max(tr1, tr2, tr3)
-            
-            atr = self.calculate_sma(tr, length)
-            upper_kc = basis + atr
-            lower_kc = basis - atr
-            
-            # Determinar Squeeze
-            squeeze_on = np.zeros(n, dtype=bool)
-            squeeze_off = np.zeros(n, dtype=bool)
-            
-            for i in range(n):
-                if lower_bb[i] > lower_kc[i] and upper_bb[i] < upper_kc[i]:
-                    squeeze_on[i] = True
-                else:
-                    squeeze_off[i] = True
-            
-            # Calcular Momentum (simplificado)
-            momentum = close - basis
-            
-            return {
-                'squeeze_on': squeeze_on.tolist(),
-                'squeeze_off': squeeze_off.tolist(),
-                'momentum': momentum.tolist(),
-                'basis': basis.tolist(),
-                'upper_bb': upper_bb.tolist(),
-                'lower_bb': lower_bb.tolist()
-            }
-            
-        except Exception as e:
-            print(f"Error calculando Squeeze Momentum: {e}")
-            n = len(close)
-            return {
-                'squeeze_on': [False] * n,
-                'squeeze_off': [True] * n,
-                'momentum': [0] * n,
-                'basis': [0] * n,
-                'upper_bb': [0] * n,
-                'lower_bb': [0] * n
-            }
-
     def calculate_trend_strength_maverick(self, close, length=20, mult=2.0):
-        """Calcular Fuerza de Tendencia Maverick"""
+        """Calcular Fuerza de Tendencia Maverick basado en ancho de Bandas de Bollinger"""
         try:
             n = len(close)
             
@@ -496,7 +492,7 @@ class TradingIndicator:
             upper = basis + (dev * mult)
             lower = basis - (dev * mult)
             
-            # Calcular ancho de las bandas normalizado
+            # Calcular ancho de las bandas normalizado a porcentaje
             bb_width = np.zeros(n)
             for i in range(n):
                 if basis[i] > 0:
@@ -506,9 +502,9 @@ class TradingIndicator:
             trend_strength = np.zeros(n)
             for i in range(1, n):
                 if bb_width[i] > bb_width[i-1]:
-                    trend_strength[i] = bb_width[i]  # Fuerza creciente
+                    trend_strength[i] = bb_width[i]  # Positivo (verde)
                 else:
-                    trend_strength[i] = -bb_width[i]  # Fuerza decreciente
+                    trend_strength[i] = -bb_width[i]  # Negativo (rojo)
             
             # Calcular percentil 70 para zona alta
             if n >= 50:
@@ -517,7 +513,7 @@ class TradingIndicator:
             else:
                 high_zone_threshold = np.percentile(bb_width, 70) if len(bb_width) > 0 else 5
             
-            # Detectar zonas de no operar y señales de fuerza
+            # Detectar zonas de no operar
             no_trade_zones = np.zeros(n, dtype=bool)
             strength_signals = ['NEUTRAL'] * n
             
@@ -569,10 +565,74 @@ class TradingIndicator:
                 'colors': ['gray'] * n
             }
 
-    def check_multi_timeframe_trend(self, symbol, interval):
-        """Verificar tendencia en múltiples temporalidades OBLIGATORIO"""
+    def calculate_squeeze_momentum(self, high, low, close, length=20, mult=2.0, length_kc=20, mult_kc=1.5):
+        """Calcular Squeeze Momentum (LazyBear)"""
         try:
-            hierarchy = TIMEFRAME_HIERARCHY.get(interval, {})
+            n = len(close)
+            
+            # Bollinger Bands
+            basis = self.calculate_sma(close, length)
+            dev = np.zeros(n)
+            for i in range(length-1, n):
+                window = close[i-length+1:i+1]
+                dev[i] = np.std(window) if len(window) > 1 else 0
+            upper_bb = basis + (dev * mult)
+            lower_bb = basis - (dev * mult)
+            
+            # Keltner Channel
+            ma = self.calculate_sma(close, length_kc)
+            range_ma = self.calculate_sma(high - low, length_kc)
+            upper_kc = ma + range_ma * mult_kc
+            lower_kc = ma - range_ma * mult_kc
+            
+            # Squeeze conditions
+            squeeze_on = np.zeros(n, dtype=bool)
+            squeeze_off = np.zeros(n, dtype=bool)
+            
+            for i in range(n):
+                if i >= length_kc:
+                    if (lower_bb[i] > lower_kc[i]) and (upper_bb[i] < upper_kc[i]):
+                        squeeze_on[i] = True
+                    else:
+                        squeeze_off[i] = True
+            
+            # Momentum (simplificado)
+            momentum = np.zeros(n)
+            for i in range(1, n):
+                if close[i] > close[i-1]:
+                    momentum[i] = 1
+                elif close[i] < close[i-1]:
+                    momentum[i] = -1
+                else:
+                    momentum[i] = 0
+            
+            return {
+                'squeeze_on': squeeze_on.tolist(),
+                'squeeze_off': squeeze_off.tolist(),
+                'squeeze_momentum': momentum.tolist(),
+                'upper_bb': upper_bb.tolist(),
+                'lower_bb': lower_bb.tolist(),
+                'upper_kc': upper_kc.tolist(),
+                'lower_kc': lower_kc.tolist()
+            }
+            
+        except Exception as e:
+            print(f"Error en calculate_squeeze_momentum: {e}")
+            n = len(close)
+            return {
+                'squeeze_on': [False] * n,
+                'squeeze_off': [False] * n,
+                'squeeze_momentum': [0] * n,
+                'upper_bb': [0] * n,
+                'lower_bb': [0] * n,
+                'upper_kc': [0] * n,
+                'lower_kc': [0] * n
+            }
+
+    def check_multi_timeframe_trend(self, symbol, timeframe):
+        """Verificar tendencia en múltiples temporalidades - OBLIGATORIO"""
+        try:
+            hierarchy = TIMEFRAME_HIERARCHY.get(timeframe, {})
             if not hierarchy:
                 return {'mayor': 'NEUTRAL', 'media': 'NEUTRAL', 'menor': 'NEUTRAL'}
             
@@ -580,9 +640,7 @@ class TradingIndicator:
             
             # Verificar cada temporalidad en la jerarquía
             for tf_type, tf_value in hierarchy.items():
-                if tf_value == '5m' and interval != '15m':  # Solo 5m para 15m
-                    continue
-                if tf_value in ['3D', '1W', '1M']:  # No usar para trading
+                if tf_value == '5m' and timeframe != '15m':  # Solo usar 5m para 15m
                     results[tf_type] = 'NEUTRAL'
                     continue
                     
@@ -595,10 +653,13 @@ class TradingIndicator:
                 
                 # Calcular fuerza de tendencia Maverick
                 trend_data = self.calculate_trend_strength_maverick(close)
-                current_signal = trend_data['strength_signals'][-1] if trend_data['strength_signals'] else 'NEUTRAL'
+                current_signal = trend_data['strength_signals'][-1] if len(trend_data['strength_signals']) > 0 else 'NEUTRAL'
+                current_no_trade = trend_data['no_trade_zones'][-1] if len(trend_data['no_trade_zones']) > 0 else False
                 
-                # Mapear a tendencia simple
-                if current_signal in ['STRONG_UP', 'WEAK_UP']:
+                # Determinar tendencia basada en fuerza Maverick
+                if current_no_trade:
+                    results[tf_type] = 'NO_TRADE'
+                elif current_signal in ['STRONG_UP', 'WEAK_UP']:
                     results[tf_type] = 'BULLISH'
                 elif current_signal in ['STRONG_DOWN', 'WEAK_DOWN']:
                     results[tf_type] = 'BEARISH'
@@ -611,81 +672,50 @@ class TradingIndicator:
             print(f"Error verificando multi-timeframe para {symbol}: {e}")
             return {'mayor': 'NEUTRAL', 'media': 'NEUTRAL', 'menor': 'NEUTRAL'}
 
-    def check_obligatory_conditions(self, symbol, interval, signal_type):
-        """Verificar condiciones OBLIGATORIAS - Si falla, score = 0"""
+    def check_mandatory_conditions(self, symbol, interval, signal_type):
+        """Verificar condiciones obligatorias - SI NO SE CUMPLEN, SCORE = 0"""
         try:
             # Obtener análisis multi-timeframe
             multi_tf_analysis = self.check_multi_timeframe_trend(symbol, interval)
             
-            # Obtener datos del timeframe operativo
-            df = self.get_kucoin_data(symbol, interval, 30)
-            if df is None or len(df) < 10:
-                return False, "Sin datos suficientes"
-            
-            close = df['close'].values
-            trend_data = self.calculate_trend_strength_maverick(close)
-            current_trend = trend_data['strength_signals'][-1] if trend_data['strength_signals'] else 'NEUTRAL'
-            no_trade_zone = trend_data['no_trade_zones'][-1] if trend_data['no_trade_zones'] else False
-            
-            # CONDICIONES OBLIGATORIAS PARA LONG
             if signal_type == 'LONG':
-                # 1. Tendencia Mayor: ALCISTA o NEUTRAL
+                # OBLIGATORIO PARA LONG: Mayor ALCISTA/NEUTRAL, Media EXCLUSIVAMENTE ALCISTA, Menor ALCISTA
                 mayor_ok = multi_tf_analysis.get('mayor', 'NEUTRAL') in ['BULLISH', 'NEUTRAL']
-                if not mayor_ok:
-                    return False, "Tendencia Mayor no alcista/neutral"
+                media_ok = multi_tf_analysis.get('media', 'NEUTRAL') == 'BULLISH'  # EXCLUSIVAMENTE ALCISTA
+                menor_ok = multi_tf_analysis.get('menor', 'NEUTRAL') == 'BULLISH'  # EXCLUSIVAMENTE ALCISTA
                 
-                # 2. Tendencia Media: EXCLUSIVAMENTE ALCISTA
-                media_ok = multi_tf_analysis.get('media', 'NEUTRAL') == 'BULLISH'
-                if not media_ok:
-                    return False, "Tendencia Media no exclusivamente alcista"
+                # Verificar que NO HAYA zonas de NO OPERAR en ninguna temporalidad
+                no_trade_zones = any(value == 'NO_TRADE' for value in multi_tf_analysis.values())
                 
-                # 3. Tendencia Menor: Fuerza Maverick ALCISTA
-                menor_ok = current_trend in ['STRONG_UP', 'WEAK_UP']
-                if not menor_ok:
-                    return False, "Fuerza de Tendencia Maverick no alcista"
+                return mayor_ok and media_ok and menor_ok and not no_trade_zones
                 
-                # 4. NO Zonas de NO OPERAR
-                if no_trade_zone:
-                    return False, "Zona de NO OPERAR activa"
-            
-            # CONDICIONES OBLIGATORIAS PARA SHORT  
             elif signal_type == 'SHORT':
-                # 1. Tendencia Mayor: BAJISTA o NEUTRAL
+                # OBLIGATORIO PARA SHORT: Mayor BAJISTA/NEUTRAL, Media EXCLUSIVAMENTE BAJISTA, Menor BAJISTA
                 mayor_ok = multi_tf_analysis.get('mayor', 'NEUTRAL') in ['BEARISH', 'NEUTRAL']
-                if not mayor_ok:
-                    return False, "Tendencia Mayor no bajista/neutral"
+                media_ok = multi_tf_analysis.get('media', 'NEUTRAL') == 'BEARISH'  # EXCLUSIVAMENTE BAJISTA
+                menor_ok = multi_tf_analysis.get('menor', 'NEUTRAL') == 'BEARISH'  # EXCLUSIVAMENTE BAJISTA
                 
-                # 2. Tendencia Media: EXCLUSIVAMENTE BAJISTA
-                media_ok = multi_tf_analysis.get('media', 'NEUTRAL') == 'BEARISH'
-                if not media_ok:
-                    return False, "Tendencia Media no exclusivamente bajista"
+                # Verificar que NO HAYA zonas de NO OPERAR en ninguna temporalidad
+                no_trade_zones = any(value == 'NO_TRADE' for value in multi_tf_analysis.values())
                 
-                # 3. Tendencia Menor: Fuerza Maverick BAJISTA
-                menor_ok = current_trend in ['STRONG_DOWN', 'WEAK_DOWN']
-                if not menor_ok:
-                    return False, "Fuerza de Tendencia Maverick no bajista"
-                
-                # 4. NO Zonas de NO OPERAR
-                if no_trade_zone:
-                    return False, "Zona de NO OPERAR activa"
+                return mayor_ok and media_ok and menor_ok and not no_trade_zones
             
-            return True, "Condiciones obligatorias cumplidas"
+            return False
             
         except Exception as e:
             print(f"Error verificando condiciones obligatorias: {e}")
-            return False, f"Error: {str(e)}"
+            return False
 
     def calculate_whale_signals_corrected(self, df, interval):
-        """Calcular señales de Ballenas SOLO para 12H y 1D"""
+        """Implementación CORRECTA del Cazador de Ballenas - SOLO para 12H y 1D"""
         try:
-            # SOLO calcular para timeframes autorizados
-            if interval not in self.whale_timeframes:
+            # SOLO aplicar en 12H y 1D
+            if interval not in ['12h', '1D']:
                 n = len(df)
                 return {
                     'whale_pump': [0] * n,
                     'whale_dump': [0] * n,
-                    'whale_active': False,
-                    'whale_score': 0
+                    'whale_active': [False] * n
                 }
             
             close = df['close'].values
@@ -694,47 +724,35 @@ class TradingIndicator:
             volume = df['volume'].values
             
             n = len(close)
+            
             whale_pump_signal = np.zeros(n)
             whale_dump_signal = np.zeros(n)
+            whale_active = np.zeros(n, dtype=bool)
             
+            # Lógica específica para Ballenas en 12H/1D
             for i in range(5, n-1):
                 avg_volume = np.mean(volume[max(0, i-20):i+1])
                 volume_ratio = volume[i] / avg_volume if avg_volume > 0 else 1
                 
-                price_change = (close[i] - close[i-1]) / close[i-1] * 100
-                low_5 = np.min(low[max(0, i-5):i+1])
-                high_5 = np.max(high[max(0, i-5):i+1])
+                # Detectar acumulación (pump) en zonas de soporte
+                if (volume_ratio > 2.0 and  # Volumen muy alto
+                    close[i] <= np.min(low[max(0, i-10):i+1]) * 1.02):  # Precio cerca de mínimos
+                    whale_pump_signal[i] = min(100, volume_ratio * 25)
+                    whale_active[i] = True
                 
-                # Detectar acumulación (pump)
-                if (volume_ratio > 1.5 and 
-                    (close[i] < close[i-1] or price_change < -0.5) and
-                    low[i] <= low_5 * 1.01):
-                    
-                    volume_strength = min(3.0, volume_ratio / 1.5)
-                    whale_pump_signal[i] = min(100, volume_ratio * 20 * 1.7 * volume_strength)
-                
-                # Detectar distribución (dump)
-                if (volume_ratio > 1.5 and 
-                    (close[i] > close[i-1] or price_change > 0.5) and
-                    high[i] >= high_5 * 0.99):
-                    
-                    volume_strength = min(3.0, volume_ratio / 1.5)
-                    whale_dump_signal[i] = min(100, volume_ratio * 20 * 1.7 * volume_strength)
+                # Detectar distribución (dump) en zonas de resistencia
+                if (volume_ratio > 2.0 and  # Volumen muy alto
+                    close[i] >= np.max(high[max(0, i-10):i+1]) * 0.98):  # Precio cerca de máximos
+                    whale_dump_signal[i] = min(100, volume_ratio * 25)
+                    whale_active[i] = True
             
             whale_pump_smooth = self.calculate_sma(whale_pump_signal, 3)
             whale_dump_smooth = self.calculate_sma(whale_dump_signal, 3)
             
-            current_whale_pump = whale_pump_smooth[-1] if len(whale_pump_smooth) > 0 else 0
-            current_whale_dump = whale_dump_smooth[-1] if len(whale_dump_smooth) > 0 else 0
-            
-            whale_active = current_whale_pump > 15 or current_whale_dump > 18
-            whale_score = max(current_whale_pump, current_whale_dump)
-            
             return {
                 'whale_pump': whale_pump_smooth.tolist(),
                 'whale_dump': whale_dump_smooth.tolist(),
-                'whale_active': whale_active,
-                'whale_score': whale_score
+                'whale_active': whale_active.tolist()
             }
             
         except Exception as e:
@@ -743,12 +761,11 @@ class TradingIndicator:
             return {
                 'whale_pump': [0] * n,
                 'whale_dump': [0] * n,
-                'whale_active': False,
-                'whale_score': 0
+                'whale_active': [False] * n
             }
 
     def calculate_rsi_maverick(self, close, length=20, bb_multiplier=2.0):
-        """Calcular RSI Maverick (Bollinger %B)"""
+        """Implementación del RSI Modificado Maverick (Bollinger %B)"""
         try:
             n = len(close)
             
@@ -772,328 +789,243 @@ class TradingIndicator:
             return [0.5] * len(close)
 
     def detect_divergence(self, price, indicator, lookback=14):
-        """Detectar divergencias extendidas (hasta 14 periodos)"""
+        """Detectar divergencias entre precio e indicador"""
         n = len(price)
         bullish_div = np.zeros(n, dtype=bool)
         bearish_div = np.zeros(n, dtype=bool)
         
         for i in range(lookback, n-1):
-            # Buscar divergencias en ventana extendida
-            for window in [7, 10, 14]:
-                if i < window:
-                    continue
-                    
-                # Divergencia alcista: precio hace lower low, indicador hace higher low
-                price_lows = price[i-window:i+1]
-                indicator_vals = indicator[i-window:i+1]
-                
-                if (len(price_lows) >= 3 and 
-                    price[i] < np.min(price_lows[:-1]) and
-                    indicator[i] > np.max(indicator_vals[:-1])):
-                    bullish_div[i] = True
-                    break
-                
-                # Divergencia bajista: precio hace higher high, indicador hace lower high
-                if (len(price_lows) >= 3 and 
-                    price[i] > np.max(price_lows[:-1]) and
-                    indicator[i] < np.min(indicator_vals[:-1])):
-                    bearish_div[i] = True
-                    break
+            # Divergencia alcista: precio hace lower low, indicador hace higher low
+            price_low = price[i] < np.min(price[i-lookback:i])
+            indicator_high = indicator[i] > np.max(indicator[i-lookback:i])
+            
+            if price_low and indicator_high:
+                bullish_div[i] = True
+            
+            # Divergencia bajista: precio hace higher high, indicador hace lower high
+            price_high = price[i] > np.max(price[i-lookback:i])
+            indicator_low = indicator[i] < np.min(indicator[i-lookback:i])
+            
+            if price_high and indicator_low:
+                bearish_div[i] = True
         
         return bullish_div.tolist(), bearish_div.tolist()
 
     def calculate_support_resistance(self, high, low, close, period=20):
-        """Calcular soportes y resistencias inteligentes"""
+        """Calcular soportes y resistencias dinámicos"""
         n = len(close)
         support = np.zeros(n)
         resistance = np.zeros(n)
         
         for i in range(period, n):
-            # Soporte: mínimo de los últimos 'period' periodos
             support[i] = np.min(low[i-period:i+1])
-            # Resistencia: máximo de los últimos 'period' periodos
             resistance[i] = np.max(high[i-period:i+1])
         
         return support.tolist(), resistance.tolist()
 
-    def calculate_optimal_leverage(self, symbol, signal_score, volatility, risk_category):
-        """Calcular apalancamiento óptimo dinámico"""
-        # Factor base por score
-        if signal_score >= 90:
-            base_leverage = 20
-        elif signal_score >= 80:
-            base_leverage = 15
-        elif signal_score >= 75:
-            base_leverage = 10
-        else:
-            base_leverage = 5
-        
-        # Ajustar por volatilidad
-        if volatility > 0.05:  # Alta volatilidad
-            base_leverage = max(5, base_leverage - 5)
-        elif volatility < 0.01:  # Baja volatilidad
-            base_leverage = min(20, base_leverage + 5)
-        
-        # Ajustar por categoría de riesgo
-        risk_factors = {
-            'bajo': 1.0,
-            'medio': 0.8,
-            'alto': 0.6,
-            'memecoins': 0.5
-        }
-        
-        risk_factor = risk_factors.get(risk_category, 0.7)
-        optimal_leverage = int(base_leverage * risk_factor)
-        
-        return max(5, min(20, optimal_leverage))
+    def calculate_signal_score_professional(self, conditions, signal_type, interval):
+        """Calcular score profesional con ponderaciones mejoradas"""
+        try:
+            # PONDERACIONES MEJORADAS
+            weights = {
+                'mandatory': 0.60,  # 60% condiciones obligatorias
+                'complementary': 0.40,  # 40% indicadores complementarios
+                'whale_bonus': 0.15   # 15% bonus ballenas (solo 12H, 1D)
+            }
+            
+            # Verificar condiciones obligatorias primero
+            mandatory_score = 1.0 if conditions['mandatory_conditions'] else 0.0
+            
+            if mandatory_score == 0:
+                return 0.0, []
+            
+            # Calcular score complementario
+            complementary_indicators = [
+                ('rsi_maverick_divergence', 0.10),
+                ('rsi_traditional_divergence', 0.10),
+                ('adx_dmi', 0.05),
+                ('macd', 0.05),
+                ('squeeze_momentum', 0.05),
+                ('moving_averages', 0.05)
+            ]
+            
+            complementary_score = 0.0
+            fulfilled_conditions = []
+            
+            for indicator, weight in complementary_indicators:
+                if conditions.get(indicator, False):
+                    complementary_score += weight
+                    fulfilled_conditions.append(indicator.replace('_', ' ').title())
+            
+            # Bonus ballenas (solo para 12H y 1D)
+            whale_bonus = 0.0
+            if interval in ['12h', '1D'] and conditions.get('whale_confirmation', False):
+                whale_bonus = weights['whale_bonus']
+                fulfilled_conditions.append("Whale Confirmation")
+            
+            # Score final
+            final_score = (
+                mandatory_score * weights['mandatory'] +
+                complementary_score * weights['complementary'] +
+                whale_bonus
+            ) * 100
+            
+            # Aplicar umbral mínimo
+            min_threshold = SCORE_THRESHOLDS.get(signal_type, 75)
+            if final_score < min_threshold:
+                return 0.0, []
+            
+            return min(final_score, 100), fulfilled_conditions
+            
+        except Exception as e:
+            print(f"Error calculando score profesional: {e}")
+            return 0.0, []
 
     def generate_signals_professional(self, symbol, interval, di_period=14, adx_threshold=20, 
-                                    sr_period=20, rsi_length=20, bb_multiplier=2.0, leverage=15):
-        """GENERACIÓN DE SEÑALES PROFESIONAL CON OBLIGATORIEDADES"""
+                                   sr_period=50, rsi_length=20, bb_multiplier=2.0, 
+                                   volume_filter='Todos', leverage=15):
+        """GENERACIÓN DE SEÑALES PROFESIONAL - CON OBLIGATORIEDADES MULTI-TIMEFRAME"""
         try:
             df = self.get_kucoin_data(symbol, interval, 100)
             
-            if df is None or len(df) < 30:
+            if df is None or len(df) < 50:
                 return self._create_empty_signal(symbol)
             
+            # OBTENER DATOS DE INDICADORES
             close = df['close'].values
             high = df['high'].values
             low = df['low'].values
             volume = df['volume'].values
             
-            # 1. INDICADORES OBLIGATORIOS (60% del score)
-            # Fuerza de Tendencia Maverick (20%)
-            trend_data = self.calculate_trend_strength_maverick(close)
-            current_trend = trend_data['strength_signals'][-1]
-            no_trade_zone = trend_data['no_trade_zones'][-1]
+            current_idx = -1
+            current_price = float(close[current_idx])
             
-            # Soportes/Resistencias Smart Money (20%)
+            # INDICADORES OBLIGATORIOS
+            trend_strength_data = self.calculate_trend_strength_maverick(close)
             support, resistance = self.calculate_support_resistance(high, low, close, sr_period)
-            current_support = support[-1]
-            current_resistance = resistance[-1]
-            current_price = close[-1]
             
-            # Confirmación Multi-Timeframe (20%)
-            multi_tf_analysis = self.check_multi_timeframe_trend(symbol, interval)
-            
-            # 2. INDICADORES COMPLEMENTARIOS (40% del score)
-            # RSI Maverick (10%)
+            # INDICADORES COMPLEMENTARIOS
             rsi_maverick = self.calculate_rsi_maverick(close, rsi_length, bb_multiplier)
-            current_rsi_maverick = rsi_maverick[-1]
-            
-            # RSI Tradicional (10%)
-            rsi_trad = self.calculate_rsi(close, 14)
-            current_rsi_trad = rsi_trad[-1]
-            
-            # ADX + DMI (5%)
+            rsi_traditional = self.calculate_rsi(close, 14)
             adx, plus_di, minus_di = self.calculate_adx(high, low, close, di_period)
-            current_adx = adx[-1] if len(adx) > 0 else 0
-            current_plus_di = plus_di[-1] if len(plus_di) > 0 else 0
-            current_minus_di = minus_di[-1] if len(minus_di) > 0 else 0
-            
-            # MACD (5%)
             macd, macd_signal, macd_histogram = self.calculate_macd(close)
-            current_macd = macd[-1] if len(macd) > 0 else 0
-            current_macd_histogram = macd_histogram[-1] if len(macd_histogram) > 0 else 0
-            
-            # Squeeze Momentum (5%)
             squeeze_data = self.calculate_squeeze_momentum(high, low, close)
-            current_squeeze_momentum = squeeze_data['momentum'][-1] if squeeze_data['momentum'] else 0
-            squeeze_on = squeeze_data['squeeze_on'][-1] if squeeze_data['squeeze_on'] else False
             
-            # Medias Móviles (5%)
-            ma_50 = self.calculate_sma(close, 50)
-            ma_200 = self.calculate_sma(close, 200)
-            current_ma_50 = ma_50[-1] if len(ma_50) > 0 else 0
-            current_ma_200 = ma_200[-1] if len(ma_200) > 0 else 0
-            above_ma_200 = current_price > current_ma_200
+            # DETECCIÓN DE DIVERGENCIAS
+            rsi_maverick_bullish_div, rsi_maverick_bearish_div = self.detect_divergence(close, rsi_maverick)
+            rsi_traditional_bullish_div, rsi_traditional_bearish_div = self.detect_divergence(close, rsi_traditional)
             
-            # 3. CAZADOR DE BALLENAS (15% adicional cuando aplica)
+            # INDICADOR BALLENAS (SOLO 12H, 1D)
             whale_data = self.calculate_whale_signals_corrected(df, interval)
-            whale_active = whale_data['whale_active']
-            whale_score = whale_data['whale_score']
             
-            # 4. DETECCIÓN DE DIVERGENCIAS
-            bullish_div_rsi, bearish_div_rsi = self.detect_divergence(close, rsi_trad)
-            bullish_div_maverick, bearish_div_maverick = self.detect_divergence(close, rsi_maverick)
-            
-            current_bullish_div = bullish_div_rsi[-1] or bullish_div_maverick[-1]
-            current_bearish_div = bearish_div_rsi[-1] or bearish_div_maverick[-1]
-            
-            # 5. EVALUACIÓN DE SEÑALES CON OBLIGATORIEDADES
+            # EVALUAR CONDICIONES PARA CADA TIPO DE SEÑAL
             long_conditions = {
-                'obligatorias': {
-                    'multi_tf_mayor': multi_tf_analysis.get('mayor') in ['BULLISH', 'NEUTRAL'],
-                    'multi_tf_media': multi_tf_analysis.get('media') == 'BULLISH',
-                    'trend_strength': current_trend in ['STRONG_UP', 'WEAK_UP'],
-                    'no_trade_zone': not no_trade_zone,
-                    'price_above_support': current_price > current_support
-                },
-                'complementarias': {
-                    'rsi_maverick_bullish': current_rsi_maverick < 0.8 and current_bullish_div,
-                    'rsi_trad_bullish': current_rsi_trad < 70 and current_bullish_div,
-                    'adx_strong': current_adx > adx_threshold and current_plus_di > current_minus_di,
-                    'macd_bullish': current_macd_histogram > 0,
-                    'squeeze_bullish': current_squeeze_momentum > 0 and not squeeze_on,
-                    'ma_bullish': current_price > current_ma_50 and above_ma_200
-                },
-                'ballenas': {
-                    'whale_pump': whale_active and whale_data['whale_pump'][-1] > 15
-                }
+                'mandatory_conditions': self.check_mandatory_conditions(symbol, interval, 'LONG'),
+                'rsi_maverick_divergence': rsi_maverick_bullish_div[current_idx] if current_idx < len(rsi_maverick_bullish_div) else False,
+                'rsi_traditional_divergence': rsi_traditional_bullish_div[current_idx] if current_idx < len(rsi_traditional_bullish_div) else False,
+                'adx_dmi': (adx[current_idx] > adx_threshold if current_idx < len(adx) else False) and 
+                          (plus_di[current_idx] > minus_di[current_idx] if current_idx < len(plus_di) else False),
+                'macd': macd[current_idx] > macd_signal[current_idx] if current_idx < len(macd) else False,
+                'squeeze_momentum': squeeze_data['squeeze_momentum'][current_idx] > 0 if current_idx < len(squeeze_data['squeeze_momentum']) else False,
+                'moving_averages': (current_price > self.calculate_sma(close, 50)[current_idx] if current_idx < len(close) else False) and
+                                 (self.calculate_sma(close, 50)[current_idx] > self.calculate_sma(close, 200)[current_idx] if current_idx < len(close) else False),
+                'whale_confirmation': whale_data['whale_active'][current_idx] if current_idx < len(whale_data['whale_active']) else False,
+                'price_above_support': current_price > support[current_idx] if current_idx < len(support) else False
             }
             
             short_conditions = {
-                'obligatorias': {
-                    'multi_tf_mayor': multi_tf_analysis.get('mayor') in ['BEARISH', 'NEUTRAL'],
-                    'multi_tf_media': multi_tf_analysis.get('media') == 'BEARISH',
-                    'trend_strength': current_trend in ['STRONG_DOWN', 'WEAK_DOWN'],
-                    'no_trade_zone': not no_trade_zone,
-                    'price_below_resistance': current_price < current_resistance
-                },
-                'complementarias': {
-                    'rsi_maverick_bearish': current_rsi_maverick > 0.2 and current_bearish_div,
-                    'rsi_trad_bearish': current_rsi_trad > 30 and current_bearish_div,
-                    'adx_strong': current_adx > adx_threshold and current_minus_di > current_plus_di,
-                    'macd_bearish': current_macd_histogram < 0,
-                    'squeeze_bearish': current_squeeze_momentum < 0 and not squeeze_on,
-                    'ma_bearish': current_price < current_ma_50 and not above_ma_200
-                },
-                'ballenas': {
-                    'whale_dump': whale_active and whale_data['whale_dump'][-1] > 18
-                }
+                'mandatory_conditions': self.check_mandatory_conditions(symbol, interval, 'SHORT'),
+                'rsi_maverick_divergence': rsi_maverick_bearish_div[current_idx] if current_idx < len(rsi_maverick_bearish_div) else False,
+                'rsi_traditional_divergence': rsi_traditional_bearish_div[current_idx] if current_idx < len(rsi_traditional_bearish_div) else False,
+                'adx_dmi': (adx[current_idx] > adx_threshold if current_idx < len(adx) else False) and 
+                          (minus_di[current_idx] > plus_di[current_idx] if current_idx < len(minus_di) else False),
+                'macd': macd[current_idx] < macd_signal[current_idx] if current_idx < len(macd) else False,
+                'squeeze_momentum': squeeze_data['squeeze_momentum'][current_idx] < 0 if current_idx < len(squeeze_data['squeeze_momentum']) else False,
+                'moving_averages': (current_price < self.calculate_sma(close, 50)[current_idx] if current_idx < len(close) else False) and
+                                 (self.calculate_sma(close, 50)[current_idx] < self.calculate_sma(close, 200)[current_idx] if current_idx < len(close) else False),
+                'whale_confirmation': whale_data['whale_active'][current_idx] if current_idx < len(whale_data['whale_active']) else False,
+                'price_below_resistance': current_price < resistance[current_idx] if current_idx < len(resistance) else False
             }
             
-            # 6. CÁLCULO DE SCORE MEJORADO
-            def calculate_score(conditions, use_whales=False):
-                # Ponderación: Obligatorias 60%, Complementarias 40%, Ballenas 15% adicional
-                obligatorio_weight = 0.6
-                complementario_weight = 0.4
-                ballenas_bonus = 0.15
-                
-                # Calcular puntuación obligatoria
-                obligatorio_count = sum(1 for cond in conditions['obligatorias'].values() if cond)
-                obligatorio_total = len(conditions['obligatorias'])
-                obligatorio_score = (obligatorio_count / obligatorio_total) if obligatorio_total > 0 else 0
-                
-                # Calcular puntuación complementaria
-                complementario_count = sum(1 for cond in conditions['complementarias'].values() if cond)
-                complementario_total = len(conditions['complementarias'])
-                complementario_score = (complementario_count / complementario_total) if complementario_total > 0 else 0
-                
-                # Calcular bonus de ballenas
-                ballenas_bonus_score = 0
-                if use_whales and interval in self.whale_timeframes:
-                    ballenas_count = sum(1 for cond in conditions['ballenas'].values() if cond)
-                    ballenas_total = len(conditions['ballenas'])
-                    ballenas_bonus_score = (ballenas_count / ballenas_total) * ballenas_bonus if ballenas_total > 0 else 0
-                
-                total_score = (obligatorio_score * obligatorio_weight + 
-                             complementario_score * complementario_weight + 
-                             ballenas_bonus_score)
-                
-                return min(total_score * 100, 100), obligatorio_count == obligatorio_total
+            # CALCULAR SCORES
+            long_score, long_fulfilled = self.calculate_signal_score_professional(long_conditions, 'LONG', interval)
+            short_score, short_fulfilled = self.calculate_signal_score_professional(short_conditions, 'SHORT', interval)
             
-            # Calcular scores
-            long_score, long_obligatory_ok = calculate_score(long_conditions, use_whales=True)
-            short_score, short_obligatory_ok = calculate_score(short_conditions, use_whales=True)
-            
-            # 7. DETERMINAR SEÑAL FINAL CON OBLIGATORIEDADES
+            # DETERMINAR SEÑAL FINAL
             signal_type = 'NEUTRAL'
-            final_score = 0
+            signal_score = 0
             fulfilled_conditions = []
             
-            if long_obligatory_ok and long_score >= 75:
+            if long_score >= SCORE_THRESHOLDS['LONG']:
                 signal_type = 'LONG'
-                final_score = long_score
-                fulfilled_conditions = [k for k, v in long_conditions['obligatorias'].items() if v] + \
-                                     [k for k, v in long_conditions['complementarias'].items() if v]
-                if interval in self.whale_timeframes:
-                    fulfilled_conditions.extend([k for k, v in long_conditions['ballenas'].items() if v])
-                    
-            elif short_obligatory_ok and short_score >= 80:
+                signal_score = long_score
+                fulfilled_conditions = long_fulfilled
+            elif short_score >= SCORE_THRESHOLDS['SHORT']:
                 signal_type = 'SHORT'
-                final_score = short_score
-                fulfilled_conditions = [k for k, v in short_conditions['obligatorias'].items() if v] + \
-                                     [k for k, v in short_conditions['complementarias'].items() if v]
-                if interval in self.whale_timeframes:
-                    fulfilled_conditions.extend([k for k, v in short_conditions['ballenas'].items() if v])
+                signal_score = short_score
+                fulfilled_conditions = short_fulfilled
             
-            # 8. CÁLCULO DE NIVELES DE PRECIO
-            atr = np.mean([high[i] - low[i] for i in range(-14, 0)]) if len(close) >= 14 else current_price * 0.02
+            # CALCULAR NIVELES DE ENTRADA/SALIDA
+            entry_exit_data = self.calculate_optimal_entry_exit(df, signal_type, leverage, support, resistance)
             
-            if signal_type == 'LONG':
-                entry = current_price
-                stop_loss = current_support - (atr * 1.5)
-                take_profit = [current_resistance - (atr * 0.5)]
-            elif signal_type == 'SHORT':
-                entry = current_price
-                stop_loss = current_resistance + (atr * 1.5)
-                take_profit = [current_support + (atr * 0.5)]
-            else:
-                entry = current_price
-                stop_loss = current_price * 0.98
-                take_profit = [current_price * 1.02]
+            # REGISTRAR OPERACIÓN SI ES VÁLIDA
+            if signal_type in ['LONG', 'SHORT']:
+                operation_id = self.track_operation(
+                    symbol, interval, signal_type, 
+                    entry_exit_data['entry'], signal_score, 
+                    fulfilled_conditions
+                )
             
-            # 9. CALCULAR APALANCAMIENTO ÓPTIMO
-            risk_category = next((cat for cat, symbols in CRYPTO_RISK_CLASSIFICATION.items() 
-                               if symbol in symbols), 'medio')
-            volatility = atr / current_price
-            optimal_leverage = self.calculate_optimal_leverage(symbol, final_score, volatility, risk_category)
-            
-            # 10. PREPARAR DATOS PARA VISUALIZACIÓN
+            # PREPARAR DATOS PARA VISUALIZACIÓN
             ma_9 = self.calculate_sma(close, 9)
             ma_21 = self.calculate_sma(close, 21)
-            bb_upper, bb_middle, bb_lower = self.calculate_bollinger_bands(close, 20, 2)
+            ma_50 = self.calculate_sma(close, 50)
+            ma_200 = self.calculate_sma(close, 200)
+            bb_upper, bb_middle, bb_lower = self.calculate_bollinger_bands(close)
+            
+            # Obtener análisis multi-timeframe para mostrar
+            multi_tf_analysis = self.check_multi_timeframe_trend(symbol, interval)
             
             return {
                 'symbol': symbol,
-                'current_price': float(current_price),
+                'current_price': current_price,
                 'signal': signal_type,
-                'signal_score': float(final_score),
-                'entry': float(entry),
-                'stop_loss': float(stop_loss),
-                'take_profit': [float(tp) for tp in take_profit],
-                'support': float(current_support),
-                'resistance': float(current_resistance),
-                'atr': float(atr),
-                'atr_percentage': float(atr / current_price),
-                'volume': float(volume[-1]),
+                'signal_score': float(signal_score),
+                'entry': entry_exit_data['entry'],
+                'stop_loss': entry_exit_data['stop_loss'],
+                'take_profit': entry_exit_data['take_profit'],
+                'support': entry_exit_data['support'],
+                'resistance': entry_exit_data['resistance'],
+                'atr': entry_exit_data['atr'],
+                'atr_percentage': entry_exit_data['atr_percentage'],
+                'volume': float(volume[current_idx]),
                 'volume_ma': float(np.mean(volume[-20:])),
-                'adx': float(current_adx),
-                'plus_di': float(current_plus_di),
-                'minus_di': float(current_minus_di),
-                'rsi_maverick': float(current_rsi_maverick),
-                'rsi_trad': float(current_rsi_trad),
-                'macd': float(current_macd),
-                'macd_histogram': float(current_macd_histogram),
-                'squeeze_momentum': float(current_squeeze_momentum),
-                'squeeze_on': squeeze_on,
-                'whale_pump': float(whale_data['whale_pump'][-1]),
-                'whale_dump': float(whale_data['whale_dump'][-1]),
-                'whale_active': whale_active,
+                'adx': float(adx[current_idx] if current_idx < len(adx) else 0),
+                'plus_di': float(plus_di[current_idx] if current_idx < len(plus_di) else 0),
+                'minus_di': float(minus_di[current_idx] if current_idx < len(minus_di) else 0),
+                'rsi_maverick': float(rsi_maverick[current_idx] if current_idx < len(rsi_maverick) else 0.5),
+                'rsi_traditional': float(rsi_traditional[current_idx] if current_idx < len(rsi_traditional) else 50),
                 'fulfilled_conditions': fulfilled_conditions,
-                'trend_strength_signal': current_trend,
-                'no_trade_zone': no_trade_zone,
                 'multi_timeframe_analysis': multi_tf_analysis,
-                'optimal_leverage': optimal_leverage,
-                'above_ma_200': above_ma_200,
+                'mandatory_conditions_met': long_conditions['mandatory_conditions'] if signal_type == 'LONG' else short_conditions['mandatory_conditions'] if signal_type == 'SHORT' else False,
                 'data': df.tail(50).to_dict('records'),
                 'indicators': {
-                    'trend_strength': trend_data['trend_strength'][-50:],
-                    'bb_width': trend_data['bb_width'][-50:],
-                    'no_trade_zones': trend_data['no_trade_zones'][-50:],
-                    'strength_signals': trend_data['strength_signals'][-50:],
-                    'colors': trend_data['colors'][-50:],
+                    'trend_strength': trend_strength_data['trend_strength'][-50:],
+                    'bb_width': trend_strength_data['bb_width'][-50:],
+                    'no_trade_zones': trend_strength_data['no_trade_zones'][-50:],
+                    'strength_signals': trend_strength_data['strength_signals'][-50:],
+                    'colors': trend_strength_data['colors'][-50:],
                     'rsi_maverick': rsi_maverick[-50:],
-                    'rsi_trad': rsi_trad[-50:],
+                    'rsi_traditional': rsi_traditional[-50:],
                     'adx': adx[-50:].tolist(),
                     'plus_di': plus_di[-50:].tolist(),
                     'minus_di': minus_di[-50:].tolist(),
                     'macd': macd[-50:].tolist(),
+                    'macd_signal': macd_signal[-50:].tolist(),
                     'macd_histogram': macd_histogram[-50:].tolist(),
-                    'squeeze_momentum': squeeze_data['momentum'][-50:],
                     'squeeze_on': squeeze_data['squeeze_on'][-50:],
                     'squeeze_off': squeeze_data['squeeze_off'][-50:],
+                    'squeeze_momentum': squeeze_data['squeeze_momentum'][-50:],
                     'whale_pump': whale_data['whale_pump'][-50:],
                     'whale_dump': whale_data['whale_dump'][-50:],
                     'ma_9': ma_9[-50:].tolist(),
@@ -1104,19 +1036,95 @@ class TradingIndicator:
                     'bb_middle': bb_middle[-50:].tolist(),
                     'bb_lower': bb_lower[-50:].tolist(),
                     'support': support[-50:],
-                    'resistance': resistance[-50:],
-                    'bullish_div_rsi': bullish_div_rsi[-50:],
-                    'bearish_div_rsi': bearish_div_rsi[-50:],
-                    'bullish_div_maverick': bullish_div_maverick[-50:],
-                    'bearish_div_maverick': bearish_div_maverick[-50:]
+                    'resistance': resistance[-50:]
                 }
             }
             
         except Exception as e:
             print(f"Error en generate_signals_professional para {symbol}: {e}")
+            traceback.print_exc()
             return self._create_empty_signal(symbol)
 
+    def calculate_optimal_entry_exit(self, df, signal_type, leverage, support, resistance):
+        """Calcular entradas y salidas óptimas"""
+        try:
+            close = df['close'].values
+            high = df['high'].values
+            low = df['low'].values
+            
+            current_price = close[-1]
+            
+            # Calcular ATR para stops
+            atr = self.calculate_atr(high, low, close)
+            current_atr = atr[-1] if len(atr) > 0 else current_price * 0.02
+            atr_percentage = current_atr / current_price
+            
+            current_support = support[-1] if len(support) > 0 else np.min(low[-20:])
+            current_resistance = resistance[-1] if len(resistance) > 0 else np.max(high[-20:])
+            
+            if signal_type == 'LONG':
+                entry = min(current_price, current_support * 1.01)
+                stop_loss = max(current_support * 0.98, entry - (current_atr * 1.5))
+                take_profit = [current_resistance * 0.99]
+                
+                # Asegurar relación riesgo/beneficio mínima 1:2
+                min_tp = entry + (2 * (entry - stop_loss))
+                take_profit[0] = max(take_profit[0], min_tp)
+                
+            elif signal_type == 'SHORT':
+                entry = max(current_price, current_resistance * 0.99)
+                stop_loss = min(current_resistance * 1.02, entry + (current_atr * 1.5))
+                take_profit = [current_support * 1.01]
+                
+                # Asegurar relación riesgo/beneficio mínima 1:2
+                min_tp = entry - (2 * (stop_loss - entry))
+                take_profit[0] = min(take_profit[0], min_tp)
+                
+            else:
+                entry = current_price
+                stop_loss = current_price * 0.98
+                take_profit = [current_price * 1.02]
+            
+            return {
+                'entry': float(entry),
+                'stop_loss': float(stop_loss),
+                'take_profit': [float(tp) for tp in take_profit],
+                'support': float(current_support),
+                'resistance': float(current_resistance),
+                'atr': float(current_atr),
+                'atr_percentage': float(atr_percentage)
+            }
+            
+        except Exception as e:
+            print(f"Error calculando entradas/salidas: {e}")
+            current_price = float(df['close'].iloc[-1])
+            return {
+                'entry': current_price,
+                'stop_loss': current_price * 0.95,
+                'take_profit': [current_price * 1.02],
+                'support': float(np.min(df['low'].values[-14:])),
+                'resistance': float(np.max(df['high'].values[-14:])),
+                'atr': 0.0,
+                'atr_percentage': 0.0
+            }
+
+    def calculate_atr(self, high, low, close, period=14):
+        """Calcular Average True Range"""
+        n = len(high)
+        tr = np.zeros(n)
+        tr[0] = high[0] - low[0]
+        
+        for i in range(1, n):
+            tr1 = high[i] - low[i]
+            tr2 = abs(high[i] - close[i-1])
+            tr3 = abs(low[i] - close[i-1])
+            tr[i] = max(tr1, tr2, tr3)
+        
+        atr = self.calculate_sma(tr, period)
+        return atr
+
     def _create_empty_signal(self, symbol):
+        """Crear señal vacía en caso de error"""
         return {
             'symbol': symbol,
             'current_price': 0,
@@ -1135,50 +1143,46 @@ class TradingIndicator:
             'plus_di': 0,
             'minus_di': 0,
             'rsi_maverick': 0.5,
-            'rsi_trad': 50,
-            'macd': 0,
-            'macd_histogram': 0,
-            'squeeze_momentum': 0,
-            'squeeze_on': False,
-            'whale_pump': 0,
-            'whale_dump': 0,
-            'whale_active': False,
+            'rsi_traditional': 50,
             'fulfilled_conditions': [],
-            'trend_strength_signal': 'NEUTRAL',
-            'no_trade_zone': False,
-            'multi_timeframe_analysis': {},
-            'optimal_leverage': 10,
-            'above_ma_200': False,
+            'multi_timeframe_analysis': {'mayor': 'NEUTRAL', 'media': 'NEUTRAL', 'menor': 'NEUTRAL'},
+            'mandatory_conditions_met': False,
             'data': [],
             'indicators': {}
         }
 
     def generate_scalping_alerts(self):
-        """Generar alertas de scalping mejoradas"""
+        """Generar alertas de scalping con nuevo sistema"""
         alerts = []
+        current_time = self.get_bolivia_time()
         
-        for interval in TRADING_TIMEFRAMES:
-            # Para scalping verificar horario
+        for interval in ['15m', '30m', '1h', '2h', '4h', '8h', '12h', '1D']:
             if interval in ['15m', '30m'] and not self.is_scalping_time():
                 continue
                 
-            current_time = self.get_bolivia_time()
             should_send_alert = self.calculate_remaining_time(interval, current_time)
             
             if not should_send_alert:
                 continue
                 
-            for symbol in CRYPTO_SYMBOLS[:15]:  # Limitar para performance
+            for symbol in CRYPTO_SYMBOLS[:15]:
                 try:
                     signal_data = self.generate_signals_professional(symbol, interval)
                     
                     if (signal_data['signal'] in ['LONG', 'SHORT'] and 
-                        signal_data['signal_score'] >= 70):
+                        signal_data['signal_score'] >= SCORE_THRESHOLDS[signal_data['signal']] and
+                        signal_data['mandatory_conditions_met']):
                         
                         risk_category = next(
                             (cat for cat, symbols in CRYPTO_RISK_CLASSIFICATION.items() 
                              if symbol in symbols), 'medio'
                         )
+                        
+                        # Calcular leverage óptimo basado en score y riesgo
+                        base_leverage = min(20, 5 + (signal_data['signal_score'] - 70) // 3)
+                        risk_factors = {'bajo': 1.0, 'medio': 0.8, 'alto': 0.6, 'memecoins': 0.5}
+                        risk_factor = risk_factors.get(risk_category, 0.7)
+                        optimal_leverage = max(5, int(base_leverage * risk_factor))
                         
                         alert = {
                             'symbol': symbol,
@@ -1188,13 +1192,13 @@ class TradingIndicator:
                             'entry': signal_data['entry'],
                             'stop_loss': signal_data['stop_loss'],
                             'take_profit': signal_data['take_profit'][0],
-                            'leverage': signal_data['optimal_leverage'],
+                            'leverage': optimal_leverage,
                             'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S"),
                             'fulfilled_conditions': signal_data.get('fulfilled_conditions', []),
                             'risk_category': risk_category,
                             'current_price': signal_data['current_price'],
-                            'trend_strength': signal_data.get('trend_strength_signal', 'NEUTRAL'),
-                            'winrate': self.operation_tracker.winrate_data['global_winrate']
+                            'multi_timeframe_analysis': signal_data.get('multi_timeframe_analysis', {}),
+                            'winrate': self.winrate_data['winrate']
                         }
                         
                         alert_key = f"{symbol}_{interval}_{signal_data['signal']}"
@@ -1211,68 +1215,103 @@ class TradingIndicator:
         return alerts
 
     def generate_exit_signals(self):
-        """Generar señales de salida inteligentes"""
+        """Generar señales de salida para operaciones activas"""
         exit_alerts = []
         current_time = self.get_bolivia_time()
         
-        for signal_key, signal_data in list(self.active_signals.items()):
-            try:
-                symbol = signal_data['symbol']
-                interval = signal_data['interval']
-                signal_type = signal_data['signal']
-                entry_price = signal_data['entry_price']
+        try:
+            # Obtener operaciones activas de la base de datos
+            self.cursor.execute('''
+                SELECT id, symbol, timeframe, signal_type, entry_price, score 
+                FROM operations WHERE status = 'active'
+            ''')
+            active_operations = self.cursor.fetchall()
+            
+            for op in active_operations:
+                op_id, symbol, timeframe, signal_type, entry_price, score = op
                 
-                # Obtener datos actuales
-                current_signal = self.generate_signals_professional(symbol, interval)
-                
-                if current_signal['signal'] == 'NEUTRAL' or current_signal['no_trade_zone']:
-                    # Calcular P&L
-                    current_price = current_signal['current_price']
-                    if signal_type == 'LONG':
-                        pnl_percent = ((current_price - entry_price) / entry_price) * 100
-                    else:
-                        pnl_percent = ((entry_price - current_price) / entry_price) * 100
+                try:
+                    # Obtener datos actuales
+                    signal_data = self.generate_signals_professional(symbol, timeframe)
+                    current_price = signal_data['current_price']
                     
-                    exit_alert = {
-                        'symbol': symbol,
-                        'interval': interval,
-                        'signal': signal_type,
-                        'entry_price': entry_price,
-                        'exit_price': current_price,
-                        'pnl_percent': pnl_percent,
-                        'reason': "Señal neutral o zona no operar detectada",
-                        'trend_strength': current_signal.get('trend_strength_signal', 'NEUTRAL'),
-                        'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S")
-                    }
+                    # Verificar condiciones de salida
+                    exit_reason = None
                     
-                    exit_alerts.append(exit_alert)
+                    # 1. Salida por cambio en condiciones obligatorias
+                    if not signal_data['mandatory_conditions_met']:
+                        exit_reason = "Pérdida de condiciones obligatorias multi-timeframe"
                     
-                    # Registrar operación en tracker
-                    outcome = 'win' if pnl_percent > 0 else 'loss' if pnl_percent < 0 else 'breakeven'
-                    self.operation_tracker.add_operation(
-                        symbol, interval, signal_type, entry_price, current_price,
-                        outcome, signal_data['score'], signal_data.get('conditions', [])
-                    )
+                    # 2. Salida por cambio de tendencia
+                    elif (signal_type == 'LONG' and 
+                          signal_data['multi_timeframe_analysis'].get('menor') == 'BEARISH'):
+                        exit_reason = "Cambio a tendencia bajista en TF menor"
                     
-                    # Remover señal activa
-                    del self.active_signals[signal_key]
+                    elif (signal_type == 'SHORT' and 
+                          signal_data['multi_timeframe_analysis'].get('menor') == 'BULLISH'):
+                        exit_reason = "Cambio a tendencia alcista en TF menor"
                     
-            except Exception as e:
-                print(f"Error generando señal de salida para {signal_key}: {e}")
-                continue
+                    # 3. Salida por zona no operar
+                    elif any('NO_TRADE' in str(value) for value in signal_data['multi_timeframe_analysis'].values()):
+                        exit_reason = "Activación de zona NO OPERAR"
+                    
+                    if exit_reason:
+                        # Calcular P&L
+                        if signal_type == 'LONG':
+                            pnl_percent = ((current_price - entry_price) / entry_price) * 100
+                        else:
+                            pnl_percent = ((entry_price - current_price) / entry_price) * 100
+                        
+                        # Actualizar operación en base de datos
+                        status = 'profit' if pnl_percent > 0 else 'loss'
+                        self.update_operation_outcome(op_id, current_price, pnl_percent, status)
+                        
+                        exit_alert = {
+                            'symbol': symbol,
+                            'interval': timeframe,
+                            'signal': signal_type,
+                            'entry_price': entry_price,
+                            'exit_price': current_price,
+                            'pnl_percent': pnl_percent,
+                            'reason': exit_reason,
+                            'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S")
+                        }
+                        
+                        exit_alerts.append(exit_alert)
+                        
+                except Exception as e:
+                    print(f"Error procesando salida para {symbol}: {e}")
+                    continue
+                    
+        except Exception as e:
+            print(f"Error generando señales de salida: {e}")
         
         return exit_alerts
 
 # Instancia global del indicador
 indicator = TradingIndicator()
 
+def get_risk_classification(symbol):
+    """Obtener la clasificación de riesgo de una criptomoneda"""
+    for risk_level, symbols in CRYPTO_RISK_CLASSIFICATION.items():
+        if symbol in symbols:
+            if risk_level == "bajo":
+                return "Bajo Riesgo"
+            elif risk_level == "medio":
+                return "Medio Riesgo"
+            elif risk_level == "alto":
+                return "Alto Riesgo"
+            elif risk_level == "memecoins":
+                return "Memecoin"
+    return "Medio Riesgo"
+
 def send_telegram_alert(alert_data, alert_type='entry'):
-    """Enviar alerta por Telegram mejorada con winrate"""
+    """Enviar alerta por Telegram con nuevo formato"""
     try:
         bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
         
         risk_classification = get_risk_classification(alert_data['symbol'])
-        winrate = alert_data.get('winrate', indicator.operation_tracker.winrate_data['global_winrate'])
+        winrate = alert_data.get('winrate', indicator.winrate_data['winrate'])
         
         if alert_type == 'entry':
             message = f"""
@@ -1285,24 +1324,26 @@ def send_telegram_alert(alert_data, alert_type='entry'):
 🏆 Winrate Sistema: {winrate:.1f}%
 
 💰 Precio actual: {alert_data['current_price']:.6f}
-🎯 Entrada: ${alert_data['entry']:.6f}
-🛑 Stop Loss: ${alert_data['stop_loss']:.6f}
-📈 Take Profit: ${alert_data['take_profit']:.6f}
+🎯 ENTRADA: ${alert_data['entry']:.6f}
+🛑 STOP LOSS: ${alert_data['stop_loss']:.6f}
+🎯 TAKE PROFIT: ${alert_data['take_profit']:.6f}
 
-💪 Fuerza de Tendencia: {alert_data.get('trend_strength', 'NEUTRAL')}
-⚡ Apalancamiento: x{alert_data['leverage']}
+📈 Apalancamiento: x{alert_data['leverage']}
 
-✅ Condiciones Cumplidas:
-{chr(10).join(['• ' + cond for cond in alert_data.get('fulfilled_conditions', [])][:3])}
+✅ Confirmación Multi-Timeframe:
+   • Mayor: {alert_data['multi_timeframe_analysis'].get('mayor', 'N/A')}
+   • Media: {alert_data['multi_timeframe_analysis'].get('media', 'N/A')} 
+   • Menor: {alert_data['multi_timeframe_analysis'].get('menor', 'N/A')}
 
-📊 Sistema Multi-Timeframe Confirmado ✅
-🔔 Winrate basado en {indicator.operation_tracker.winrate_data['total_operations']} operaciones
+🔔 Condiciones Cumplidas:
+• {chr(10) + '• '.join(alert_data['fulfilled_conditions'][:3]) if alert_data['fulfilled_conditions'] else 'Condiciones base cumplidas'}
 
-⚠️ Gestiona tu riesgo adecuadamente
+📊 Sistema profesional con confirmación multi-temporalidad
+⚡ Operar solo si todas las condiciones obligatorias se mantienen
             """
+            
         else:  # exit alert
             pnl_text = f"📊 P&L: {alert_data['pnl_percent']:+.2f}%"
-            
             message = f"""
 🚨 ALERTA DE SALIDA - MULTI-TIMEFRAME CRYPTO WGTA PRO 🚨
 
@@ -1314,10 +1355,11 @@ def send_telegram_alert(alert_data, alert_type='entry'):
 💰 Salida: ${alert_data['exit_price']:.6f}
 {pnl_text}
 
-💪 Fuerza de Tendencia: {alert_data.get('trend_strength', 'NEUTRAL')}
 📊 Razón: {alert_data['reason']}
 
 🏆 Winrate Sistema: {winrate:.1f}%
+
+🔔 Próximo paso: Esperar nueva señal con condiciones óptimas
             """
         
         # Generar URL para el reporte
@@ -1337,47 +1379,21 @@ def send_telegram_alert(alert_data, alert_type='entry'):
     except Exception as e:
         print(f"Error enviando alerta a Telegram: {e}")
 
-def get_risk_classification(symbol):
-    """Obtener la clasificación de riesgo de una criptomoneda"""
-    for risk_level, symbols in CRYPTO_RISK_CLASSIFICATION.items():
-        if symbol in symbols:
-            if risk_level == "bajo":
-                return "Bajo Riesgo"
-            elif risk_level == "medio":
-                return "Medio Riesgo"
-            elif risk_level == "alto":
-                return "Alto Riesgo"
-            elif risk_level == "memecoins":
-                return "Memecoin"
-    return "Medio Riesgo"
-
 def background_alert_checker():
-    """Verificador de alertas en segundo plano mejorado"""
+    """Verificador de alertas en segundo plano"""
     while True:
         try:
             # Generar alertas de entrada
             alerts = indicator.generate_scalping_alerts()
             for alert in alerts:
                 send_telegram_alert(alert, 'entry')
-                
-                # Registrar como señal activa
-                signal_key = f"{alert['symbol']}_{alert['interval']}_{alert['signal']}"
-                indicator.active_signals[signal_key] = {
-                    'symbol': alert['symbol'],
-                    'interval': alert['interval'],
-                    'signal': alert['signal'],
-                    'entry_price': alert['entry'],
-                    'timestamp': datetime.now(),
-                    'score': alert['score'],
-                    'conditions': alert.get('fulfilled_conditions', [])
-                }
             
             # Generar alertas de salida
             exit_alerts = indicator.generate_exit_signals()
             for alert in exit_alerts:
                 send_telegram_alert(alert, 'exit')
             
-            time.sleep(60)
+            time.sleep(60)  # Verificar cada 60 segundos
             
         except Exception as e:
             print(f"Error en background_alert_checker: {e}")
@@ -1391,6 +1407,7 @@ try:
 except Exception as e:
     print(f"Error iniciando background alert checker: {e}")
 
+# RUTAS DE LA APLICACIÓN
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -1401,20 +1418,21 @@ def manual():
 
 @app.route('/api/signals')
 def get_signals():
-    """Endpoint para obtener señales profesionales"""
+    """Endpoint para obtener señales de trading PROFESIONAL"""
     try:
         symbol = request.args.get('symbol', 'BTC-USDT')
         interval = request.args.get('interval', '4h')
         di_period = int(request.args.get('di_period', 14))
         adx_threshold = int(request.args.get('adx_threshold', 20))
-        sr_period = int(request.args.get('sr_period', 20))
+        sr_period = int(request.args.get('sr_period', 50))
         rsi_length = int(request.args.get('rsi_length', 20))
         bb_multiplier = float(request.args.get('bb_multiplier', 2.0))
+        volume_filter = request.args.get('volume_filter', 'Todos')
         leverage = int(request.args.get('leverage', 15))
         
         signal_data = indicator.generate_signals_professional(
             symbol, interval, di_period, adx_threshold, sr_period, 
-            rsi_length, bb_multiplier, leverage
+            rsi_length, bb_multiplier, volume_filter, leverage
         )
         
         return jsonify(signal_data)
@@ -1430,9 +1448,10 @@ def get_multiple_signals():
         interval = request.args.get('interval', '4h')
         di_period = int(request.args.get('di_period', 14))
         adx_threshold = int(request.args.get('adx_threshold', 20))
-        sr_period = int(request.args.get('sr_period', 20))
+        sr_period = int(request.args.get('sr_period', 50))
         rsi_length = int(request.args.get('rsi_length', 20))
         bb_multiplier = float(request.args.get('bb_multiplier', 2.0))
+        volume_filter = request.args.get('volume_filter', 'Todos')
         leverage = int(request.args.get('leverage', 15))
         
         all_signals = []
@@ -1441,10 +1460,10 @@ def get_multiple_signals():
             try:
                 signal_data = indicator.generate_signals_professional(
                     symbol, interval, di_period, adx_threshold, sr_period,
-                    rsi_length, bb_multiplier, leverage
+                    rsi_length, bb_multiplier, volume_filter, leverage
                 )
                 
-                if signal_data and signal_data['signal'] != 'NEUTRAL' and signal_data['signal_score'] >= 70:
+                if signal_data and signal_data['signal'] != 'NEUTRAL':
                     all_signals.append(signal_data)
                 
                 time.sleep(0.1)
@@ -1462,8 +1481,7 @@ def get_multiple_signals():
         return jsonify({
             'long_signals': long_signals[:5],  # Top 5
             'short_signals': short_signals[:5],  # Top 5
-            'total_signals': len(all_signals),
-            'global_winrate': indicator.operation_tracker.winrate_data['global_winrate']
+            'total_signals': len(all_signals)
         })
         
     except Exception as e:
@@ -1472,7 +1490,7 @@ def get_multiple_signals():
 
 @app.route('/api/scatter_data_improved')
 def get_scatter_data_improved():
-    """Endpoint para datos del scatter plot mejorado"""
+    """Endpoint para datos del scatter plot"""
     try:
         interval = request.args.get('interval', '4h')
         
@@ -1480,38 +1498,25 @@ def get_scatter_data_improved():
         
         symbols_to_analyze = []
         for category in ['bajo', 'medio', 'alto', 'memecoins']:
-            symbols_to_analyze.extend(CRYPTO_RISK_CLASSIFICATION[category][:3])  # 3 por categoría
+            symbols_to_analyze.extend(CRYPTO_RISK_CLASSIFICATION[category][:3])
         
         for symbol in symbols_to_analyze:
             try:
                 signal_data = indicator.generate_signals_professional(symbol, interval)
                 if signal_data and signal_data['current_price'] > 0:
                     
-                    # Presión compradora basada en condiciones alcistas
+                    # Calcular presiones de compra/venta basadas en indicadores
                     buy_pressure = min(100, max(0,
-                        (1 if signal_data['trend_strength_signal'] in ['STRONG_UP', 'WEAK_UP'] else 0) * 30 +
-                        (1 if signal_data['plus_di'] > signal_data['minus_di'] else 0) * 25 +
-                        (signal_data['rsi_maverick'] * 15) +
-                        (1 if signal_data['adx'] > 20 else 0) * 10 +
-                        (min(1, signal_data['volume'] / signal_data['volume_ma']) * 20)
+                        (1 if signal_data['plus_di'] > signal_data['minus_di'] else 0) * 40 +
+                        (signal_data['rsi_maverick'] * 30) +
+                        (min(1, signal_data['volume'] / signal_data['volume_ma']) * 30)
                     ))
                     
-                    # Presión vendedora basada en condiciones bajistas
                     sell_pressure = min(100, max(0,
-                        (1 if signal_data['trend_strength_signal'] in ['STRONG_DOWN', 'WEAK_DOWN'] else 0) * 30 +
-                        (1 if signal_data['minus_di'] > signal_data['plus_di'] else 0) * 25 +
-                        ((1 - signal_data['rsi_maverick']) * 15) +
-                        (1 if signal_data['adx'] > 20 else 0) * 10 +
-                        (min(1, signal_data['volume'] / signal_data['volume_ma']) * 20)
+                        (1 if signal_data['minus_di'] > signal_data['plus_di'] else 0) * 40 +
+                        ((1 - signal_data['rsi_maverick']) * 30) +
+                        (min(1, signal_data['volume'] / signal_data['volume_ma']) * 30)
                     ))
-                    
-                    # Ajustar según señal
-                    if signal_data['signal'] == 'LONG':
-                        buy_pressure = max(buy_pressure, 70)
-                        sell_pressure = min(sell_pressure, 30)
-                    elif signal_data['signal'] == 'SHORT':
-                        sell_pressure = max(sell_pressure, 70)
-                        buy_pressure = min(buy_pressure, 30)
                     
                     scatter_data.append({
                         'symbol': symbol,
@@ -1538,22 +1543,27 @@ def get_scatter_data_improved():
 
 @app.route('/api/crypto_risk_classification')
 def get_crypto_risk_classification():
+    """Endpoint para obtener la clasificación de riesgo"""
     return jsonify(CRYPTO_RISK_CLASSIFICATION)
 
 @app.route('/api/scalping_alerts')
 def get_scalping_alerts():
+    """Endpoint para obtener alertas de scalping"""
     try:
         alerts = indicator.generate_scalping_alerts()
         return jsonify({'alerts': alerts})
+        
     except Exception as e:
         print(f"Error en /api/scalping_alerts: {e}")
         return jsonify({'alerts': []})
 
 @app.route('/api/exit_signals')
 def get_exit_signals():
+    """Endpoint para obtener señales de salida"""
     try:
         exit_alerts = indicator.generate_exit_signals()
         return jsonify({'exit_signals': exit_alerts})
+        
     except Exception as e:
         print(f"Error en /api/exit_signals: {e}")
         return jsonify({'exit_signals': []})
@@ -1562,13 +1572,12 @@ def get_exit_signals():
 def get_winrate_data():
     """Endpoint para obtener datos de winrate"""
     try:
-        return jsonify({
-            'winrate_data': indicator.operation_tracker.winrate_data,
-            'strategy_recommendations': indicator.operation_tracker.get_strategy_recommendations()
-        })
+        winrate = indicator.calculate_winrate()
+        return jsonify(indicator.winrate_data)
+        
     except Exception as e:
         print(f"Error en /api/winrate_data: {e}")
-        return jsonify({'error': 'Error obteniendo datos de winrate'}), 500
+        return jsonify({'winrate': 0.0, 'total_operations': 0, 'successful_operations': 0})
 
 @app.route('/api/generate_report')
 def generate_report():
@@ -1622,32 +1631,17 @@ def generate_report():
                 color = colors[i] if i < len(colors) else 'gray'
                 ax2.bar(trend_dates[i], trend_strength[i], color=color, alpha=0.7, width=0.8)
             
-            if 'high_zone_threshold' in signal_data['indicators']:
-                threshold = signal_data['indicators']['high_zone_threshold']
-                ax2.axhline(y=threshold, color='orange', linestyle='--', alpha=0.7, 
-                           label=f'Umbral Alto ({threshold:.1f}%)')
-                ax2.axhline(y=-threshold, color='orange', linestyle='--', alpha=0.7)
-            
-            no_trade_zones = signal_data['indicators']['no_trade_zones']
-            for i, date in enumerate(trend_dates):
-                if i < len(no_trade_zones) and no_trade_zones[i]:
-                    ax2.axvline(x=date, color='red', alpha=0.3, linewidth=2)
-            
             ax2.set_ylabel('Fuerza Tendencia %')
-            ax2.legend()
             ax2.grid(True, alpha=0.3)
         
-        # Gráfico 3: RSI Maverick y Tradicional
+        # Gráfico 3: RSI Maverick
         ax3 = plt.subplot(7, 1, 3, sharex=ax1)
         if 'indicators' in signal_data:
             rsi_dates = dates[-len(signal_data['indicators']['rsi_maverick']):]
-            ax3.plot(rsi_dates, signal_data['indicators']['rsi_maverick'], 
-                    'blue', linewidth=2, label='RSI Maverick')
-            ax3.plot(rsi_dates, [x/100 for x in signal_data['indicators']['rsi_trad']], 
-                    'orange', linewidth=1, label='RSI Tradicional')
+            ax3.plot(rsi_dates, signal_data['indicators']['rsi_maverick'], 'blue', linewidth=2, label='RSI Maverick')
             ax3.axhline(y=0.8, color='red', linestyle='--', alpha=0.7, label='Sobrecompra')
             ax3.axhline(y=0.2, color='green', linestyle='--', alpha=0.7, label='Sobreventa')
-        ax3.set_ylabel('RSI')
+        ax3.set_ylabel('RSI Maverick')
         ax3.legend()
         ax3.grid(True, alpha=0.3)
         
@@ -1655,12 +1649,9 @@ def generate_report():
         ax4 = plt.subplot(7, 1, 4, sharex=ax1)
         if 'indicators' in signal_data:
             adx_dates = dates[-len(signal_data['indicators']['adx']):]
-            ax4.plot(adx_dates, signal_data['indicators']['adx'], 
-                    'white', linewidth=2, label='ADX')
-            ax4.plot(adx_dates, signal_data['indicators']['plus_di'], 
-                    'green', linewidth=1, label='+DI')
-            ax4.plot(adx_dates, signal_data['indicators']['minus_di'], 
-                    'red', linewidth=1, label='-DI')
+            ax4.plot(adx_dates, signal_data['indicators']['adx'], 'white', linewidth=2, label='ADX')
+            ax4.plot(adx_dates, signal_data['indicators']['plus_di'], 'green', linewidth=1, label='+DI')
+            ax4.plot(adx_dates, signal_data['indicators']['minus_di'], 'red', linewidth=1, label='-DI')
         ax4.set_ylabel('ADX/DMI')
         ax4.legend()
         ax4.grid(True, alpha=0.3)
@@ -1669,11 +1660,11 @@ def generate_report():
         ax5 = plt.subplot(7, 1, 5, sharex=ax1)
         if 'indicators' in signal_data:
             macd_dates = dates[-len(signal_data['indicators']['macd']):]
-            ax5.plot(macd_dates, signal_data['indicators']['macd'], 
-                    'blue', linewidth=1, label='MACD')
-            ax5.plot(macd_dates, signal_data['indicators']['macd_histogram'], 
-                    'red', linewidth=0.5, label='Histograma')
-            ax5.axhline(y=0, color='white', linestyle='-', alpha=0.5)
+            ax5.plot(macd_dates, signal_data['indicators']['macd'], 'blue', linewidth=1, label='MACD')
+            ax5.plot(macd_dates, signal_data['indicators']['macd_signal'], 'red', linewidth=1, label='Señal')
+            ax5.bar(macd_dates, signal_data['indicators']['macd_histogram'], 
+                   color=['green' if x > 0 else 'red' for x in signal_data['indicators']['macd_histogram']], 
+                   alpha=0.6, label='Histograma')
         ax5.set_ylabel('MACD')
         ax5.legend()
         ax5.grid(True, alpha=0.3)
@@ -1683,51 +1674,47 @@ def generate_report():
         if 'indicators' in signal_data:
             squeeze_dates = dates[-len(signal_data['indicators']['squeeze_momentum']):]
             momentum = signal_data['indicators']['squeeze_momentum']
-            
-            # Crear histograma
             colors = ['green' if x > 0 else 'red' for x in momentum]
-            ax6.bar(squeeze_dates, momentum, color=colors, alpha=0.7, width=0.8)
-            ax6.axhline(y=0, color='white', linestyle='-', linewidth=1)
-            
-            # Marcar períodos de squeeze
-            squeeze_on = signal_data['indicators']['squeeze_on']
-            for i, date in enumerate(squeeze_dates):
-                if i < len(squeeze_on) and squeeze_on[i]:
-                    ax6.axvline(x=date, color='yellow', alpha=0.2, linewidth=2)
-            
-        ax6.set_ylabel('Squeeze Momentum')
+            ax6.bar(squeeze_dates, momentum, color=colors, alpha=0.7, label='Squeeze Momentum')
+            ax6.axhline(y=0, color='white', linestyle='-', alpha=0.5)
+        ax6.set_ylabel('Squeeze')
+        ax6.legend()
         ax6.grid(True, alpha=0.3)
         
         # Información de la señal
         ax7 = plt.subplot(7, 1, 7)
         ax7.axis('off')
         
-        winrate_data = indicator.operation_tracker.winrate_data
         multi_tf = signal_data.get('multi_timeframe_analysis', {})
+        winrate = indicator.winrate_data['winrate']
         
         signal_info = f"""
+        MULTI-TIMEFRAME CRYPTO WGTA PRO - REPORTE TÉCNICO
+        
         SEÑAL: {signal_data['signal']}
         SCORE: {signal_data['signal_score']:.1f}%
-        WINRATE GLOBAL: {winrate_data['global_winrate']:.1f}%
+        WINRATE SISTEMA: {winrate:.1f}%
         
-        MULTI-TIMEFRAME:
-        Mayor ({multi_tf.get('mayor', 'N/A')}): {multi_tf.get('mayor', 'NEUTRAL')}
-        Media ({multi_tf.get('media', 'N/A')}): {multi_tf.get('media', 'NEUTRAL')}
-        Menor ({multi_tf.get('menor', 'N/A')}): {multi_tf.get('menor', 'NEUTRAL')}
+        CONDICIONES OBLIGATORIAS: {'✅ CUMPLIDAS' if signal_data['mandatory_conditions_met'] else '❌ NO CUMPLIDAS'}
         
-        FUERZA TENDENCIA: {signal_data.get('trend_strength_signal', 'NEUTRAL')}
-        ZONA NO OPERAR: {'✅ NO' if not signal_data.get('no_trade_zone') else '❌ SI'}
+        ANÁLISIS MULTI-TIMEFRAME:
+        • Mayor: {multi_tf.get('mayor', 'N/A')}
+        • Media: {multi_tf.get('media', 'N/A')}
+        • Menor: {multi_tf.get('menor', 'N/A')}
         
-        PRECIO: ${signal_data['current_price']:.6f}
-        ENTRADA: ${signal_data['entry']:.6f}
-        STOP LOSS: ${signal_data['stop_loss']:.6f}
-        TAKE PROFIT: ${signal_data['take_profit'][0]:.6f}
+        NIVELES DE TRADING:
+        Precio Actual: ${signal_data['current_price']:.6f}
+        Entrada: ${signal_data['entry']:.6f}
+        Stop Loss: ${signal_data['stop_loss']:.6f}
+        Take Profit: ${signal_data['take_profit'][0]:.6f}
         
-        APALANCAMIENTO: x{signal_data['optimal_leverage']}
-        ATR: {signal_data['atr_percentage']*100:.1f}%
+        Apalancamiento: x{leverage}
+        ATR: {signal_data['atr']:.6f} ({signal_data['atr_percentage']*100:.1f}%)
         
         CONDICIONES CUMPLIDAS:
-        {chr(10).join(['• ' + cond for cond in signal_data.get('fulfilled_conditions', [])][:5])}
+        {chr(10).join(['• ' + cond for cond in signal_data.get('fulfilled_conditions', ['Condiciones base'])[:5]])}
+        
+        Sistema profesional con confirmación multi-temporalidad
         """
         
         ax7.text(0.1, 0.9, signal_info, transform=ax7.transAxes, fontsize=9,
@@ -1750,14 +1737,14 @@ def generate_report():
 
 @app.route('/api/bolivia_time')
 def get_bolivia_time():
+    """Endpoint para obtener la hora actual de Bolivia"""
     bolivia_tz = pytz.timezone('America/La_Paz')
     current_time = datetime.now(bolivia_tz)
     return jsonify({
         'time': current_time.strftime('%H:%M:%S'),
         'date': current_time.strftime('%Y-%m-%d'),
         'timezone': 'America/La_Paz',
-        'is_scalping_time': indicator.is_scalping_time(),
-        'day_of_week': current_time.strftime('%A')
+        'is_scalping_time': indicator.is_scalping_time()
     })
 
 @app.errorhandler(404)
@@ -1773,8 +1760,7 @@ def health_check():
     return jsonify({
         'status': 'healthy', 
         'timestamp': datetime.now().isoformat(),
-        'winrate': indicator.operation_tracker.winrate_data['global_winrate'],
-        'total_operations': indicator.operation_tracker.winrate_data['total_operations']
+        'winrate': indicator.winrate_data['winrate']
     })
 
 if __name__ == '__main__':
