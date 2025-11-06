@@ -973,10 +973,10 @@ function updateMultiTimeframeAnalysis(symbol, interval) {
 
 // Funciones auxiliares optimizadas
 function formatPriceForDisplay(price) {
-    if (!price || price === 0) return '0.00';
-    if (price < 0.01) return price.toFixed(6);
-    if (price < 1) return price.toFixed(4);
-    return price.toFixed(2);
+    if (price === undefined || price === null || isNaN(price) || price === 0) return '0.00';
+    if (price < 0.01) return parseFloat(price).toFixed(6);
+    if (price < 1) return parseFloat(price).toFixed(4);
+    return parseFloat(price).toFixed(2);
 }
 
 function showError(message) {
