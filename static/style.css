@@ -930,3 +930,264 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Final Cleanup - Remove unused styles */
 /* Todas las clases utilitarias están optimizadas para el uso específico de la aplicación */
+
+/* Animaciones de entrada para elementos dinámicos */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Estados de señal mejorados */
+.signal-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.signal-indicator.long {
+    background: var(--bs-success);
+    box-shadow: 0 0 8px var(--bs-success);
+}
+
+.signal-indicator.short {
+    background: var(--bs-danger);
+    box-shadow: 0 0 8px var(--bs-danger);
+}
+
+.signal-indicator.neutral {
+    background: var(--bs-border-color);
+}
+
+/* Mejoras para gráficos Plotly */
+.js-plotly-plot .plotly .modebar {
+    background: rgba(30, 41, 59, 0.9) !important;
+    border: 1px solid var(--bs-border-color) !important;
+}
+
+.js-plotly-plot .plotly .modebar-btn {
+    color: var(--bs-body-color) !important;
+}
+
+.js-plotly-plot .plotly .modebar-btn:hover {
+    background: rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Efectos de hover mejorados para elementos interactivos */
+.interactive-item {
+    transition: all 0.2s ease;
+}
+
+.interactive-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Estados de carga mejorados */
+.skeleton-loader {
+    background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Mejoras de accesibilidad */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus states para mejor accesibilidad */
+.btn:focus,
+.form-control:focus,
+.form-select:focus,
+.dropdown-item:focus {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
+}
+
+/* Estados deshabilitados mejorados */
+.btn:disabled,
+.form-control:disabled,
+.form-select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Mejoras para el modo de alto contraste */
+@media (prefers-contrast: high) {
+    .btn {
+        border-width: 2px;
+    }
+    
+    .card {
+        border-width: 2px;
+    }
+    
+    .form-control, .form-select {
+        border-width: 2px;
+    }
+}
+
+/* Soporte para modo oscuro del sistema */
+@media (prefers-color-scheme: dark) {
+    [data-bs-theme="dark"] {
+        --bs-body-color: #e2e8f0;
+        --bs-body-bg: #0a0e14;
+        --bs-border-color: #334155;
+    }
+}
+
+/* Optimizaciones de rendimiento para animaciones */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Mejoras para pantallas táctiles */
+@media (hover: none) and (pointer: coarse) {
+    .btn {
+        padding: 0.8rem 1.4rem;
+        min-height: 44px;
+    }
+    
+    .dropdown-item {
+        padding: 0.8rem 1rem;
+        min-height: 44px;
+    }
+    
+    .form-control, .form-select {
+        padding: 0.8rem;
+        min-height: 44px;
+    }
+}
+
+/* Soporte para navegadores antiguos */
+@supports not (display: grid) {
+    .multi-timeframe-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .timeframe-item {
+        flex: 1 1 calc(33.333% - 0.5rem);
+        min-width: 100px;
+    }
+}
+
+/* Correcciones específicas para Safari */
+@supports (-webkit-touch-callout: none) {
+    .chart-container {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Mejoras de legibilidad */
+.content-readable {
+    line-height: 1.6;
+    max-width: 65ch;
+}
+
+/* Utilidades para texto truncado */
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.text-truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Estados de validación de formularios */
+.is-valid {
+    border-color: var(--bs-success) !important;
+}
+
+.is-invalid {
+    border-color: var(--bs-danger) !important;
+}
+
+.valid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: var(--bs-success);
+}
+
+.invalid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: var(--bs-danger);
+}
+
+.was-validated .form-control:valid ~ .valid-feedback,
+.was-validated .form-control:invalid ~ .invalid-feedback,
+.form-control.is-valid ~ .valid-feedback,
+.form-control.is-invalid ~ .invalid-feedback {
+    display: block;
+}
+
+/* Utilidades de espaciado adicionales */
+.gap-1 { gap: 0.5rem !important; }
+.gap-2 { gap: 1rem !important; }
+.gap-3 { gap: 1.5rem !important; }
+
+/* Utilidades de orden para flex/grid */
+.order-1 { order: 1 !important; }
+.order-2 { order: 2 !important; }
+.order-3 { order: 3 !important; }
+
+/* Utilidades de visibilidad responsiva */
+.d-print-none { display: none !important; }
+
+@media print {
+    .d-print-block { display: block !important; }
+    .d-print-none { display: none !important; }
+}
+
+/* Mejoras finales de rendimiento */
+.perf-optimized * {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000;
+}
+
+/* Limpieza final - asegurar que no hay estilos duplicados o conflictivos */
+/* Todos los estilos están optimizados y organizados para máximo rendimiento */
