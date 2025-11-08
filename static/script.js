@@ -297,6 +297,7 @@ function updateMarketIndicators() {
     updateBoliviaClock();
 }
 
+
 function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage) {
     const params = new URLSearchParams({
         symbol, 
@@ -315,11 +316,16 @@ function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsi
     fetch(`/api/signals?${params}`)
         .then(response => {
             if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
+                throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
             }
             return response.json();
         })
         .then(data => {
+            // Verificar si los datos son válidos
+            if (!data || typeof data !== 'object') {
+                throw new Error('Datos inválidos recibidos del servidor');
+            }
+            
             currentData = data;
             renderCandleChart(data);
             renderTrendStrengthChart(data);
@@ -330,14 +336,47 @@ function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsi
             updateAuxChart();
             updateMarketSummary(data);
             updateSignalAnalysis(data);
+            
+            console.log(`✅ Gráfico actualizado exitosamente para ${symbol}`);
         })
         .catch(error => {
-            console.error('Error cargando datos:', error);
-            showError('Error al cargar datos del mercado. Reintentando...');
+            console.error('❌ Error crítico cargando datos:', error);
+            showError(`Error al cargar datos: ${error.message}. Reintentando en 5 segundos...`);
+            
+            // Mostrar datos de ejemplo para evitar interfaz bloqueada
+            showSampleData(symbol, interval);
+            
             // Reintentar después de 5 segundos
             setTimeout(() => updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage), 5000);
         });
 }
+
+// Agregar función para mostrar datos de ejemplo
+function showSampleData(symbol, interval) {
+    const chartElement = document.getElementById('candle-chart');
+    if (!chartElement) return;
+    
+    chartElement.innerHTML = `
+        <div class="alert alert-warning text-center m-3">
+            <h6><i class="fas fa-exclamation-triangle me-2"></i>Modo de Datos de Ejemplo</h6>
+            <p class="small mb-2">Mostrando datos de ejemplo mientras se restablece la conexión...</p>
+            <div class="mt-2">
+                <p class="small mb-1"><strong>${symbol} - ${interval}</strong></p>
+                <p class="small mb-1">Precio: $45,250.75</p>
+                <p class="small mb-1">Señal: NEUTRAL | Score: 45%</p>
+            </div>
+            <button class="btn btn-sm btn-primary mt-2" onclick="updateCharts()">
+                <i class="fas fa-sync-alt me-1"></i>Reintentar Conexión
+            </button>
+        </div>
+    `;
+}
+
+
+
+
+
+
 
 function renderCandleChart(data) {
     const chartElement = document.getElementById('candle-chart');
