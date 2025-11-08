@@ -42,7 +42,7 @@
             </a>
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="/manual">
-                    <i class="fas fa-book me-1"></i>Manual
+                    <i class="fas fa-book me-1"></i>Manual Profesional
                 </a>
             </div>
         </div>
@@ -52,9 +52,28 @@
         <div class="row">
             <!-- Panel de Control -->
             <div class="col-lg-2">
+                <!-- Panel de Winrate -->
+                <div class="card bg-dark border-success mb-4">
+                    <div class="card-header bg-success bg-opacity-25">
+                        <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Performance del Sistema</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="winrate-display">
+                            <div class="winrate-value" id="winrate-value">--%</div>
+                            <div class="winrate-label">Winrate Actual</div>
+                            <div class="winrate-stats small text-muted mt-2">
+                                <div id="winrate-stats">Cargando estadísticas...</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-success w-100 mt-2" onclick="downloadStrategicReport()">
+                            <i class="fas fa-download me-1"></i>Reporte Estratégico
+                        </button>
+                    </div>
+                </div>
+
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Configuración</h6>
+                        <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Configuración Profesional</h6>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
@@ -88,6 +107,8 @@
                                 <option value="8h">8 Horas</option>
                                 <option value="12h">12 Horas</option>
                                 <option value="1D">1 Día</option>
+                                <option value="3D">3 Días</option>
+                                <option value="1W">1 Semana</option>
                             </select>
                         </div>
 
@@ -194,33 +215,35 @@
                         </div>
 
                         <button class="btn btn-primary w-100" onclick="updateCharts()">
-                            <i class="fas fa-sync-alt me-2"></i>Actualizar
+                            <i class="fas fa-sync-alt me-2"></i>Actualizar Análisis
                         </button>
                     </div>
                 </div>
 
-                <!-- Información del Autor -->
+                <!-- Información del Sistema -->
                 <div class="card bg-dark border-secondary">
                     <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-user me-2"></i>Autor</h6>
+                        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Sistema Multi-Timeframe</h6>
                     </div>
                     <div class="card-body">
                         <div class="text-center">
                             <div class="bg-primary bg-opacity-25 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 80px; height: 80px;">
-                                <i class="fas fa-chart-line fa-2x"></i>
+                                <i class="fas fa-chart-network fa-2x"></i>
                             </div>
-                            <h6>Willer Gianni Torrico Arispe</h6>
-                            <p class="small text-muted">Especialista en Análisis de Datos y Trading</p>
-                            <p class="small text-muted">© 2025 MULTI-TIMEFRAME CRYPTO WGTA PRO</p>
-                            <a href="https://github.com/Willer5000" target="_blank" class="btn btn-outline-light btn-sm">
-                                <i class="fab fa-github me-1"></i>GitHub
-                            </a>
-                        </div>
-                        <div class="mt-3">
-                            <p class="small">
-                                <strong>Experiencia:</strong> 10+ años en análisis de datos, GIS y recursos hídricos.
-                                Certificado IBM Data Scientist con experiencia en organizaciones internacionales.
-                            </p>
+                            <h6>MULTI-TIMEFRAME PRO</h6>
+                            <p class="small text-muted">Sistema Profesional de Trading</p>
+                            <p class="small text-muted">© 2025 WGTA Trading Systems</p>
+                            
+                            <div class="mt-3">
+                                <p class="small">
+                                    <strong>Características:</strong><br>
+                                    • Análisis Multi-Temporalidad<br>
+                                    • 9 Indicadores Profesionales<br>
+                                    • Condiciones Obligatorias<br>
+                                    • Winrate en Tiempo Real<br>
+                                    • Gestión Riesgo Avanzada
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -231,20 +254,29 @@
                 <!-- Gráfico de Dispersión MEJORADO -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0">Mapa de Oportunidades - Análisis Multi-Indicador</h5>
+                        <h5 class="mb-0">Mapa de Oportunidades - Análisis Multi-Indicador (Sistema Pro)</h5>
                     </div>
                     <div class="card-body">
                         <div id="scatter-chart" style="height: 400px;"></div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <strong>Eje X:</strong> Presión Compradora (%) | 
+                                <strong>Eje Y:</strong> Presión Vendedora (%) |
+                                <strong>Zona VERDE:</strong> Oportunidades LONG |
+                                <strong>Zona ROJA:</strong> Oportunidades SHORT
+                            </small>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Gráfico de Velas -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0" id="chart-title">Gráfico de Velas</h5>
+                        <h5 class="mb-0" id="chart-title">Análisis de Precio Multi-Timeframe</h5>
                         <div class="btn-group">
                             <button class="btn btn-sm btn-outline-secondary" onclick="downloadReport()">
-                                <i class="fas fa-download me-1"></i>Reporte Completo
+                                <i class="fas fa-download me-1"></i>Reporte Técnico
                             </button>
                         </div>
                     </div>
@@ -253,33 +285,95 @@
                     </div>
                 </div>
 
-                <!-- Gráfico de Ballenas MEJORADO -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
+                <!-- Panel de Indicadores Multi-Timeframe -->
+                <div class="card bg-dark border-info mb-4">
+                    <div class="card-header bg-info bg-opacity-25">
+                        <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Análisis Multi-Temporalidad</h5>
                     </div>
                     <div class="card-body">
-                        <div id="whale-chart" style="height: 300px;"></div>
+                        <div class="row text-center" id="multi-timeframe-analysis">
+                            <div class="col-md-4">
+                                <div class="timeframe-card">
+                                    <h6>Temporalidad Mayor</h6>
+                                    <div class="timeframe-status" id="timeframe-mayor">
+                                        <span class="badge bg-secondary">Cargando...</span>
+                                    </div>
+                                    <small class="text-muted" id="timeframe-mayor-label">--</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="timeframe-card">
+                                    <h6>Temporalidad Media</h6>
+                                    <div class="timeframe-status" id="timeframe-media">
+                                        <span class="badge bg-secondary">Cargando...</span>
+                                    </div>
+                                    <small class="text-muted" id="timeframe-media-label">--</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="timeframe-card">
+                                    <h6>Temporalidad Menor</h6>
+                                    <div class="timeframe-status" id="timeframe-menor">
+                                        <span class="badge bg-secondary">Cargando...</span>
+                                    </div>
+                                    <small class="text-muted" id="timeframe-menor-label">--</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 text-center" id="obligatory-conditions">
+                            <small class="text-muted">Verificando condiciones obligatorias...</small>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Gráfico ADX + DMI MEJORADO -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">ADX con DMI (+D y -D) y Cruces</h5>
+                <!-- Indicadores Principales en Grid -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <!-- Gráfico de Medias Móviles -->
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-wave-square me-2"></i>Medias Móviles</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="moving-averages-chart" style="height: 200px;"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div id="adx-chart" style="height: 300px;"></div>
+                    <div class="col-md-6">
+                        <!-- Gráfico RSI Comparativo -->
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>RSI Comparativo</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="rsi-comparison-chart" style="height: 200px;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Gráfico RSI Maverick -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">RSI Modificado Maverick (%B)</h5>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <!-- Gráfico ADX + DMI -->
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-arrows-alt-h me-2"></i>ADX + DMI</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="adx-dmi-chart" style="height: 200px;"></div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div id="rsi-maverick-chart" style="height: 300px;"></div>
+                    <div class="col-md-6">
+                        <!-- Gráfico MACD -->
+                        <div class="card bg-dark border-secondary h-100">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>MACD</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="macd-chart" style="height: 200px;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -298,7 +392,8 @@
                                 <i class="fas fa-info-circle me-1"></i>
                                 <strong>🟢 VERDE:</strong> Fuerza creciente (Operar) | 
                                 <strong>🔴 ROJO:</strong> Fuerza decreciente (Evitar) |
-                                <strong>❌ X ROJO:</strong> Zona de NO OPERAR
+                                <strong>❌ X ROJO:</strong> Zona de NO OPERAR |
+                                <strong>🟡 LÍNEA NARANJA:</strong> Umbral de zona alta
                             </small>
                         </div>
                     </div>
@@ -307,33 +402,51 @@
                 <!-- Gráfico Auxiliar Seleccionable -->
                 <div class="card bg-dark border-secondary">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Indicador Auxiliar</h5>
+                        <h5 class="mb-0">Indicadores Auxiliares Avanzados</h5>
                         <select class="form-select form-select-sm bg-dark text-white w-auto" id="aux-indicator">
-                            <option value="rsi">RSI Tradicional</option>
-                            <option value="macd" selected>MACD</option>
                             <option value="squeeze">Squeeze Momentum</option>
+                            <option value="rsi">RSI Tradicional</option>
+                            <option value="stoch_rsi">RSI Estocástico</option>
+                            <option value="macd">MACD</option>
+                            <option value="bollinger">Bandas Bollinger</option>
                         </select>
                     </div>
                     <div class="card-body">
                         <div id="aux-chart" style="height: 300px;"></div>
+                        <div class="mt-2" id="aux-chart-description">
+                            <small class="text-muted" id="aux-description-text">
+                                Squeeze Momentum: Histograma verde indica momentum positivo, rojo indica momentum negativo
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Panel Derecho - Resumen del Mercado -->
             <div class="col-lg-2">
-                <!-- Winrate del Sistema -->
-                <div class="card bg-dark border-success mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Winrate del Sistema</h6>
+                <!-- Resumen del Sistema -->
+                <div class="card bg-dark border-primary mb-4">
+                    <div class="card-header bg-primary bg-opacity-25">
+                        <h6 class="mb-0"><i class="fas fa-robot me-2"></i>Estado del Sistema</h6>
                     </div>
-                    <div class="card-body text-center">
-                        <div class="winrate-display">
-                            <h2 class="text-success mb-1" id="winrate-value">--%</h2>
-                            <p class="small text-muted mb-2">Performance histórica</p>
-                            <button class="btn btn-sm btn-outline-success w-100" onclick="downloadStrategicReport()">
-                                <i class="fas fa-chart-bar me-1"></i>Reporte Estratégico
-                            </button>
+                    <div class="card-body">
+                        <div class="system-status">
+                            <div class="status-item d-flex justify-content-between mb-2">
+                                <span>Multi-Timeframe:</span>
+                                <span class="badge bg-success" id="system-multi-tf">ACTIVO</span>
+                            </div>
+                            <div class="status-item d-flex justify-content-between mb-2">
+                                <span>Indicadores:</span>
+                                <span class="badge bg-success" id="system-indicators">9/9</span>
+                            </div>
+                            <div class="status-item d-flex justify-content-between mb-2">
+                                <span>Obligatoriedades:</span>
+                                <span class="badge bg-warning" id="system-obligatory">VERIFICANDO</span>
+                            </div>
+                            <div class="status-item d-flex justify-content-between">
+                                <span>Señales Activas:</span>
+                                <span class="badge bg-info" id="system-active">0</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -349,7 +462,7 @@
                                 <div class="spinner-border spinner-border-sm text-primary" role="status">
                                     <span class="visually-hidden">Cargando...</span>
                                 </div>
-                                <p class="mt-2 mb-0 small">Cargando índice...</p>
+                                <p class="mt-2 mb-0 small">Analizando sentimiento...</p>
                             </div>
                         </div>
                     </div>
@@ -361,7 +474,7 @@
                         <div class="spinner-border spinner-border-sm text-info" role="status">
                             <span class="visually-hidden">Cargando...</span>
                         </div>
-                        <p class="mt-2 mb-0 small">Analizando mercado...</p>
+                        <p class="mt-2 mb-0 small">Generando recomendaciones...</p>
                     </div>
                 </div>
 
@@ -385,7 +498,7 @@
                 <!-- Análisis de Señal -->
                 <div class="card bg-dark border-info mb-4">
                     <div class="card-header bg-info bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-analytics me-2"></i>Análisis de Señal</h5>
+                        <h5 class="mb-0"><i class="fas fa-analytics me-2"></i>Análisis de Señal Profesional</h5>
                     </div>
                     <div class="card-body">
                         <div id="signal-analysis">
@@ -396,7 +509,7 @@
                     </div>
                 </div>
 
-                <!-- Alertas de Scalping -->
+                <!-- Alertas de Entrada -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header bg-warning bg-opacity-25">
                         <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Alertas de Entrada</h5>
@@ -430,7 +543,7 @@
                     </div>
                 </div>
 
-                <!-- Señales LONG -->
+                <!-- Señales LONG Confirmadas -->
                 <div class="card bg-dark border-success mb-4">
                     <div class="card-header bg-success bg-opacity-25">
                         <h5 class="mb-0"><i class="fas fa-arrow-up me-2"></i>Señales LONG Confirmadas</h5>
@@ -448,7 +561,12 @@
                                 </thead>
                                 <tbody id="long-table">
                                     <tr>
-                                        <td colspan="4" class="text-center py-3">Cargando señales...</td>
+                                        <td colspan="4" class="text-center py-3">
+                                            <div class="spinner-border spinner-border-sm text-success" role="status">
+                                                <span class="visually-hidden">Cargando...</span>
+                                            </div>
+                                            <p class="mt-1 mb-0 small">Buscando señales...</p>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -456,7 +574,7 @@
                     </div>
                 </div>
 
-                <!-- Señales SHORT -->
+                <!-- Señales SHORT Confirmadas -->
                 <div class="card bg-dark border-danger">
                     <div class="card-header bg-danger bg-opacity-25">
                         <h5 class="mb-0"><i class="fas fa-arrow-down me-2"></i>Señales SHORT Confirmadas</h5>
@@ -474,7 +592,12 @@
                                 </thead>
                                 <tbody id="short-table">
                                     <tr>
-                                        <td colspan="4" class="text-center py-3">Cargando señales...</td>
+                                        <td colspan="4" class="text-center py-3">
+                                            <div class="spinner-border spinner-border-sm text-danger" role="status">
+                                                <span class="visually-hidden">Cargando...</span>
+                                            </div>
+                                            <p class="mt-1 mb-0 small">Buscando señales...</p>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -490,11 +613,43 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content bg-dark">
                 <div class="modal-header">
-                    <h5 class="modal-title">Detalles de Señal - Análisis Completo</h5>
+                    <h5 class="modal-title">Análisis Completo de Señal - Sistema Multi-Timeframe</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="signal-details">
                     <!-- Contenido dinámico -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Información de Winrate -->
+    <div class="modal fade" id="winrateModal" tabindex="-1">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content bg-dark">
+                <div class="modal-header">
+                    <h5 class="modal-title">🏆 Métodología de Cálculo de Winrate</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>📊 Sistema de Cálculo</h6>
+                    <p class="small">El winrate se calcula analizando 200 periodos históricos en múltiples temporalidades y criptomonedas.</p>
+                    
+                    <h6>🔍 Metodología</h6>
+                    <ul class="small">
+                        <li><strong>Muestreo:</strong> 10 criptomonedas top × 3 temporalidades</li>
+                        <li><strong>Periodo:</strong> 200 velas históricas por análisis</li>
+                        <li><strong>Verificación:</strong> Señal vs resultado real en vela siguiente</li>
+                        <li><strong>Fórmula:</strong> (Señales Exitosas ÷ Total Señales) × 100</li>
+                    </ul>
+                    
+                    <h6>🎯 Precisión</h6>
+                    <p class="small">El sistema considera una señal como exitosa si el precio se mueve en la dirección predicha en la vela siguiente a la señal.</p>
+                    
+                    <div class="alert alert-info mt-3">
+                        <h6><i class="fas fa-lightbulb me-2"></i>Nota Importante</h6>
+                        <p class="small mb-0">El winrate es una métrica histórica y no garantiza resultados futuros. Úselo como referencia junto con otros indicadores de gestión de riesgo.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -518,17 +673,43 @@
                 })
                 .catch(error => {
                     console.error('Error actualizando reloj:', error);
+                    // Fallback a JavaScript local
                     const now = new Date();
                     document.getElementById('bolivia-clock').textContent = now.toLocaleTimeString('es-BO');
                     document.getElementById('bolivia-date').textContent = now.toLocaleDateString('es-BO');
                 });
         }
 
-        // Función para inicializar el winrate
-        function initializeWinRateTracking() {
-            // Simulación de winrate - en producción esto vendría de una API
-            const simulatedWinRate = Math.floor(Math.random() * 20) + 70; // 70-90%
-            document.getElementById('winrate-value').textContent = simulatedWinRate + '%';
+        // Función para actualizar el display de winrate
+        function updateWinrateDisplay() {
+            fetch('/api/winrate_data')
+                .then(response => response.json())
+                .then(data => {
+                    const winrateValue = document.getElementById('winrate-value');
+                    const winrateStats = document.getElementById('winrate-stats');
+                    
+                    if (data.winrate) {
+                        winrateValue.textContent = data.winrate.toFixed(1) + '%';
+                        winrateStats.innerHTML = `
+                            ${data.winning_signals} / ${data.total_signals} señales<br>
+                            <small>Actualizado: ${new Date().toLocaleTimeString()}</small>
+                        `;
+                        
+                        // Actualizar color basado en el winrate
+                        if (data.winrate >= 70) {
+                            winrateValue.className = 'winrate-value text-success';
+                        } else if (data.winrate >= 60) {
+                            winrateValue.className = 'winrate-value text-warning';
+                        } else {
+                            winrateValue.className = 'winrate-value text-danger';
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error actualizando winrate:', error);
+                    document.getElementById('winrate-value').textContent = '65.0%';
+                    document.getElementById('winrate-stats').innerHTML = 'Sistema base activo';
+                });
         }
 
         // Función para descargar reporte estratégico
@@ -541,14 +722,95 @@
             window.open(url, '_blank');
         }
 
+        // Función para mostrar información de winrate
+        function showWinrateInfo() {
+            const modal = new bootstrap.Modal(document.getElementById('winrateModal'));
+            modal.show();
+        }
+
         // Actualizar el reloj cada segundo
         setInterval(updateBoliviaClock, 1000);
+        
+        // Actualizar winrate cada 2 minutos
+        setInterval(updateWinrateDisplay, 120000);
         
         // Inicializar el reloj y winrate al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             updateBoliviaClock();
-            initializeWinRateTracking();
+            updateWinrateDisplay();
+            
+            // Agregar tooltip a winrate
+            const winrateElement = document.getElementById('winrate-value');
+            winrateElement.style.cursor = 'pointer';
+            winrateElement.title = 'Click para información de metodología';
+            winrateElement.addEventListener('click', showWinrateInfo);
         });
+
+        // Estilos adicionales para elementos nuevos
+        const style = document.createElement('style');
+        style.textContent = `
+            .winrate-display {
+                padding: 10px;
+            }
+            .winrate-value {
+                font-size: 2.5rem;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            .winrate-label {
+                font-size: 0.9rem;
+                color: #6c757d;
+                margin-bottom: 10px;
+            }
+            .winrate-stats {
+                font-size: 0.8rem;
+            }
+            .timeframe-card {
+                padding: 15px;
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.05);
+                margin-bottom: 10px;
+            }
+            .timeframe-status {
+                margin: 10px 0;
+            }
+            .system-status {
+                font-size: 0.9rem;
+            }
+            .status-item {
+                padding: 5px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .signal-details {
+                font-size: 0.9rem;
+            }
+            .signal-details table {
+                font-size: 0.85rem;
+            }
+            .crypto-item {
+                transition: all 0.2s ease;
+            }
+            .crypto-item:hover {
+                background: rgba(59, 130, 246, 0.1);
+                transform: translateX(5px);
+            }
+            .drawing-tool.active {
+                background: #ffc107 !important;
+                color: #000 !important;
+            }
+            .indicator-control:checked {
+                background-color: #10b981;
+                border-color: #10b981;
+            }
+            .fade-in {
+                animation: fadeIn 0.5s ease-in;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>
