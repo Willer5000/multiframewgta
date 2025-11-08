@@ -182,6 +182,7 @@ h1, h2, h3, h4, h5, h6 {
     background: rgba(15, 23, 42, 0.9);
     border-color: var(--bs-primary);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    color: var(--bs-body-color);
 }
 
 .form-label {
@@ -350,7 +351,7 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: var(--border-radius);
     padding: 1rem;
     margin-bottom: 1rem;
-    min-height: 400px;
+    position: relative;
 }
 
 /* Trend Strength */
@@ -444,10 +445,14 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: var(--border-radius-sm);
     transition: var(--transition);
     cursor: pointer;
+    text-decoration: none;
+    color: inherit;
 }
 
 .crypto-item:hover {
     background: rgba(59, 130, 246, 0.1);
+    text-decoration: none;
+    color: inherit;
 }
 
 .risk-badge {
@@ -498,6 +503,10 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb {
     background: var(--bs-primary);
     border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--bs-info);
 }
 
 /* Estados de Carga */
@@ -571,7 +580,7 @@ h1, h2, h3, h4, h5, h6 {
     }
     
     .chart-container {
-        min-height: 300px;
+        padding: 0.8rem;
     }
 }
 
@@ -592,7 +601,6 @@ h1, h2, h3, h4, h5, h6 {
     
     .chart-container {
         padding: 0.8rem;
-        min-height: 250px;
     }
     
     .table {
@@ -610,6 +618,12 @@ h1, h2, h3, h4, h5, h6 {
     
     .winrate-value {
         font-size: 1.75rem;
+    }
+    
+    /* Stack columns on mobile */
+    .col-lg-2, .col-lg-8, .col-lg-2 {
+        width: 100%;
+        margin-bottom: 1rem;
     }
 }
 
@@ -643,19 +657,13 @@ h1, h2, h3, h4, h5, h6 {
         padding: 0.3rem 0.6rem;
     }
     
-    /* Stack columns on mobile */
-    .col-lg-2, .col-lg-8, .col-lg-2 {
-        width: 100%;
-        margin-bottom: 1rem;
-    }
-    
     /* Hide less important elements on mobile */
     .trading-tools {
         display: none;
     }
     
-    .chart-container {
-        min-height: 200px;
+    .dropdown-menu {
+        font-size: 0.8rem;
     }
 }
 
@@ -678,6 +686,10 @@ h1, h2, h3, h4, h5, h6 {
         padding: 0.5rem 0.8rem;
         font-size: 0.85rem;
     }
+    
+    .digital-clock-container {
+        font-size: 0.75rem;
+    }
 }
 
 /* Orientación Landscape en Móviles */
@@ -693,7 +705,6 @@ h1, h2, h3, h4, h5, h6 {
     .chart-container {
         padding: 0.5rem;
         margin-bottom: 0.5rem;
-        min-height: 150px;
     }
 }
 
@@ -762,11 +773,13 @@ h1, h2, h3, h4, h5, h6 {
 /* Placeholder Styling */
 ::placeholder {
     color: rgba(255, 255, 255, 0.5) !important;
+    opacity: 1;
 }
 
 /* Performance Optimizations */
 .perf-optimized {
     transform: translateZ(0);
+    will-change: transform;
 }
 
 /* Estados de Señal */
@@ -891,6 +904,28 @@ h1, h2, h3, h4, h5, h6 {
 @media (max-width: 768px) {
     .d-md-none { display: none !important; }
     .d-md-block { display: block !important; }
+}
+
+/* Custom Scroll for Chart Containers */
+.chart-scroll-container {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Loading States */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: var(--border-radius);
 }
 
 /* Final Cleanup - Remove unused styles */
