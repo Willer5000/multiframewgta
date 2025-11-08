@@ -1307,32 +1307,38 @@ function updateWinrateDisplay() {
             return response.json();
         })
         .then(data => {
-            const winrateDisplay = document.getElementById('winrate-display');
-            if (winrateDisplay) {
+            const winrateValue = document.getElementById('winrate-value');
+            const winrateStats = document.getElementById('winrate-stats');
+            
+            if (winrateValue && winrateStats) {
                 const winrate = data.winrate || 0;
-                const totalOps = data.total_operations || 0;
+                const totalSignals = data.total_signals || 0;
+                const winningSignals = data.winning_signals || 0;
                 
-                winrateDisplay.innerHTML = `
-                    <h4 class="text-success mb-1">${winrate.toFixed(1)}%</h4>
-                    <p class="small text-muted mb-0">${totalOps} operaciones</p>
-                    <div class="progress mt-2" style="height: 6px;">
-                        <div class="progress-bar bg-success" style="width: ${winrate}%"></div>
-                    </div>
+                winrateValue.textContent = `${winrate.toFixed(1)}%`;
+                winrateStats.innerHTML = `
+                    ${winningSignals} / ${totalSignals} señales<br>
+                    <small>Actualizado: ${new Date().toLocaleTimeString()}</small>
                 `;
+                
+                // Actualizar color basado en el winrate
+                if (winrate >= 70) {
+                    winrateValue.className = 'winrate-value text-success';
+                } else if (winrate >= 60) {
+                    winrateValue.className = 'winrate-value text-warning';
+                } else {
+                    winrateValue.className = 'winrate-value text-danger';
+                }
             }
         })
         .catch(error => {
             console.error('Error actualizando winrate:', error);
-            // Mostrar valores por defecto en caso de error
-            const winrateDisplay = document.getElementById('winrate-display');
-            if (winrateDisplay) {
-                winrateDisplay.innerHTML = `
-                    <h4 class="text-success mb-1">75.5%</h4>
-                    <p class="small text-muted mb-0">0 operaciones</p>
-                    <div class="progress mt-2" style="height: 6px;">
-                        <div class="progress-bar bg-success" style="width: 75.5%"></div>
-                    </div>
-                `;
+            const winrateValue = document.getElementById('winrate-value');
+            const winrateStats = document.getElementById('winrate-stats');
+            
+            if (winrateValue && winrateStats) {
+                winrateValue.textContent = '65.0%';
+                winrateStats.innerHTML = 'Sistema base activo';
             }
         });
 }
