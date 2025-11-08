@@ -38,6 +38,8 @@ body {
     line-height: 1.5;
     overflow-x: hidden;
     min-height: 100vh;
+    margin: 0;
+    padding: 0;
 }
 
 /* Tipografía Responsiva */
@@ -137,6 +139,7 @@ h1, h2, h3, h4, h5, h6 {
     border: 1px solid transparent;
     transition: var(--transition);
     font-size: 0.9rem;
+    cursor: pointer;
 }
 
 .btn-primary {
@@ -180,6 +183,7 @@ h1, h2, h3, h4, h5, h6 {
     background: rgba(15, 23, 42, 0.9);
     border-color: var(--bs-primary);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    outline: none;
 }
 
 .form-label {
@@ -196,6 +200,7 @@ h1, h2, h3, h4, h5, h6 {
     --bs-table-border-color: var(--bs-border-color);
     font-size: 0.85rem;
     margin-bottom: 0;
+    width: 100%;
 }
 
 .table th {
@@ -283,10 +288,13 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: var(--border-radius-sm);
     padding: 0.6rem 1rem;
     transition: var(--transition);
+    text-decoration: none;
+    display: block;
 }
 
 .dropdown-item:hover {
     background: rgba(59, 130, 246, 0.2);
+    color: var(--bs-body-color);
 }
 
 /* Herramientas de Trading */
@@ -304,6 +312,8 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0.4rem;
     transition: var(--transition);
     cursor: pointer;
+    border: none;
+    color: var(--bs-body-color);
 }
 
 .drawing-tool:hover {
@@ -348,6 +358,7 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: var(--border-radius);
     padding: 1rem;
     margin-bottom: 1rem;
+    position: relative;
 }
 
 /* Trend Strength */
@@ -363,18 +374,22 @@ h1, h2, h3, h4, h5, h6 {
 
 .trend-strength-strong-up {
     background: var(--bs-success);
+    color: white;
 }
 
 .trend-strength-weak-up {
     background: var(--bs-warning);
+    color: black;
 }
 
 .trend-strength-strong-down {
     background: var(--bs-danger);
+    color: white;
 }
 
 .trend-strength-no-trade {
     background: #6b7280;
+    color: white;
     animation: pulse 2s infinite;
 }
 
@@ -441,10 +456,14 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: var(--border-radius-sm);
     transition: var(--transition);
     cursor: pointer;
+    text-decoration: none;
+    color: var(--bs-body-color);
 }
 
 .crypto-item:hover {
     background: rgba(59, 130, 246, 0.1);
+    color: var(--bs-body-color);
+    text-decoration: none;
 }
 
 .risk-badge {
@@ -452,6 +471,7 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0.2rem 0.4rem;
     border-radius: 4px;
     font-weight: 600;
+    color: white;
 }
 
 .risk-low { background: var(--bs-success); }
@@ -497,6 +517,10 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 3px;
 }
 
+::-webkit-scrollbar-thumb:hover {
+    background: var(--bs-info);
+}
+
 /* Estados de Carga */
 .loading-spinner {
     display: inline-block;
@@ -524,11 +548,13 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
-.fade-in-up { animation: fadeInUp 0.4s ease-out; }
+.fade-in-up { 
+    animation: fadeInUp 0.4s ease-out; 
+}
 
 /* Utilidades de Texto */
 .text-gradient {
-    background: linear-gradient(135deg, var(--bs-primary), var(--bs-info);
+    background: linear-gradient(135deg, var(--bs-primary), var(--bs-info));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -740,15 +766,18 @@ h1, h2, h3, h4, h5, h6 {
 /* Selection Colors */
 ::selection {
     background: rgba(59, 130, 246, 0.3);
+    color: inherit;
 }
 
 ::-moz-selection {
     background: rgba(59, 130, 246, 0.3);
+    color: inherit;
 }
 
 /* Placeholder Styling */
 ::placeholder {
     color: rgba(255, 255, 255, 0.5) !important;
+    opacity: 1;
 }
 
 /* Performance Optimizations */
