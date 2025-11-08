@@ -1191,235 +1191,308 @@ class TradingIndicator:
         
         return exit_alerts
 
-    def generate_signals_pro(self, symbol, interval, di_period=14, adx_threshold=25, 
-                           sr_period=50, rsi_length=20, bb_multiplier=2.0, volume_filter='Todos', leverage=15):
-        """GENERACIÓN DE SEÑALES PROFESIONAL con todas las mejoras"""
-        try:
-            df = self.get_kucoin_data(symbol, interval, 100)
-            
-            if df is None or len(df) < 30:
-                return self._create_empty_signal(symbol)
-            
-            # INDICADORES PRINCIPALES
-            close = df['close'].values
-            high = df['high'].values
-            low = df['low'].values
-            
-            # 1. Ballenas (CORREGIDO: solo 12H y 1D)
-            whale_data = self.calculate_whale_signals_corrected(df, interval)
-            
-            # 2. ADX + DMI
-            adx, plus_di, minus_di = self.calculate_adx(high, low, close, di_period)
-            
-            # 3. Cruces DI
-            di_cross_bullish, di_cross_bearish, di_trend_bullish, di_trend_bearish = self.check_di_crossover(plus_di, minus_di)
-            
-            # 4. RSI Maverick
-            rsi_maverick = self.calculate_rsi_maverick(close, rsi_length, bb_multiplier)
-            
-            # 5. Divergencias
-            bullish_div, bearish_div = self.detect_divergence(close, rsi_maverick)
-            
-            # 6. Breakouts
-            breakout_up, breakout_down = self.check_breakout(high, low, close, whale_data['support'], whale_data['resistance'])
-            
-            # 7. Fuerza de tendencia Maverick
-            trend_strength_data = self.calculate_trend_strength_maverick(close)
-            
-            # 8. Medias móviles
-            ma_9 = self.calculate_sma(close, 9)
-            ma_21 = self.calculate_sma(close, 21)
-            ma_50 = self.calculate_sma(close, 50)
-            ma_200 = self.calculate_sma(close, 200)
-            
-            # 9. Bandas Bollinger
-            bb_upper, bb_middle, bb_lower = self.calculate_bollinger_bands(close)
-            bb_position = (close - bb_lower) / (bb_upper - bb_lower)  # %B
-            
-            # 10. RSI tradicional
-            rsi = self.calculate_rsi(close)
-            
-            # 11. MACD
-            macd, macd_signal, macd_histogram = self.calculate_macd(close)
-            
-            # 12. Squeeze Momentum
-            squeeze_data = self.calculate_squeeze_momentum(high, low, close)
-            
-            # 13. Patrones Chartistas
-            chart_patterns = self.detect_chart_patterns(high, low, close)
-            
-            current_idx = -1
-            
-            # Preparar datos para evaluación
-            analysis_data = {
-                'close': close,
-                'ma_9': ma_9,
-                'ma_21': ma_21,
-                'ma_50': ma_50,
-                'ma_200': ma_200,
-                'rsi': rsi,
-                'rsi_maverick': rsi_maverick,
-                'support': whale_data['support'],
-                'resistance': whale_data['resistance'],
-                'adx': adx,
-                'plus_di': plus_di,
-                'minus_di': minus_di,
-                'macd': macd,
-                'macd_signal': macd_signal,
-                'squeeze_momentum': squeeze_data['momentum'],
-                'bb_position': bb_position,
-                'whale_pump': whale_data['whale_pump'],
-                'whale_dump': whale_data['whale_dump'],
-                'chart_patterns': chart_patterns
-            }
-            
-            # VERIFICACIÓN OBLIGATORIA MULTI-TIMEFRAME
-            long_multi_tf = self.check_multi_timeframe_trend(symbol, interval, 'LONG')
-            short_multi_tf = self.check_multi_timeframe_trend(symbol, interval, 'SHORT')
-            
-            # Evaluar condiciones
-            long_conditions = self.evaluate_signal_conditions_pro(analysis_data, current_idx, interval, adx_threshold)
-            short_conditions = self.evaluate_signal_conditions_pro(analysis_data, current_idx, interval, adx_threshold)
-            
-            # Calcular scores con OBLIGATORIEDAD
-            long_score, long_fulfilled = self.calculate_signal_score_pro(long_conditions, 'long', long_multi_tf['valid'])
-            short_score, short_fulfilled = self.calculate_signal_score_pro(short_conditions, 'short', short_multi_tf['valid'])
-            
-            # Determinar señal final
-            signal_type = 'NEUTRAL'
-            signal_score = 0
-            fulfilled_conditions = []
-            
-            if long_score >= 70 and long_score > short_score:
-                signal_type = 'LONG'
-                signal_score = long_score
-                fulfilled_conditions = long_fulfilled
-            elif short_score >= 70 and short_score > long_score:
-                signal_type = 'SHORT'
-                signal_score = short_score
-                fulfilled_conditions = short_fulfilled
-            
-            # Calcular niveles de entrada/salida
-            current_price = float(close[current_idx])
-            levels_data = self.calculate_optimal_entry_exit(df, signal_type, leverage)
-            
-            # Registrar señal activa si es válida
-            if signal_type in ['LONG', 'SHORT'] and signal_score >= 70:
-                signal_key = f"{symbol}_{interval}_{signal_type}"
-                self.active_signals[signal_key] = {
-                    'symbol': symbol,
-                    'interval': interval,
-                    'signal': signal_type,
-                    'entry_price': levels_data['entry'],
-                    'timestamp': self.get_bolivia_time().strftime("%Y-%m-%d %H:%M:%S"),
-                    'score': signal_score
-                }
-            
-            # Calcular winrate
-            winrate = self.calculate_winrate(symbol, interval)
-            
-            return {
-                'symbol': symbol,
-                'current_price': current_price,
-                'signal': signal_type,
-                'signal_score': float(signal_score),
-                'winrate': float(winrate),
-                'entry': levels_data['entry'],
-                'stop_loss': levels_data['stop_loss'],
-                'take_profit': levels_data['take_profit'],
-                'support': levels_data['support'],
-                'resistance': levels_data['resistance'],
-                'atr': levels_data['atr'],
-                'atr_percentage': levels_data['atr_percentage'],
-                'volume': float(df['volume'].iloc[current_idx]),
-                'volume_ma': float(np.mean(df['volume'].tail(20))),
-                'adx': float(adx[current_idx] if current_idx < len(adx) else 0),
-                'plus_di': float(plus_di[current_idx] if current_idx < len(plus_di) else 0),
-                'minus_di': float(minus_di[current_idx] if current_idx < len(minus_di) else 0),
-                'whale_pump': float(whale_data['whale_pump'][current_idx]),
-                'whale_dump': float(whale_data['whale_dump'][current_idx]),
-                'rsi_maverick': float(rsi_maverick[current_idx] if current_idx < len(rsi_maverick) else 0.5),
-                'fulfilled_conditions': fulfilled_conditions,
-                'multi_tf_valid_long': long_multi_tf['valid'],
-                'multi_tf_valid_short': short_multi_tf['valid'],
-                'multi_tf_reason_long': long_multi_tf['reason'],
-                'multi_tf_reason_short': short_multi_tf['reason'],
-                'trend_strength_signal': trend_strength_data['strength_signals'][current_idx] if current_idx < len(trend_strength_data['strength_signals']) else 'NEUTRAL',
-                'no_trade_zone': trend_strength_data['no_trade_zones'][current_idx] if current_idx < len(trend_strength_data['no_trade_zones']) else False,
-                'whale_indicator_active': whale_data['active'],
-                'data': df.tail(50).to_dict('records'),
-                'indicators': {
-                    'ma_9': ma_9[-50:].tolist(),
-                    'ma_21': ma_21[-50:].tolist(),
-                    'ma_50': ma_50[-50:].tolist(),
-                    'ma_200': ma_200[-50:].tolist(),
-                    'rsi': rsi[-50:].tolist(),
-                    'rsi_maverick': rsi_maverick[-50:],
-                    'adx': adx[-50:].tolist(),
-                    'plus_di': plus_di[-50:].tolist(),
-                    'minus_di': minus_di[-50:].tolist(),
-                    'macd': macd[-50:].tolist(),
-                    'macd_signal': macd_signal[-50:].tolist(),
-                    'macd_histogram': macd_histogram[-50:].tolist(),
-                    'squeeze_on': squeeze_data['squeeze_on'][-50:],
-                    'squeeze_off': squeeze_data['squeeze_off'][-50:],
-                    'squeeze_momentum': squeeze_data['momentum'][-50:],
-                    'bb_upper': bb_upper[-50:].tolist(),
-                    'bb_middle': bb_middle[-50:].tolist(),
-                    'bb_lower': bb_lower[-50:].tolist(),
-                    'bb_position': bb_position[-50:].tolist(),
-                    'whale_pump': whale_data['whale_pump'][-50:],
-                    'whale_dump': whale_data['whale_dump'][-50:],
-                    'trend_strength': trend_strength_data['trend_strength'][-50:],
-                    'bb_width': trend_strength_data['bb_width'][-50:],
-                    'no_trade_zones': trend_strength_data['no_trade_zones'][-50:],
-                    'strength_signals': trend_strength_data['strength_signals'][-50:],
-                    'high_zone_threshold': trend_strength_data['high_zone_threshold'],
-                    'colors': trend_strength_data['colors'][-50:],
-                    'chart_patterns': {
-                        key: value[-50:] for key, value in chart_patterns.items()
-                    }
-                }
-            }
-            
-        except Exception as e:
-            print(f"Error en generate_signals_pro para {symbol}: {e}")
-            return self._create_empty_signal(symbol)
+def _ensure_serializable(self, obj):
+    """Asegurar que todos los datos sean serializables a JSON"""
+    try:
+        if obj is None:
+            return None
+        elif isinstance(obj, (np.ndarray, np.generic)):
+            return obj.tolist()
+        elif isinstance(obj, (pd.DataFrame, pd.Series)):
+            return obj.to_dict('records') if isinstance(obj, pd.DataFrame) else obj.tolist()
+        elif isinstance(obj, (int, float, str, bool)):
+            return obj
+        elif isinstance(obj, list):
+            return [self._ensure_serializable(item) for item in obj]
+        elif isinstance(obj, dict):
+            return {key: self._ensure_serializable(value) for key, value in obj.items()}
+        elif hasattr(obj, 'tolist'):
+            return obj.tolist()
+        else:
+            # Intentar convertir a tipo nativo de Python
+            try:
+                return float(obj) if isinstance(obj, (np.float32, np.float64)) else int(obj)
+            except:
+                return str(obj)
+    except Exception as e:
+        print(f"Error en _ensure_serializable: {e}")
+        return str(obj)
 
-    def _create_empty_signal(self, symbol):
-        """Crear señal vacía en caso de error"""
-        return {
-            'symbol': symbol,
-            'current_price': 0,
-            'signal': 'NEUTRAL',
-            'signal_score': 0,
-            'winrate': 0.0,
-            'entry': 0,
-            'stop_loss': 0,
-            'take_profit': [0],
-            'support': 0,
-            'resistance': 0,
-            'atr': 0,
-            'atr_percentage': 0,
-            'volume': 0,
-            'volume_ma': 0,
-            'adx': 0,
-            'plus_di': 0,
-            'minus_di': 0,
-            'whale_pump': 0,
-            'whale_dump': 0,
-            'rsi_maverick': 0.5,
-            'fulfilled_conditions': [],
-            'multi_tf_valid_long': False,
-            'multi_tf_valid_short': False,
-            'multi_tf_reason_long': 'Error',
-            'multi_tf_reason_short': 'Error',
-            'trend_strength_signal': 'NEUTRAL',
-            'no_trade_zone': False,
-            'whale_indicator_active': False,
-            'data': [],
-            'indicators': {}
+
+
+
+    
+   def generate_signals_pro(self, symbol, interval, di_period=14, adx_threshold=25, 
+                       sr_period=50, rsi_length=20, bb_multiplier=2.0, volume_filter='Todos', leverage=15):
+    """GENERACIÓN DE SEÑALES PROFESIONAL con todas las mejoras y corrección de serialización JSON"""
+    try:
+        df = self.get_kucoin_data(symbol, interval, 100)
+        
+        if df is None or len(df) < 30:
+            return self._create_empty_signal(symbol)
+        
+        # INDICADORES PRINCIPALES
+        close = df['close'].values
+        high = df['high'].values
+        low = df['low'].values
+        
+        # 1. Ballenas (CORREGIDO: solo 12H y 1D)
+        whale_data = self.calculate_whale_signals_corrected(df, interval)
+        
+        # 2. ADX + DMI
+        adx, plus_di, minus_di = self.calculate_adx(high, low, close, di_period)
+        
+        # 3. Cruces DI
+        di_cross_bullish, di_cross_bearish, di_trend_bullish, di_trend_bearish = self.check_di_crossover(plus_di, minus_di)
+        
+        # 4. RSI Maverick
+        rsi_maverick = self.calculate_rsi_maverick(close, rsi_length, bb_multiplier)
+        
+        # 5. Divergencias
+        bullish_div, bearish_div = self.detect_divergence(close, rsi_maverick)
+        
+        # 6. Breakouts
+        breakout_up, breakout_down = self.check_breakout(high, low, close, whale_data['support'], whale_data['resistance'])
+        
+        # 7. Fuerza de tendencia Maverick
+        trend_strength_data = self.calculate_trend_strength_maverick(close)
+        
+        # 8. Medias móviles
+        ma_9 = self.calculate_sma(close, 9)
+        ma_21 = self.calculate_sma(close, 21)
+        ma_50 = self.calculate_sma(close, 50)
+        ma_200 = self.calculate_sma(close, 200)
+        
+        # 9. Bandas Bollinger
+        bb_upper, bb_middle, bb_lower = self.calculate_bollinger_bands(close)
+        bb_position = (close - bb_lower) / (bb_upper - bb_lower)  # %B
+        
+        # 10. RSI tradicional
+        rsi = self.calculate_rsi(close)
+        
+        # 11. MACD
+        macd, macd_signal, macd_histogram = self.calculate_macd(close)
+        
+        # 12. Squeeze Momentum
+        squeeze_data = self.calculate_squeeze_momentum(high, low, close)
+        
+        # 13. Patrones Chartistas
+        chart_patterns = self.detect_chart_patterns(high, low, close)
+        
+        current_idx = -1
+        
+        # Preparar datos para evaluación
+        analysis_data = {
+            'close': close.tolist() if hasattr(close, 'tolist') else list(close),
+            'ma_9': ma_9.tolist() if hasattr(ma_9, 'tolist') else list(ma_9),
+            'ma_21': ma_21.tolist() if hasattr(ma_21, 'tolist') else list(ma_21),
+            'ma_50': ma_50.tolist() if hasattr(ma_50, 'tolist') else list(ma_50),
+            'ma_200': ma_200.tolist() if hasattr(ma_200, 'tolist') else list(ma_200),
+            'rsi': rsi.tolist() if hasattr(rsi, 'tolist') else list(rsi),
+            'rsi_maverick': rsi_maverick if isinstance(rsi_maverick, list) else list(rsi_maverick),
+            'support': whale_data['support'],
+            'resistance': whale_data['resistance'],
+            'adx': adx.tolist() if hasattr(adx, 'tolist') else list(adx),
+            'plus_di': plus_di.tolist() if hasattr(plus_di, 'tolist') else list(plus_di),
+            'minus_di': minus_di.tolist() if hasattr(minus_di, 'tolist') else list(minus_di),
+            'macd': macd.tolist() if hasattr(macd, 'tolist') else list(macd),
+            'macd_signal': macd_signal.tolist() if hasattr(macd_signal, 'tolist') else list(macd_signal),
+            'squeeze_momentum': squeeze_data['momentum'],
+            'bb_position': bb_position.tolist() if hasattr(bb_position, 'tolist') else list(bb_position),
+            'whale_pump': whale_data['whale_pump'],
+            'whale_dump': whale_data['whale_dump'],
+            'chart_patterns': chart_patterns
         }
+        
+        # VERIFICACIÓN OBLIGATORIA MULTI-TIMEFRAME
+        long_multi_tf = self.check_multi_timeframe_trend(symbol, interval, 'LONG')
+        short_multi_tf = self.check_multi_timeframe_trend(symbol, interval, 'SHORT')
+        
+        # Evaluar condiciones
+        long_conditions = self.evaluate_signal_conditions_pro(analysis_data, current_idx, interval, adx_threshold)
+        short_conditions = self.evaluate_signal_conditions_pro(analysis_data, current_idx, interval, adx_threshold)
+        
+        # Calcular scores con OBLIGATORIEDAD
+        long_score, long_fulfilled = self.calculate_signal_score_pro(long_conditions, 'long', long_multi_tf['valid'])
+        short_score, short_fulfilled = self.calculate_signal_score_pro(short_conditions, 'short', short_multi_tf['valid'])
+        
+        # Determinar señal final
+        signal_type = 'NEUTRAL'
+        signal_score = 0
+        fulfilled_conditions = []
+        
+        if long_score >= 70 and long_score > short_score:
+            signal_type = 'LONG'
+            signal_score = long_score
+            fulfilled_conditions = long_fulfilled
+        elif short_score >= 70 and short_score > long_score:
+            signal_type = 'SHORT'
+            signal_score = short_score
+            fulfilled_conditions = short_fulfilled
+        
+        # Calcular niveles de entrada/salida
+        current_price = float(close[current_idx])
+        levels_data = self.calculate_optimal_entry_exit(df, signal_type, leverage)
+        
+        # Registrar señal activa si es válida
+        if signal_type in ['LONG', 'SHORT'] and signal_score >= 70:
+            signal_key = f"{symbol}_{interval}_{signal_type}"
+            self.active_signals[signal_key] = {
+                'symbol': symbol,
+                'interval': interval,
+                'signal': signal_type,
+                'entry_price': levels_data['entry'],
+                'timestamp': self.get_bolivia_time().strftime("%Y-%m-%d %H:%M:%S"),
+                'score': signal_score
+            }
+        
+        # Calcular winrate
+        winrate = self.calculate_winrate(symbol, interval)
+        
+        # CONVERTIR TODOS LOS DATOS A FORMATO JSON SERIALIZABLE
+        indicators_dict = {
+            'ma_9': self._ensure_serializable(ma_9[-50:]),
+            'ma_21': self._ensure_serializable(ma_21[-50:]),
+            'ma_50': self._ensure_serializable(ma_50[-50:]),
+            'ma_200': self._ensure_serializable(ma_200[-50:]),
+            'rsi': self._ensure_serializable(rsi[-50:]),
+            'rsi_maverick': self._ensure_serializable(rsi_maverick[-50:]),
+            'adx': self._ensure_serializable(adx[-50:]),
+            'plus_di': self._ensure_serializable(plus_di[-50:]),
+            'minus_di': self._ensure_serializable(minus_di[-50:]),
+            'macd': self._ensure_serializable(macd[-50:]),
+            'macd_signal': self._ensure_serializable(macd_signal[-50:]),
+            'macd_histogram': self._ensure_serializable(macd_histogram[-50:]),
+            'squeeze_on': self._ensure_serializable(squeeze_data['squeeze_on'][-50:]),
+            'squeeze_off': self._ensure_serializable(squeeze_data['squeeze_off'][-50:]),
+            'squeeze_momentum': self._ensure_serializable(squeeze_data['momentum'][-50:]),
+            'bb_upper': self._ensure_serializable(bb_upper[-50:]),
+            'bb_middle': self._ensure_serializable(bb_middle[-50:]),
+            'bb_lower': self._ensure_serializable(bb_lower[-50:]),
+            'bb_position': self._ensure_serializable(bb_position[-50:]),
+            'whale_pump': self._ensure_serializable(whale_data['whale_pump'][-50:]),
+            'whale_dump': self._ensure_serializable(whale_data['whale_dump'][-50:]),
+            'trend_strength': self._ensure_serializable(trend_strength_data['trend_strength'][-50:]),
+            'bb_width': self._ensure_serializable(trend_strength_data['bb_width'][-50:]),
+            'no_trade_zones': self._ensure_serializable(trend_strength_data['no_trade_zones'][-50:]),
+            'strength_signals': self._ensure_serializable(trend_strength_data['strength_signals'][-50:]),
+            'high_zone_threshold': float(trend_strength_data['high_zone_threshold']),
+            'colors': self._ensure_serializable(trend_strength_data['colors'][-50:])
+        }
+        
+        # Añadir patrones chartistas serializados
+        for key, value in chart_patterns.items():
+            indicators_dict['chart_patterns'] = indicators_dict.get('chart_patterns', {})
+            indicators_dict['chart_patterns'][key] = self._ensure_serializable(value[-50:])
+        
+        result = {
+            'symbol': symbol,
+            'current_price': current_price,
+            'signal': signal_type,
+            'signal_score': float(signal_score),
+            'winrate': float(winrate),
+            'entry': levels_data['entry'],
+            'stop_loss': levels_data['stop_loss'],
+            'take_profit': levels_data['take_profit'],
+            'support': levels_data['support'],
+            'resistance': levels_data['resistance'],
+            'atr': levels_data['atr'],
+            'atr_percentage': levels_data['atr_percentage'],
+            'volume': float(df['volume'].iloc[current_idx]),
+            'volume_ma': float(np.mean(df['volume'].tail(20))),
+            'adx': float(adx[current_idx] if current_idx < len(adx) else 0),
+            'plus_di': float(plus_di[current_idx] if current_idx < len(plus_di) else 0),
+            'minus_di': float(minus_di[current_idx] if current_idx < len(minus_di) else 0),
+            'whale_pump': float(whale_data['whale_pump'][current_idx]),
+            'whale_dump': float(whale_data['whale_dump'][current_idx]),
+            'rsi_maverick': float(rsi_maverick[current_idx] if current_idx < len(rsi_maverick) else 0.5),
+            'fulfilled_conditions': fulfilled_conditions,
+            'multi_tf_valid_long': long_multi_tf['valid'],
+            'multi_tf_valid_short': short_multi_tf['valid'],
+            'multi_tf_reason_long': long_multi_tf['reason'],
+            'multi_tf_reason_short': short_multi_tf['reason'],
+            'trend_strength_signal': trend_strength_data['strength_signals'][current_idx] if current_idx < len(trend_strength_data['strength_signals']) else 'NEUTRAL',
+            'no_trade_zone': trend_strength_data['no_trade_zones'][current_idx] if current_idx < len(trend_strength_data['no_trade_zones']) else False,
+            'whale_indicator_active': whale_data['active'],
+            'data': self._ensure_serializable(df.tail(50).to_dict('records')),
+            'indicators': indicators_dict
+        }
+        
+        return result
+        
+    except Exception as e:
+        print(f"Error en generate_signals_pro para {symbol}: {e}")
+        import traceback
+        traceback.print_exc()
+        return self._create_empty_signal(symbol)
+
+
+
+def _create_empty_signal(self, symbol):
+    """Crear señal vacía en caso de error con datos serializables"""
+    return {
+        'symbol': symbol,
+        'current_price': 0.0,
+        'signal': 'NEUTRAL',
+        'signal_score': 0.0,
+        'winrate': 0.0,
+        'entry': 0.0,
+        'stop_loss': 0.0,
+        'take_profit': [0.0],
+        'support': 0.0,
+        'resistance': 0.0,
+        'atr': 0.0,
+        'atr_percentage': 0.0,
+        'volume': 0.0,
+        'volume_ma': 0.0,
+        'adx': 0.0,
+        'plus_di': 0.0,
+        'minus_di': 0.0,
+        'whale_pump': 0.0,
+        'whale_dump': 0.0,
+        'rsi_maverick': 0.5,
+        'fulfilled_conditions': [],
+        'multi_tf_valid_long': False,
+        'multi_tf_valid_short': False,
+        'multi_tf_reason_long': 'Error',
+        'multi_tf_reason_short': 'Error',
+        'trend_strength_signal': 'NEUTRAL',
+        'no_trade_zone': False,
+        'whale_indicator_active': False,
+        'data': [],
+        'indicators': {
+            'ma_9': [],
+            'ma_21': [],
+            'ma_50': [],
+            'ma_200': [],
+            'rsi': [],
+            'rsi_maverick': [],
+            'adx': [],
+            'plus_di': [],
+            'minus_di': [],
+            'macd': [],
+            'macd_signal': [],
+            'macd_histogram': [],
+            'squeeze_on': [],
+            'squeeze_off': [],
+            'squeeze_momentum': [],
+            'bb_upper': [],
+            'bb_middle': [],
+            'bb_lower': [],
+            'bb_position': [],
+            'whale_pump': [],
+            'whale_dump': [],
+            'trend_strength': [],
+            'bb_width': [],
+            'no_trade_zones': [],
+            'strength_signals': [],
+            'high_zone_threshold': 0.0,
+            'colors': [],
+            'chart_patterns': {}
+        }
+    }
+
+    
 
     def generate_scalping_alerts(self):
         """Generar alertas de scalping con filtros mejorados"""
