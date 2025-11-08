@@ -16,6 +16,25 @@ import telegram
 import asyncio
 from threading import Thread
 import pytz
+import logging
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def log_signal_data(signal_data):
+    """Función auxiliar para loguear datos de señales"""
+    try:
+        if signal_data and 'symbol' in signal_data:
+            logger.info(f"Señal generada para {signal_data['symbol']}: {signal_data.get('signal', 'NEUTRAL')} - Score: {signal_data.get('signal_score', 0)}%")
+            
+            # Verificar tipos de datos en indicadores
+            if 'indicators' in signal_data:
+                for key, value in signal_data['indicators'].items():
+                    if hasattr(value, 'tolist'):
+                        logger.warning(f"Indicador {key} contiene ndarray - Convirtiendo a lista")
+    except Exception as e:
+        logger.error(f"Error en log_signal_data: {e}")
 
 app = Flask(__name__)
 
@@ -1629,7 +1648,7 @@ def manual():
 
 @app.route('/api/signals')
 def get_signals():
-    """Endpoint para obtener señales de trading MEJORADO"""
+    """Endpoint para obtener señales de trading MEJORADO con manejo robusto de errores"""
     try:
         symbol = request.args.get('symbol', 'BTC-USDT')
         interval = request.args.get('interval', '4h')
@@ -1641,24 +1660,30 @@ def get_signals():
         volume_filter = request.args.get('volume_filter', 'Todos')
         leverage = int(request.args.get('leverage', 15))
         
+        print(f"📡 Solicitando señales para {symbol} en {interval}")
+        
         signal_data = indicator.generate_signals_pro(
             symbol, interval, di_period, adx_threshold, sr_period, 
             rsi_length, bb_multiplier, volume_filter, leverage
         )
         
-        # Asegurar que los indicadores sean serializables
-        if 'indicators' in signal_data:
-            for key in signal_data['indicators']:
-                if isinstance(signal_data['indicators'][key], (np.ndarray, np.generic)):
-                    signal_data['indicators'][key] = signal_data['indicators'][key].tolist()
-                elif isinstance(signal_data['indicators'][key], list):
-                    signal_data['indicators'][key] = [int(x) if isinstance(x, (bool, np.bool_)) else x for x in signal_data['indicators'][key]]
+        # Asegurar serialización final
+        signal_data = indicator._ensure_serializable(signal_data)
         
+        print(f"✅ Señales generadas exitosamente para {symbol}")
         return jsonify(signal_data)
         
     except Exception as e:
-        print(f"Error en /api/signals: {e}")
-        return jsonify({'error': 'Error interno del servidor'}), 500
+        print(f"❌ Error crítico en /api/signals: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Devolver señal vacía pero serializable
+        error_signal = indicator._create_empty_signal(request.args.get('symbol', 'BTC-USDT'))
+        return jsonify(error_signal)
+
+
+
 
 @app.route('/api/multiple_signals')
 def get_multiple_signals():
