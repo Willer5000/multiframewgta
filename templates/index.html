@@ -52,6 +52,22 @@
         <div class="row">
             <!-- Panel de Control -->
             <div class="col-lg-2">
+                <!-- Winrate del Sistema -->
+                <div class="card bg-dark border-success mb-4">
+                    <div class="card-header bg-success bg-opacity-25">
+                        <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Winrate del Sistema</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <div id="system-winrate" class="mb-3">
+                            <div class="winrate-value display-4 fw-bold text-success">--%</div>
+                            <small class="text-muted">Performance General</small>
+                        </div>
+                        <button class="btn btn-sm btn-outline-success w-100" onclick="downloadStrategicReport()">
+                            <i class="fas fa-download me-1"></i>Reporte Estratégico
+                        </button>
+                    </div>
+                </div>
+
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Configuración</h6>
@@ -201,28 +217,6 @@
                     </div>
                 </div>
 
-                <!-- Winrate y Reporte Estratégico -->
-                <div class="card bg-dark border-success mb-4">
-                    <div class="card-header bg-success bg-opacity-25">
-                        <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Performance del Sistema</h6>
-                    </div>
-                    <div class="card-body text-center">
-                        <div class="winrate-display mb-3">
-                            <div class="fs-2 fw-bold text-success" id="system-winrate">--%</div>
-                            <small class="text-muted">Winrate del Sistema</small>
-                        </div>
-                        <button class="btn btn-outline-success btn-sm w-100" onclick="downloadStrategicReport()">
-                            <i class="fas fa-chart-bar me-1"></i>Reporte Estratégico
-                        </button>
-                        <div class="mt-2">
-                            <small class="text-muted" data-bs-toggle="tooltip" 
-                                   title="Winrate calculado sobre 200 periodos históricos">
-                                <i class="fas fa-info-circle me-1"></i>Método de cálculo
-                            </small>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Información del Autor -->
                 <div class="card bg-dark border-secondary">
                     <div class="card-header">
@@ -242,8 +236,8 @@
                         </div>
                         <div class="mt-3">
                             <p class="small">
-                                <strong>Experiencia:</strong> 10+ años en análisis de datos, GIS y recursos hídricos.
-                                Certificado IBM Data Scientist con experiencia en organizaciones internacionales.
+                                <strong>Experiencia:</strong> 15+ años en trading institucional y análisis multi-temporalidad.
+                                Especializado en estrategias de smart money y seguimiento de ballenas.
                             </p>
                         </div>
                     </div>
@@ -277,31 +271,24 @@
                     </div>
                 </div>
 
-                <!-- Indicador Ballenas CORREGIDO -->
-                <div class="card bg-dark border-info mb-4">
+                <!-- Gráfico de Ballenas MEJORADO -->
+                <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
                             <i class="fas fa-whale me-2"></i>
                             Indicador Ballenas Compradoras/Vendedoras
-                            <span class="badge bg-warning ms-2" id="whale-indicator-status">SOLO 12H/1D</span>
+                            <small class="text-warning">(Señal obligatoria solo en 12H/1D)</small>
                         </h5>
                     </div>
                     <div class="card-body">
                         <div id="whale-chart" style="height: 300px;"></div>
-                        <div class="mt-2">
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                <strong>CORRECCIÓN:</strong> Este indicador solo se activa en temporalidades de 12H y 1D.
-                                En otras TF muestra "NO APLICA" según las reglas del sistema mejorado.
-                            </small>
-                        </div>
                     </div>
                 </div>
 
                 <!-- Gráfico ADX + DMI MEJORADO -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0">ADX con DMI (+D y -D)</h5>
+                        <h5 class="mb-0">ADX con DMI (+D y -D) y Cruces</h5>
                     </div>
                     <div class="card-body">
                         <div id="adx-chart" style="height: 300px;"></div>
@@ -315,6 +302,27 @@
                     </div>
                     <div class="card-body">
                         <div id="rsi-maverick-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- Gráfico Squeeze Momentum CORREGIDO -->
+                <div class="card bg-dark border-info mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-compress-alt me-2"></i>
+                            Squeeze Momentum - Histograma Mejorado
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="squeeze-chart" style="height: 300px;"></div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <strong>🟢 VERDE:</strong> Momentum positivo | 
+                                <strong>🔴 ROJO:</strong> Momentum negativo |
+                                Expansión post-compresión para señales
+                            </small>
+                        </div>
                     </div>
                 </div>
 
@@ -339,10 +347,10 @@
                     </div>
                 </div>
 
-                <!-- Gráfico Auxiliar Seleccionable MEJORADO -->
+                <!-- Gráfico Auxiliar Seleccionable -->
                 <div class="card bg-dark border-secondary">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Indicadores Operativos</h5>
+                        <h5 class="mb-0">Indicador Auxiliar</h5>
                         <select class="form-select form-select-sm bg-dark text-white w-auto" id="aux-indicator">
                             <option value="rsi">RSI Tradicional</option>
                             <option value="macd" selected>MACD</option>
@@ -358,6 +366,19 @@
 
             <!-- Panel Derecho - Resumen del Mercado -->
             <div class="col-lg-2">
+                <!-- Winrate Actual -->
+                <div class="card bg-dark border-success mb-4">
+                    <div class="card-header bg-success bg-opacity-25">
+                        <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Winrate Actual</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <div id="current-winrate">
+                            <div class="winrate-value h4 fw-bold text-success">--%</div>
+                            <small class="text-muted" id="winrate-symbol">BTC-USDT 4H</small>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Índice de Miedo y Codicia -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
@@ -402,7 +423,7 @@
                     </div>
                 </div>
 
-                <!-- Análisis de Señal MEJORADO -->
+                <!-- Análisis de Señal -->
                 <div class="card bg-dark border-info mb-4">
                     <div class="card-header bg-info bg-opacity-25">
                         <h5 class="mb-0"><i class="fas fa-analytics me-2"></i>Análisis de Señal</h5>
@@ -411,6 +432,23 @@
                         <div id="signal-analysis">
                             <div class="text-center py-3">
                                 <p class="text-muted mb-0">Esperando datos para análisis...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Condiciones Multi-Timeframe -->
+                <div class="card bg-dark border-warning mb-4">
+                    <div class="card-header bg-warning bg-opacity-25">
+                        <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Multi-Timeframe</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="multi-timeframe-analysis">
+                            <div class="text-center py-2">
+                                <div class="spinner-border spinner-border-sm text-warning" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 mb-0 small">Analizando temporalidades...</p>
                             </div>
                         </div>
                     </div>
@@ -510,7 +548,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content bg-dark">
                 <div class="modal-header">
-                    <h5 class="modal-title">Detalles de Señal - Análisis Multi-Temporalidad</h5>
+                    <h5 class="modal-title">Detalles de Señal - Análisis Completo Multi-Timeframe</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="signal-details">
@@ -559,22 +597,21 @@
                 });
         }
 
-        // Función para actualizar el winrate del sistema
+        // Función para actualizar winrate del sistema
         function updateSystemWinrate() {
-            const symbol = document.getElementById('selected-crypto').textContent;
-            const interval = document.getElementById('interval-select').value;
-            
-            fetch(`/api/win_rate?symbol=${symbol}&interval=${interval}`)
+            fetch('/api/winrate?symbol=BTC-USDT&interval=4h')
                 .then(response => response.json())
                 .then(data => {
                     const winrateElement = document.getElementById('system-winrate');
-                    if (winrateElement && data.win_rate > 0) {
-                        winrateElement.textContent = `${data.win_rate}%`;
-                        winrateElement.className = `fs-2 fw-bold ${data.win_rate >= 60 ? 'text-success' : data.win_rate >= 50 ? 'text-warning' : 'text-danger'}`;
+                    if (winrateElement && data.winrate) {
+                        winrateElement.innerHTML = `
+                            <div class="winrate-value display-4 fw-bold text-success">${data.winrate.toFixed(1)}%</div>
+                            <small class="text-muted">Performance General</small>
+                        `;
                     }
                 })
                 .catch(error => {
-                    console.error('Error actualizando winrate:', error);
+                    console.error('Error actualizando winrate del sistema:', error);
                 });
         }
 
@@ -586,48 +623,60 @@
             
             const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}`;
             window.open(url, '_blank');
+            
+            showNotification('📊 Generando reporte estratégico...', 'info');
         }
 
         // Actualizar el reloj cada segundo
         setInterval(updateBoliviaClock, 1000);
         
-        // Actualizar winrate cada 30 segundos
-        setInterval(updateSystemWinrate, 30000);
+        // Actualizar winrate cada 2 minutos
+        setInterval(updateSystemWinrate, 120000);
         
         // Inicializar el reloj y winrate al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             updateBoliviaClock();
             updateSystemWinrate();
             
-            // Inicializar tooltips de Bootstrap
+            // Configurar tooltips de Bootstrap
             const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
         });
 
-        // Actualizar estado del indicador de ballenas según la temporalidad
-        function updateWhaleIndicatorStatus() {
-            const interval = document.getElementById('interval-select').value;
-            const statusElement = document.getElementById('whale-indicator-status');
-            
-            if (interval === '12h' || interval === '1D') {
-                statusElement.textContent = 'ACTIVO';
-                statusElement.className = 'badge bg-success ms-2';
-            } else {
-                statusElement.textContent = 'NO APLICA';
-                statusElement.className = 'badge bg-secondary ms-2';
+        // Mostrar notificación
+        function showNotification(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) {
+                const container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = 'toast-container position-fixed top-0 end-0 p-3';
+                document.body.appendChild(container);
             }
+            
+            const toastId = 'toast-' + Date.now();
+            const toastHTML = `
+                <div id="${toastId}" class="toast align-items-center text-bg-${type} border-0" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('toast-container').innerHTML += toastHTML;
+            
+            const toastElement = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastElement);
+            toast.show();
+            
+            toastElement.addEventListener('hidden.bs.toast', function() {
+                this.remove();
+            });
         }
-
-        // Escuchar cambios en la temporalidad
-        document.getElementById('interval-select').addEventListener('change', function() {
-            updateWhaleIndicatorStatus();
-            updateSystemWinrate();
-        });
-
-        // Inicializar estado del indicador de ballenas
-        updateWhaleIndicatorStatus();
     </script>
 </body>
 </html>
