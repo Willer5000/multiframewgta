@@ -248,12 +248,6 @@ h6 { font-size: 0.75rem; }
 }
 
 /* Cards de Trading Especializadas */
-.trading-card {
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius);
-    margin-bottom: var(--spacing-md);
-}
-
 .trading-card.long {
     border-left: 4px solid var(--bs-success);
     background: linear-gradient(90deg, rgba(16, 185, 129, 0.05) 0%, transparent 100%);
@@ -1564,66 +1558,6 @@ h6 { font-size: 0.75rem; }
     .chart-container {
         border-width: 0.5px;
     }
-}
-
-/* Condiciones Obligatorias */
-.condition-item {
-    padding: 0.75rem;
-    border-radius: var(--border-radius-sm);
-    margin-bottom: 0.5rem;
-    transition: var(--transition);
-}
-
-.condition-item.met {
-    background: rgba(25, 135, 84, 0.1);
-    border-left: 3px solid #198754;
-}
-
-.condition-item.not-met {
-    background: rgba(220, 53, 69, 0.1);
-    border-left: 3px solid #dc3545;
-}
-
-/* Signal Analysis Card */
-.signal-analysis-card {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-md);
-}
-
-.analysis-header {
-    border-bottom: 1px solid var(--bs-border-color);
-    padding-bottom: var(--spacing-md);
-}
-
-.trading-levels {
-    border-bottom: 1px solid var(--bs-border-color);
-    padding-bottom: var(--spacing-md);
-}
-
-.level-item {
-    padding: 0.3rem 0;
-}
-
-.conditions-met {
-    padding-top: var(--spacing-md);
-}
-
-.condition-met {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--spacing-sm);
-    margin-bottom: 0.5rem;
-}
-
-/* Price Display */
-.price-display, .score-display {
-    text-align: center;
-}
-
-.market-stats {
-    border-top: 1px solid var(--bs-border-color);
-    padding-top: var(--spacing-md);
 }
 
 /* Final del CSS */
