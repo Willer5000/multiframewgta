@@ -100,7 +100,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">ADX Mínimo</label>
-                            <input type="number" class="form-control bg-dark text-white" id="adx-threshold" min="5" max="95" value="25">
+                            <input type="number" class="form-control bg-dark text-white" id="adx-threshold" min="5" max="95" value="20">
                         </div>
 
                         <div class="mb-3">
@@ -110,7 +110,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">RSI Length</label>
-                            <input type="number" class="form-control bg-dark text-white" id="rsi-length" min="10" max="50" value="14">
+                            <input type="number" class="form-control bg-dark text-white" id="rsi-length" min="10" max="50" value="20">
                         </div>
 
                         <div class="mb-3">
@@ -201,19 +201,21 @@
                     </div>
                 </div>
 
-                <!-- WINRATE Y REPORTES -->
-                <div class="card bg-dark border-success mb-4">
-                    <div class="card-header bg-success bg-opacity-25">
-                        <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Performance</h6>
+                <!-- WINRATE Y ESTADÍSTICAS -->
+                <div class="card bg-dark border-info mb-4">
+                    <div class="card-header bg-info bg-opacity-25">
+                        <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Estadísticas de Winrate</h6>
                     </div>
                     <div class="card-body text-center">
                         <div id="winrate-display">
-                            <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                <span class="visually-hidden">Calculando...</span>
+                            <div class="text-center py-2">
+                                <div class="spinner-border spinner-border-sm text-info" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2 mb-0 small">Calculando winrate...</p>
                             </div>
-                            <p class="mt-2 mb-1 small">Calculando winrate...</p>
                         </div>
-                        <button class="btn btn-sm btn-outline-success w-100 mt-2" onclick="downloadStrategicReport()">
+                        <button class="btn btn-sm btn-outline-info w-100 mt-2" onclick="downloadStrategicReport()">
                             <i class="fas fa-download me-1"></i>Reporte Estratégico
                         </button>
                     </div>
@@ -231,7 +233,7 @@
                             </div>
                             <h6>Willer Gianni Torrico Arispe</h6>
                             <p class="small text-muted">Especialista en Análisis Multi-Temporalidad</p>
-                            <p class="small text-muted">© 2025 MULTI-TIMEFRAME CRYPTO WGTA PRO</p>
+                            <p class="small text-muted">© 2025 MULTI-TIMEFRAME CRYPTO PRO</p>
                             <a href="https://github.com/Willer5000" target="_blank" class="btn btn-outline-light btn-sm">
                                 <i class="fab fa-github me-1"></i>GitHub
                             </a>
@@ -239,7 +241,7 @@
                         <div class="mt-3">
                             <p class="small">
                                 <strong>Experiencia:</strong> 15+ años en trading algorítmico y análisis multi-temporalidad.
-                                Especializado en estrategias institucionales y seguimiento de smart money.
+                                Especializado en estrategias institucionales y gestión de riesgo.
                             </p>
                         </div>
                     </div>
@@ -277,7 +279,6 @@
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
-                        <small class="text-warning">Señal obligatoria solo en 12H y 1D</small>
                     </div>
                     <div class="card-body">
                         <div id="whale-chart" style="height: 300px;"></div>
@@ -287,7 +288,7 @@
                 <!-- Gráfico ADX + DMI MEJORADO -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0">ADX con DMI (+D y -D)</h5>
+                        <h5 class="mb-0">ADX con DMI (+D y -D) y Cruces</h5>
                     </div>
                     <div class="card-body">
                         <div id="adx-chart" style="height: 300px;"></div>
@@ -333,7 +334,7 @@
                             <option value="rsi">RSI Tradicional</option>
                             <option value="macd" selected>MACD</option>
                             <option value="squeeze">Squeeze Momentum</option>
-                            <option value="stoch_rsi">RSI Estocástico</option>
+                            <!-- Eliminada opción btc_dominance -->
                         </select>
                     </div>
                     <div class="card-body">
@@ -402,7 +403,7 @@
                     </div>
                 </div>
 
-                <!-- Alertas de Scalping -->
+                <!-- Alertas de Trading -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header bg-warning bg-opacity-25">
                         <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Alertas de Entrada</h5>
@@ -524,7 +525,6 @@
                 })
                 .catch(error => {
                     console.error('Error actualizando reloj:', error);
-                    // Fallback a JavaScript local
                     const now = new Date();
                     document.getElementById('bolivia-clock').textContent = now.toLocaleTimeString('es-BO');
                     document.getElementById('bolivia-date').textContent = now.toLocaleDateString('es-BO');
@@ -532,39 +532,26 @@
         }
 
         // Función para actualizar winrate
-        function updateWinRate() {
-            const symbol = document.getElementById('selected-crypto').textContent;
-            const interval = document.getElementById('interval-select').value;
-            
+        function updateWinrate(symbol, interval) {
             fetch(`/api/win_rate?symbol=${symbol}&interval=${interval}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Error en la respuesta del servidor');
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     const winrateDisplay = document.getElementById('winrate-display');
-                    if (data.win_rate > 0) {
+                    if (winrateDisplay) {
                         winrateDisplay.innerHTML = `
-                            <h3 class="text-success mb-1">${data.win_rate}%</h3>
-                            <p class="small text-muted mb-0">
-                                ${data.successful_signals}/${data.total_signals} señales exitosas
-                            </p>
-                        `;
-                    } else {
-                        winrateDisplay.innerHTML = `
-                            <h3 class="text-warning mb-1">--%</h3>
-                            <p class="small text-muted mb-0">Datos insuficientes</p>
+                            <div class="winrate-main">
+                                <div class="winrate-value ${data.win_rate >= 60 ? 'text-success' : data.win_rate >= 50 ? 'text-warning' : 'text-danger'}">
+                                    ${data.win_rate}%
+                                </div>
+                                <div class="winrate-stats small text-muted">
+                                    ${data.successful_signals}/${data.total_signals} señales exitosas
+                                </div>
+                            </div>
                         `;
                     }
                 })
                 .catch(error => {
                     console.error('Error actualizando winrate:', error);
-                    document.getElementById('winrate-display').innerHTML = `
-                        <h3 class="text-danger mb-1">Error</h3>
-                        <p class="small text-muted mb-0">No disponible</p>
-                    `;
                 });
         }
 
@@ -572,23 +559,37 @@
         function downloadStrategicReport() {
             const symbol = document.getElementById('selected-crypto').textContent;
             const interval = document.getElementById('interval-select').value;
-            const leverage = document.getElementById('leverage').value;
-            
-            const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}&type=strategic`;
+            const url = `/api/generate_report?symbol=${symbol}&interval=${interval}`;
             window.open(url, '_blank');
         }
 
         // Actualizar el reloj cada segundo
         setInterval(updateBoliviaClock, 1000);
         
-        // Actualizar winrate cada 30 segundos
-        setInterval(updateWinRate, 30000);
-        
-        // Inicializar el reloj y winrate al cargar la página
+        // Inicializar el reloj al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             updateBoliviaClock();
-            updateWinRate();
+            
+            // Actualizar winrate inicial
+            const symbol = document.getElementById('selected-crypto').textContent;
+            const interval = document.getElementById('interval-select').value;
+            updateWinrate(symbol, interval);
         });
+
+        // Actualizar winrate cuando cambia la crypto o temporalidad
+        document.getElementById('interval-select').addEventListener('change', function() {
+            const symbol = document.getElementById('selected-crypto').textContent;
+            const interval = this.value;
+            updateWinrate(symbol, interval);
+        });
+
+        // Sobrescribir la función selectCrypto para incluir actualización de winrate
+        const originalSelectCrypto = window.selectCrypto;
+        window.selectCrypto = function(symbol) {
+            originalSelectCrypto(symbol);
+            const interval = document.getElementById('interval-select').value;
+            updateWinrate(symbol, interval);
+        };
     </script>
 </body>
 </html>
