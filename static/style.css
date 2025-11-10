@@ -26,17 +26,11 @@ body {
     padding: 0;
 }
 
-/* Layout optimizado para rendimiento */
-.container-fluid {
-    padding-left: 10px;
-    padding-right: 10px;
-}
-
 .card {
     background-color: var(--bs-dark);
     border: 1px solid var(--bs-border-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     border-radius: 8px;
     margin-bottom: 1rem;
 }
@@ -52,7 +46,6 @@ body {
     border-radius: 8px 8px 0 0 !important;
 }
 
-/* Tablas optimizadas */
 .table {
     --bs-table-color: #ffffff;
     --bs-table-bg: transparent;
@@ -61,10 +54,9 @@ body {
 }
 
 .table-hover tbody tr:hover {
-    --bs-table-accent-bg: rgba(255, 255, 255, 0.05);
+    --bs-table-accent-bg: rgba(255, 255, 255, 0.075);
 }
 
-/* Formularios optimizados */
 .form-control, .form-select {
     background-color: var(--bs-dark);
     border-color: var(--bs-border-color);
@@ -81,7 +73,6 @@ body {
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
-/* Botones optimizados */
 .btn {
     border-radius: 6px;
     font-weight: 500;
@@ -106,7 +97,14 @@ body {
     background: linear-gradient(135deg, #dc3545, #b02a37);
 }
 
-/* Navbar optimizado */
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #0dcaf0, #0bacd0);
+}
+
 .navbar-brand {
     font-weight: 700;
     font-size: 1.1rem;
@@ -121,7 +119,6 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Reloj Digital optimizado */
 .digital-clock-container {
     font-size: 0.8rem;
     font-weight: 500;
@@ -139,35 +136,63 @@ body {
     color: #ccc;
 }
 
-/* Gráficos optimizados */
-.js-plotly-plot .plotly {
-    border-radius: 8px;
+.drawing-tool.active {
+    background: var(--bs-warning);
+    color: #000;
 }
 
-/* Indicadores informativos */
-.indicator-controls {
-    background: rgba(255, 255, 255, 0.03);
+.form-switch .form-check-input:checked {
+    background-color: var(--bs-success);
+    border-color: var(--bs-success);
+}
+
+.scalping-alert {
+    border-left: 3px solid var(--bs-warning);
+    background: rgba(255, 193, 7, 0.05);
+}
+
+.fear-greed-progress .progress {
+    height: 20px;
+    border-radius: 10px;
+}
+
+.toast {
+    background: var(--bs-dark);
+    border: 1px solid var(--bs-border-color);
     border-radius: 6px;
-    padding: 0.75rem;
-    margin-bottom: 1rem;
+    font-size: 0.875rem;
 }
 
-.form-switch {
-    padding-left: 2.5em;
+.hover-row:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    cursor: pointer;
 }
 
-.form-switch .form-check-input {
-    width: 2em;
-    margin-left: -2.5em;
+::-webkit-scrollbar {
+    width: 6px;
 }
 
-/* Badges optimizados */
-.badge {
-    font-size: 0.7em;
-    font-weight: 600;
+::-webkit-scrollbar-track {
+    background: var(--bs-darker);
 }
 
-/* Progress bars optimizados */
+::-webkit-scrollbar-thumb {
+    background: var(--bs-border-color);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.spinner-border {
+    animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+    to { transform: rotate(360deg); }
+}
+
 .progress {
     background-color: var(--bs-border-color);
     border-radius: 6px;
@@ -178,11 +203,36 @@ body {
     transition: width 0.3s ease;
 }
 
-/* Alertas optimizadas */
+.badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.modal-content {
+    background-color: var(--bs-dark);
+    border: 1px solid var(--bs-border-color);
+}
+
+.dropdown-menu {
+    background-color: var(--bs-dark);
+    border: 1px solid var(--bs-border-color);
+    font-size: 0.875rem;
+}
+
+.dropdown-item {
+    color: var(--bs-body-color);
+    font-size: 0.8rem;
+    padding: 0.4rem 0.75rem;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
 .alert {
     border: 1px solid transparent;
     border-radius: 6px;
-    padding: 0.75rem 1rem;
+    padding: 0.75rem;
     font-size: 0.875rem;
 }
 
@@ -210,98 +260,66 @@ body {
     color: #79dfc1;
 }
 
-/* Dropdown optimizado */
-.dropdown-menu {
-    background-color: var(--bs-dark);
-    border: 1px solid var(--bs-border-color);
-    font-size: 0.875rem;
+.signal-analysis-enhanced {
+    border-radius: 6px;
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.8rem;
 }
 
-.dropdown-item {
-    color: var(--bs-body-color);
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
+.signal-long-enhanced {
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.1), rgba(25, 135, 84, 0.05));
+    border: 1px solid rgba(25, 135, 84, 0.3);
 }
 
-.dropdown-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--bs-body-color);
+.signal-short-enhanced {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05));
+    border: 1px solid rgba(220, 53, 69, 0.3);
 }
 
-/* Herramientas de dibujo optimizadas */
-.drawing-tools {
+.signal-neutral-enhanced {
+    background: linear-gradient(135deg, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.05));
+    border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+.no-trade-alert {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.05));
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    border-radius: 6px;
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+    font-size: 0.75rem;
+}
+
+.trend-strength-legend {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 6px;
     padding: 0.5rem;
-    margin-bottom: 1rem;
+    margin-top: 0.25rem;
+    font-size: 0.7rem;
 }
 
-.drawing-tool {
-    transition: all 0.2s ease;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-}
-
-.drawing-tool.active {
-    background: var(--bs-warning);
-    color: #000;
-}
-
-/* Spinners optimizados */
-.spinner-border {
-    width: 1rem;
-    height: 1rem;
-    border-width: 0.15em;
-}
-
-.spinner-border-sm {
-    width: 0.8rem;
-    height: 0.8rem;
-    border-width: 0.1em;
-}
-
-/* Scrollbar personalizado optimizado */
-::-webkit-scrollbar {
-    width: 6px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--bs-darker);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--bs-border-color);
-    border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-/* Utilidades de texto optimizadas */
-.text-small {
-    font-size: 0.875rem;
-}
-
-.text-xsmall {
-    font-size: 0.75rem;
-}
-
-/* Estados de carga optimizados */
-.loading-state {
+.trend-strength-item {
     display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 2rem;
+    margin-bottom: 0.1rem;
+    font-size: 0.7rem;
 }
 
-/* Efectos hover optimizados */
-.hover-row:hover {
-    background: rgba(255, 255, 255, 0.05) !important;
-    cursor: pointer;
+.trend-strength-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 0.4rem;
 }
 
-/* Responsive design optimizado */
+.trend-strength-strong-up { background-color: #00C853; }
+.trend-strength-weak-up { background-color: #FFC107; }
+.trend-strength-strong-down { background-color: #FF1744; }
+.trend-strength-weak-down { background-color: #FF9800; }
+.trend-strength-neutral { background-color: #9E9E9E; }
+.trend-strength-no-trade { background-color: #F44336; }
+
 @media (max-width: 768px) {
     .container-fluid {
         padding-left: 5px;
@@ -313,78 +331,48 @@ body {
     }
     
     .table-responsive {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
     }
     
-    .navbar-brand {
-        font-size: 1rem;
+    .btn-group .btn {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.4rem;
     }
     
     .digital-clock-container {
         font-size: 0.7rem;
     }
     
+    .navbar-brand {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .card-header h5 {
+        font-size: 0.9rem;
+    }
+    
     .btn {
         font-size: 0.8rem;
-        padding: 0.375rem 0.75rem;
+        padding: 0.3rem 0.6rem;
     }
     
     .form-control, .form-select {
         font-size: 0.8rem;
     }
-}
-
-@media (max-width: 576px) {
-    body {
-        font-size: 0.875rem;
-    }
-    
-    .card-header h5, .card-header h6 {
-        font-size: 0.9rem;
-    }
-    
-    .btn-group .btn {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
-    }
-    
-    .digital-clock-container {
-        font-size: 0.65rem;
-    }
     
     .alert {
-        padding: 0.5rem 0.75rem;
+        padding: 0.5rem;
         font-size: 0.8rem;
     }
 }
 
-/* Optimizaciones de rendimiento */
-* {
-    box-sizing: border-box;
-}
+.risk-low { color: #28a745 !important; }
+.risk-medium { color: #ffc107 !important; }
+.risk-high { color: #dc3545 !important; }
+.risk-memecoin { color: #e83e8c !important; }
 
-img {
-    max-width: 100%;
-    height: auto;
-}
-
-/* Reduce repaints y reflows */
-.card, .btn, .form-control {
-    will-change: transform;
-}
-
-/* Mejora la rendering de textos */
-body {
-    text-rendering: optimizeSpeed;
-    -webkit-font-smoothing: antialiased;
-}
-
-/* Optimizaciones para gráficos */
-.plot-container {
-    will-change: transform;
-}
-
-/* Estados de error optimizados */
 .error-state {
     background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05));
     border: 1px solid rgba(220, 53, 69, 0.3);
@@ -393,7 +381,6 @@ body {
     text-align: center;
 }
 
-/* Estados de éxito optimizados */
 .success-state {
     background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.05));
     border: 1px solid rgba(40, 167, 69, 0.3);
@@ -402,39 +389,21 @@ body {
     text-align: center;
 }
 
-/* Clases utilitarias para márgenes y paddings optimizados */
-.mb-0 { margin-bottom: 0 !important; }
-.mb-1 { margin-bottom: 0.25rem !important; }
-.mb-2 { margin-bottom: 0.5rem !important; }
-.mb-3 { margin-bottom: 1rem !important; }
-
-.mt-0 { margin-top: 0 !important; }
-.mt-1 { margin-top: 0.25rem !important; }
-.mt-2 { margin-top: 0.5rem !important; }
-.mt-3 { margin-top: 1rem !important; }
-
-.p-0 { padding: 0 !important; }
-.p-1 { padding: 0.25rem !important; }
-.p-2 { padding: 0.5rem !important; }
-.p-3 { padding: 1rem !important; }
-
-/* Clases para colores de riesgo */
-.risk-low { color: #28a745 !important; }
-.risk-medium { color: #ffc107 !important; }
-.risk-high { color: #dc3545 !important; }
-.risk-memecoin { color: #e83e8c !important; }
-
-/* Animaciones optimizadas para rendimiento */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.price-small {
+    font-size: 0.8rem;
+    font-family: 'Courier New', monospace;
 }
 
-.fade-in {
-    animation: fadeIn 0.3s ease-in;
+.calendar-active {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.2), rgba(40, 167, 69, 0.1));
+    border-left: 3px solid #28a745;
 }
 
-/* Mejoras de accesibilidad */
+.calendar-inactive {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 193, 7, 0.1));
+    border-left: 3px solid #ffc107;
+}
+
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;
@@ -443,32 +412,86 @@ body {
     }
 }
 
-/* Soporte para modo alto contraste */
-@media (prefers-contrast: high) {
-    :root {
-        --bs-border-color: #ffffff;
-        --bs-body-color: #ffffff;
-        --bs-body-bg: #000000;
+.plot-container {
+    will-change: transform;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 1.5rem;
+    height: 1.5rem;
+    border: 0.2em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+.small-text {
+    font-size: 0.75rem;
+}
+
+.x-small-text {
+    font-size: 0.7rem;
+}
+
+.memecoin-badge {
+    background: linear-gradient(135deg, #9C27B0, #E91E63) !important;
+}
+
+/* Optimizaciones específicas para Plotly */
+.js-plotly-plot .plotly .modebar {
+    background: rgba(0, 0, 0, 0.8) !important;
+}
+
+.js-plotly-plot .plotly .modebar-btn {
+    color: #fff !important;
+}
+
+.js-plotly-plot .plotly .hovertext {
+    background: rgba(0, 0, 0, 0.9) !important;
+    border: 1px solid #333 !important;
+    border-radius: 4px !important;
+}
+
+/* Efectos de carga optimizados */
+.skeleton-loading {
+    background: linear-gradient(90deg, #333 25%, #444 50%, #333 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Mejoras de rendimiento para móviles */
+@media (hover: none) {
+    .card:hover {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transform: none;
     }
     
-    .card {
-        border-width: 2px;
+    .btn:hover {
+        transform: none;
     }
 }
 
 /* Impresión optimizada */
 @media print {
-    .navbar, .btn, .drawing-tools, .indicator-controls {
+    .navbar, .btn, .drawing-tools, .indicator-controls, .toast-container {
         display: none !important;
     }
     
     .card {
         border: 1px solid #000 !important;
         box-shadow: none !important;
+        break-inside: avoid;
     }
     
     body {
         background: white !important;
         color: black !important;
+        font-size: 12pt;
     }
 }
