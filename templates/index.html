@@ -52,24 +52,6 @@
         <div class="row">
             <!-- Panel de Control -->
             <div class="col-lg-2">
-                <!-- Panel Winrate -->
-                <div class="card bg-dark border-warning mb-4">
-                    <div class="card-header bg-warning bg-opacity-25">
-                        <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Winrate del Sistema</h6>
-                    </div>
-                    <div class="card-body text-center">
-                        <div id="winrate-display">
-                            <div class="spinner-border spinner-border-sm text-warning" role="status">
-                                <span class="visually-hidden">Calculando...</span>
-                            </div>
-                            <p class="mt-2 mb-1 small">Calculando winrate...</p>
-                        </div>
-                        <button class="btn btn-sm btn-outline-warning w-100 mt-2" onclick="downloadStrategicReport()">
-                            <i class="fas fa-download me-1"></i>Reporte Estratégico
-                        </button>
-                    </div>
-                </div>
-
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h6 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Configuración</h6>
@@ -118,7 +100,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">ADX Mínimo</label>
-                            <input type="number" class="form-control bg-dark text-white" id="adx-threshold" min="5" max="95" value="20">
+                            <input type="number" class="form-control bg-dark text-white" id="adx-threshold" min="5" max="95" value="25">
                         </div>
 
                         <div class="mb-3">
@@ -128,7 +110,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">RSI Length</label>
-                            <input type="number" class="form-control bg-dark text-white" id="rsi-length" min="10" max="50" value="20">
+                            <input type="number" class="form-control bg-dark text-white" id="rsi-length" min="10" max="50" value="14">
                         </div>
 
                         <div class="mb-3">
@@ -219,6 +201,24 @@
                     </div>
                 </div>
 
+                <!-- NUEVO: Panel de WinRate -->
+                <div class="card bg-dark border-success mb-4">
+                    <div class="card-header bg-success bg-opacity-25">
+                        <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Performance del Sistema</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <div id="win-rate-display">
+                            <div class="spinner-border spinner-border-sm text-success" role="status">
+                                <span class="visually-hidden">Calculando...</span>
+                            </div>
+                            <p class="mt-2 mb-1 small">Calculando winrate...</p>
+                        </div>
+                        <button class="btn btn-sm btn-outline-success w-100 mt-2" onclick="downloadStrategicReport()">
+                            <i class="fas fa-download me-1"></i>Reporte Estratégico
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Información del Autor -->
                 <div class="card bg-dark border-secondary">
                     <div class="card-header">
@@ -273,20 +273,30 @@
                     </div>
                 </div>
 
-                <!-- Gráfico de Ballenas MEJORADO -->
+                <!-- Gráfico de Ballenas CORREGIDO -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
+                        <h5 class="mb-0">
+                            <i class="fas fa-whale me-2"></i>
+                            Indicador Ballenas Compradoras/Vendedoras
+                            <span class="badge bg-info ms-2" id="whale-indicator-status">Visible en todas las TF</span>
+                        </h5>
                     </div>
                     <div class="card-body">
                         <div id="whale-chart" style="height: 300px;"></div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <strong>Nota:</strong> Indicador visible en todas las temporalidades. Señal obligatoria solo en 12H y 1D.
+                            </small>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Gráfico ADX + DMI MEJORADO -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0">ADX con DMI (+D y -D) y Cruces</h5>
+                        <h5 class="mb-0">ADX con DMI (+D y -D)</h5>
                     </div>
                     <div class="card-body">
                         <div id="adx-chart" style="height: 300px;"></div>
@@ -401,6 +411,23 @@
                     </div>
                 </div>
 
+                <!-- NUEVO: Análisis Multi-Temporalidad -->
+                <div class="card bg-dark border-teal mb-4">
+                    <div class="card-header bg-teal bg-opacity-25">
+                        <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Análisis Multi-TF</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="multi-tf-analysis">
+                            <div class="text-center py-3">
+                                <div class="spinner-border spinner-border-sm text-teal" role="status">
+                                    <span class="visually-hidden">Analizando...</span>
+                                </div>
+                                <p class="text-muted mb-0">Verificando temporalidades...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Alertas de Scalping -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header bg-warning bg-opacity-25">
@@ -448,7 +475,7 @@
                                         <th>#</th>
                                         <th>Crypto</th>
                                         <th>Score</th>
-                                        <th>Entrada</th>
+                                        <th>WinRate</th>
                                     </tr>
                                 </thead>
                                 <tbody id="long-table">
@@ -474,7 +501,7 @@
                                         <th>#</th>
                                         <th>Crypto</th>
                                         <th>Score</th>
-                                        <th>Entrada</th>
+                                        <th>WinRate</th>
                                     </tr>
                                 </thead>
                                 <tbody id="short-table">
@@ -495,7 +522,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content bg-dark">
                 <div class="modal-header">
-                    <h5 class="modal-title">Detalles de Señal - Análisis Completo</h5>
+                    <h5 class="modal-title">Detalles de Señal - Análisis Multi-Temporalidad</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="signal-details">
@@ -520,6 +547,20 @@
                 .then(data => {
                     document.getElementById('bolivia-clock').textContent = data.time;
                     document.getElementById('bolivia-date').textContent = data.date;
+                    
+                    // Actualizar información del calendario
+                    const calendarInfo = document.getElementById('calendar-info');
+                    if (calendarInfo) {
+                        const scalpingStatus = data.is_scalping_time ? 
+                            '<span class="text-success">🟢 ACTIVO</span>' : 
+                            '<span class="text-danger">🔴 INACTIVO</span>';
+                        
+                        calendarInfo.innerHTML = `
+                            <small class="text-muted">
+                                📅 ${data.date} | Scalping 15m/30m: ${scalpingStatus} | Horario: 4am-4pm L-V
+                            </small>
+                        `;
+                    }
                 })
                 .catch(error => {
                     console.error('Error actualizando reloj:', error);
