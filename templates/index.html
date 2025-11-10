@@ -52,17 +52,19 @@
         <div class="row">
             <!-- Panel de Control -->
             <div class="col-lg-2">
-                <!-- Winrate del Sistema -->
-                <div class="card bg-dark border-success mb-4">
-                    <div class="card-header bg-success bg-opacity-25">
+                <!-- Panel Winrate -->
+                <div class="card bg-dark border-warning mb-4">
+                    <div class="card-header bg-warning bg-opacity-25">
                         <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Winrate del Sistema</h6>
                     </div>
                     <div class="card-body text-center">
-                        <div id="system-winrate" class="mb-3">
-                            <div class="winrate-value display-4 fw-bold text-success">--%</div>
-                            <small class="text-muted">Performance General</small>
+                        <div id="winrate-display">
+                            <div class="spinner-border spinner-border-sm text-warning" role="status">
+                                <span class="visually-hidden">Calculando...</span>
+                            </div>
+                            <p class="mt-2 mb-1 small">Calculando winrate...</p>
                         </div>
-                        <button class="btn btn-sm btn-outline-success w-100" onclick="downloadStrategicReport()">
+                        <button class="btn btn-sm btn-outline-warning w-100 mt-2" onclick="downloadStrategicReport()">
                             <i class="fas fa-download me-1"></i>Reporte Estratégico
                         </button>
                     </div>
@@ -116,7 +118,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">ADX Mínimo</label>
-                            <input type="number" class="form-control bg-dark text-white" id="adx-threshold" min="5" max="95" value="25">
+                            <input type="number" class="form-control bg-dark text-white" id="adx-threshold" min="5" max="95" value="20">
                         </div>
 
                         <div class="mb-3">
@@ -236,8 +238,8 @@
                         </div>
                         <div class="mt-3">
                             <p class="small">
-                                <strong>Experiencia:</strong> 15+ años en trading institucional y análisis multi-temporalidad.
-                                Especializado en estrategias de smart money y seguimiento de ballenas.
+                                <strong>Experiencia:</strong> 10+ años en análisis de datos, GIS y recursos hídricos.
+                                Certificado IBM Data Scientist con experiencia en organizaciones internacionales.
                             </p>
                         </div>
                     </div>
@@ -274,11 +276,7 @@
                 <!-- Gráfico de Ballenas MEJORADO -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-whale me-2"></i>
-                            Indicador Ballenas Compradoras/Vendedoras
-                            <small class="text-warning">(Señal obligatoria solo en 12H/1D)</small>
-                        </h5>
+                        <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
                     </div>
                     <div class="card-body">
                         <div id="whale-chart" style="height: 300px;"></div>
@@ -302,27 +300,6 @@
                     </div>
                     <div class="card-body">
                         <div id="rsi-maverick-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Gráfico Squeeze Momentum CORREGIDO -->
-                <div class="card bg-dark border-info mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-compress-alt me-2"></i>
-                            Squeeze Momentum - Histograma Mejorado
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="squeeze-chart" style="height: 300px;"></div>
-                        <div class="mt-2">
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Momentum positivo | 
-                                <strong>🔴 ROJO:</strong> Momentum negativo |
-                                Expansión post-compresión para señales
-                            </small>
-                        </div>
                     </div>
                 </div>
 
@@ -355,7 +332,7 @@
                             <option value="rsi">RSI Tradicional</option>
                             <option value="macd" selected>MACD</option>
                             <option value="squeeze">Squeeze Momentum</option>
-                            <option value="moving_averages">Medias Móviles</option>
+                            <option value="multi_tf">Análisis Multi-TF</option>
                         </select>
                     </div>
                     <div class="card-body">
@@ -366,19 +343,6 @@
 
             <!-- Panel Derecho - Resumen del Mercado -->
             <div class="col-lg-2">
-                <!-- Winrate Actual -->
-                <div class="card bg-dark border-success mb-4">
-                    <div class="card-header bg-success bg-opacity-25">
-                        <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Winrate Actual</h6>
-                    </div>
-                    <div class="card-body text-center">
-                        <div id="current-winrate">
-                            <div class="winrate-value h4 fw-bold text-success">--%</div>
-                            <small class="text-muted" id="winrate-symbol">BTC-USDT 4H</small>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Índice de Miedo y Codicia -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
@@ -437,24 +401,7 @@
                     </div>
                 </div>
 
-                <!-- Condiciones Multi-Timeframe -->
-                <div class="card bg-dark border-warning mb-4">
-                    <div class="card-header bg-warning bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Multi-Timeframe</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="multi-timeframe-analysis">
-                            <div class="text-center py-2">
-                                <div class="spinner-border spinner-border-sm text-warning" role="status">
-                                    <span class="visually-hidden">Cargando...</span>
-                                </div>
-                                <p class="mt-2 mb-0 small">Analizando temporalidades...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Alertas de Entrada -->
+                <!-- Alertas de Scalping -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header bg-warning bg-opacity-25">
                         <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Alertas de Entrada</h5>
@@ -548,7 +495,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content bg-dark">
                 <div class="modal-header">
-                    <h5 class="modal-title">Detalles de Señal - Análisis Completo Multi-Timeframe</h5>
+                    <h5 class="modal-title">Detalles de Señal - Análisis Completo</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="signal-details">
@@ -573,20 +520,6 @@
                 .then(data => {
                     document.getElementById('bolivia-clock').textContent = data.time;
                     document.getElementById('bolivia-date').textContent = data.date;
-                    
-                    // Actualizar información del calendario
-                    const calendarInfo = document.getElementById('calendar-info');
-                    if (calendarInfo) {
-                        const scalpingStatus = data.is_scalping_time ? 
-                            '<span class="text-success">🟢 ACTIVO</span>' : 
-                            '<span class="text-danger">🔴 INACTIVO</span>';
-                        
-                        calendarInfo.innerHTML = `
-                            <small class="text-muted">
-                                📅 ${data.day_of_week} | Scalping 15m/30m: ${scalpingStatus} | Horario: 4am-4pm L-V
-                            </small>
-                        `;
-                    }
                 })
                 .catch(error => {
                     console.error('Error actualizando reloj:', error);
@@ -597,86 +530,13 @@
                 });
         }
 
-        // Función para actualizar winrate del sistema
-        function updateSystemWinrate() {
-            fetch('/api/winrate?symbol=BTC-USDT&interval=4h')
-                .then(response => response.json())
-                .then(data => {
-                    const winrateElement = document.getElementById('system-winrate');
-                    if (winrateElement && data.winrate) {
-                        winrateElement.innerHTML = `
-                            <div class="winrate-value display-4 fw-bold text-success">${data.winrate.toFixed(1)}%</div>
-                            <small class="text-muted">Performance General</small>
-                        `;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error actualizando winrate del sistema:', error);
-                });
-        }
-
-        // Función para descargar reporte estratégico
-        function downloadStrategicReport() {
-            const symbol = document.getElementById('selected-crypto').textContent;
-            const interval = document.getElementById('interval-select').value;
-            const leverage = document.getElementById('leverage').value;
-            
-            const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}`;
-            window.open(url, '_blank');
-            
-            showNotification('📊 Generando reporte estratégico...', 'info');
-        }
-
         // Actualizar el reloj cada segundo
         setInterval(updateBoliviaClock, 1000);
         
-        // Actualizar winrate cada 2 minutos
-        setInterval(updateSystemWinrate, 120000);
-        
-        // Inicializar el reloj y winrate al cargar la página
+        // Inicializar el reloj al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             updateBoliviaClock();
-            updateSystemWinrate();
-            
-            // Configurar tooltips de Bootstrap
-            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-            });
         });
-
-        // Mostrar notificación
-        function showNotification(message, type = 'info') {
-            const toastContainer = document.getElementById('toast-container');
-            if (!toastContainer) {
-                const container = document.createElement('div');
-                container.id = 'toast-container';
-                container.className = 'toast-container position-fixed top-0 end-0 p-3';
-                document.body.appendChild(container);
-            }
-            
-            const toastId = 'toast-' + Date.now();
-            const toastHTML = `
-                <div id="${toastId}" class="toast align-items-center text-bg-${type} border-0" role="alert">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            ${message}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('toast-container').innerHTML += toastHTML;
-            
-            const toastElement = document.getElementById(toastId);
-            const toast = new bootstrap.Toast(toastElement);
-            toast.show();
-            
-            toastElement.addEventListener('hidden.bs.toast', function() {
-                this.remove();
-            });
-        }
     </script>
 </body>
 </html>
