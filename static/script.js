@@ -5,8 +5,9 @@ let currentWhaleChart = null;
 let currentAdxChart = null;
 let currentRsiComparisonChart = null;
 let currentMacdChart = null;
-let currentTrendStrengthChart = null;
+let currentSqueezeChart = null;
 let currentAuxChart = null;
+let currentTrendStrengthChart = null;
 let currentSymbol = 'BTC-USDT';
 let currentData = null;
 let allCryptos = [];
@@ -26,7 +27,8 @@ function initializeApp() {
     loadCryptoRiskClassification();
     loadMarketIndicators();
     updateCalendarInfo();
-    updateSystemWinrate();
+    updateBoliviaClock();
+    updateWinrate();
 }
 
 function setupEventListeners() {
@@ -52,7 +54,6 @@ function setupEventListeners() {
 }
 
 function updateCalendarInfo() {
-    // Actualizar información del calendario y horario de scalping
     fetch('/api/bolivia_time')
         .then(response => response.json())
         .then(data => {
@@ -74,26 +75,6 @@ function updateCalendarInfo() {
         });
 }
 
-function updateSystemWinrate() {
-    fetch('/api/winrate?symbol=BTC-USDT&interval=4h')
-        .then(response => response.json())
-        .then(data => {
-            const winrateElement = document.querySelector('.winrate-value');
-            const winrateLabel = document.querySelector('.winrate-label');
-            
-            if (data.winrate && data.winrate > 0) {
-                winrateElement.textContent = `${data.winrate.toFixed(1)}%`;
-                winrateElement.className = 'winrate-value display-4 fw-bold ' + 
-                    (data.winrate >= 70 ? 'text-success' : 
-                     data.winrate >= 60 ? 'text-warning' : 'text-danger');
-                winrateLabel.textContent = `Performance Histórica (${data.interval})`;
-            }
-        })
-        .catch(error => {
-            console.error('Error actualizando winrate:', error);
-        });
-}
-
 function setupCryptoSearch() {
     const searchInput = document.getElementById('crypto-search');
     const cryptoList = document.getElementById('crypto-list');
@@ -103,14 +84,12 @@ function setupCryptoSearch() {
         filterCryptoList(filter);
     });
     
-    // Prevenir que el dropdown se cierre al hacer clic en el buscador
     searchInput.addEventListener('click', function(e) {
         e.stopPropagation();
     });
 }
 
 function setupDrawingTools() {
-    // Inicializar herramientas de dibujo para cada gráfico
     const drawingButtons = document.querySelectorAll('.drawing-tool');
     drawingButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -119,7 +98,6 @@ function setupDrawingTools() {
         });
     });
     
-    // Configurar selector de color
     const colorPicker = document.getElementById('drawing-color');
     if (colorPicker) {
         colorPicker.addEventListener('change', function() {
@@ -129,7 +107,6 @@ function setupDrawingTools() {
 }
 
 function setupIndicatorControls() {
-    // Configurar controles de indicadores informativos
     const indicatorControls = document.querySelectorAll('.indicator-control');
     indicatorControls.forEach(control => {
         control.addEventListener('change', function() {
@@ -141,16 +118,13 @@ function setupIndicatorControls() {
 function activateDrawingTool(tool) {
     drawingToolsActive = true;
     
-    // Remover clase activa de todos los botones
     document.querySelectorAll('.drawing-tool').forEach(btn => {
         btn.classList.remove('active');
     });
     
-    // Activar botón seleccionado
     event.target.classList.add('active');
     
-    // Configurar modo de dibujo según la herramienta
-    const charts = ['candle-chart', 'whale-chart', 'adx-chart', 'rsi-comparison-chart', 'macd-chart', 'trend-strength-chart', 'aux-chart'];
+    const charts = ['candle-chart', 'whale-chart', 'adx-chart', 'rsi-comparison-chart', 'macd-chart', 'squeeze-chart', 'aux-chart', 'trend-strength-chart'];
     
     charts.forEach(chartId => {
         const chart = document.getElementById(chartId);
@@ -186,8 +160,7 @@ function activateDrawingTool(tool) {
 }
 
 function setDrawingColor(color) {
-    // Configurar color para herramientas de dibujo
-    const charts = ['candle-chart', 'whale-chart', 'adx-chart', 'rsi-comparison-chart', 'macd-chart', 'trend-strength-chart', 'aux-chart'];
+    const charts = ['candle-chart', 'whale-chart', 'adx-chart', 'rsi-comparison-chart', 'macd-chart', 'squeeze-chart', 'aux-chart', 'trend-strength-chart'];
     
     charts.forEach(chartId => {
         if (currentChart) {
@@ -200,7 +173,6 @@ function setDrawingColor(color) {
 }
 
 function updateChartIndicators() {
-    // Actualizar indicadores en el gráfico principal
     const showMA9 = document.getElementById('show-ma9').checked;
     const showMA21 = document.getElementById('show-ma21').checked;
     const showMA50 = document.getElementById('show-ma50').checked;
@@ -235,7 +207,6 @@ function filterCryptoList(filter) {
         return;
     }
     
-    // Agrupar por categoría
     const categories = {};
     filteredCryptos.forEach(crypto => {
         if (!categories[crypto.category]) {
@@ -244,7 +215,6 @@ function filterCryptoList(filter) {
         categories[crypto.category].push(crypto);
     });
     
-    // Mostrar por categorías
     Object.keys(categories).forEach(category => {
         const categoryDiv = document.createElement('div');
         categoryDiv.className = 'dropdown-header';
@@ -286,7 +256,6 @@ function selectCrypto(symbol) {
     currentSymbol = symbol;
     document.getElementById('selected-crypto').textContent = symbol;
     
-    // Cerrar el dropdown
     const dropdown = document.getElementById('crypto-dropdown-menu');
     const bootstrapDropdown = bootstrap.Dropdown.getInstance(document.getElementById('cryptoDropdown'));
     if (bootstrapDropdown) {
@@ -296,7 +265,6 @@ function selectCrypto(symbol) {
     updateCharts();
 }
 
-// Función para cargar clasificación de riesgo MEJORADA
 function loadCryptoRiskClassification() {
     fetch('/api/crypto_risk_classification')
         .then(response => {
@@ -306,14 +274,12 @@ function loadCryptoRiskClassification() {
             return response.json();
         })
         .then(riskData => {
-            // Verificar que riskData es un objeto válido
             if (typeof riskData !== 'object' || riskData === null) {
                 throw new Error('Datos de riesgo no válidos');
             }
             
             allCryptos = [];
             Object.keys(riskData).forEach(category => {
-                // Verificar que riskData[category] es un array
                 if (Array.isArray(riskData[category])) {
                     riskData[category].forEach(symbol => {
                         allCryptos.push({
@@ -350,19 +316,10 @@ function loadBasicCryptoSymbols() {
 }
 
 function loadMarketIndicators() {
-    // Cargar índice de miedo y codicia
     updateFearGreedIndex();
-    
-    // Cargar recomendaciones de mercado
     updateMarketRecommendations();
-    
-    // Cargar alertas de scalping
     updateScalpingAlerts();
-
-    // Nueva línea cargada
     updateExitSignals();
-    
-    // Actualizar información del calendario
     updateCalendarInfo();
 }
 
@@ -384,32 +341,20 @@ function showLoadingState() {
             <p class="text-muted mb-0 small">Evaluando condiciones de señal...</p>
         </div>
     `;
-
-    document.getElementById('obligatory-conditions').innerHTML = `
-        <div class="text-center py-2">
-            <div class="spinner-border spinner-border-sm text-warning" role="status">
-                <span class="visually-hidden">Verificando...</span>
-            </div>
-            <p class="mt-2 mb-0 small">Verificando condiciones obligatorias...</p>
-        </div>
-    `;
 }
 
 function startAutoUpdate() {
-    // Detener intervalo anterior si existe
     if (updateInterval) {
         clearInterval(updateInterval);
     }
     
-    // Configurar actualización automática cada 90 segundos
     updateInterval = setInterval(() => {
         if (document.visibilityState === 'visible') {
             console.log('Actualización automática (cada 90 segundos)');
             updateCharts();
             updateMarketIndicators();
-            updateSystemWinrate();
         }
-    }, 90000); // 90 segundos
+    }, 90000);
 }
 
 function updateCharts() {
@@ -425,16 +370,9 @@ function updateCharts() {
     const volumeFilter = document.getElementById('volume-filter').value;
     const leverage = document.getElementById('leverage').value;
     
-    // Actualizar gráfico principal
     updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
-    
-    // Actualizar gráfico de dispersión MEJORADO
     updateScatterChartImproved(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
-    
-    // Actualizar señales múltiples
     updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
-    
-    // Actualizar gráfico auxiliar
     updateAuxChart();
 }
 
@@ -465,22 +403,19 @@ function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsi
             renderAdxChartImproved(data);
             renderRsiComparisonChart(data);
             renderMacdChartImproved(data);
+            renderSqueezeChart(data);
             renderTrendStrengthChart(data);
             updateMarketSummary(data);
             updateSignalAnalysis(data);
-            updateObligatoryConditions(data);
         })
         .catch(error => {
             console.error('Error:', error);
             showError('Error al cargar datos del gráfico: ' + error.message);
-            
-            // Mostrar datos de ejemplo en caso de error
             showSampleData(symbol);
         });
 }
 
 function showSampleData(symbol) {
-    // Datos de ejemplo para cuando falle la API
     const sampleData = {
         symbol: symbol,
         current_price: 50000,
@@ -488,7 +423,7 @@ function showSampleData(symbol) {
         signal_score: 0,
         entry: 50000,
         stop_loss: 48000,
-        take_profit: [52000],
+        take_profit: [52000, 54000, 56000],
         support: 48000,
         resistance: 52000,
         volume: 1000000,
@@ -503,13 +438,11 @@ function showSampleData(symbol) {
         trend_strength_signal: 'NEUTRAL',
         no_trade_zone: false,
         obligatory_conditions_met: false,
-        winrate: 0.0,
         fulfilled_conditions: []
     };
     
     updateMarketSummary(sampleData);
     updateSignalAnalysis(sampleData);
-    updateObligatoryConditions(sampleData);
 }
 
 function renderCandleChart(data, indicatorOptions = {}) {
@@ -532,7 +465,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
     const lows = data.data.map(d => parseFloat(d.low));
     const closes = data.data.map(d => parseFloat(d.close));
     
-    // Traza de velas japonesas
     const candlestickTrace = {
         type: 'candlestick',
         x: dates,
@@ -547,7 +479,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
     
     const traces = [candlestickTrace];
     
-    // Añadir líneas de soporte y resistencia si están disponibles
     if (data.support && data.resistance) {
         traces.push({
             type: 'scatter',
@@ -568,7 +499,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
         });
     }
 
-    // Añadir líneas de liquidación LONG y SHORT si están disponibles
     if (data.liquidation_long && data.liquidation_short) {
         traces.push({
             type: 'scatter',
@@ -589,7 +519,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
         });
     }
     
-    // Añadir niveles de entrada y take profits
     if (data.entry && data.take_profit) {
         traces.push({
             type: 'scatter',
@@ -600,7 +529,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
             name: 'Entrada'
         });
         
-        // Añadir take profits
         data.take_profit.forEach((tp, index) => {
             traces.push({
                 type: 'scatter',
@@ -613,7 +541,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
         });
     }
     
-    // Añadir indicadores informativos si están activados
     if (data.indicators) {
         const options = indicatorOptions || {
             showMA9: false,
@@ -623,7 +550,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
             showBB: false
         };
         
-        // Medias móviles
         if (options.showMA9 && data.indicators.ma_9) {
             traces.push({
                 type: 'scatter',
@@ -668,7 +594,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
             });
         }
         
-        // Bandas de Bollinger
         if (options.showBB && data.indicators.bb_upper && data.indicators.bb_lower) {
             traces.push({
                 type: 'scatter',
@@ -700,7 +625,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
                 showlegend: false
             });
             
-            // Rellenar entre bandas
             traces.push({
                 type: 'scatter',
                 x: dates.concat(dates.slice().reverse()),
@@ -714,7 +638,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
         }
     }
     
-    // Calcular rango dinámico para el eje Y basado en los datos visibles
     const visibleHighs = highs.slice(-50);
     const visibleLows = lows.slice(-50);
     const minPrice = Math.min(...visibleLows);
@@ -724,7 +647,7 @@ function renderCandleChart(data, indicatorOptions = {}) {
     
     const layout = {
         title: {
-            text: `${data.symbol} - Gráfico de Velas Japonesas (${document.getElementById('interval-select').value})`,
+            text: `${data.symbol} - Gráfico de Velas Japonesas`,
             font: {color: '#ffffff', size: 16}
         },
         xaxis: {
@@ -753,7 +676,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
             bgcolor: 'rgba(0,0,0,0)'
         },
         margin: {t: 80, r: 50, b: 50, l: 50},
-        // Configuración para herramientas de dibujo
         dragmode: drawingToolsActive ? 'drawline' : false,
         newshape: {
             line: {
@@ -778,7 +700,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
         }
     };
     
-    // Destruir gráfico existente
     if (currentChart) {
         Plotly.purge('candle-chart');
     }
@@ -801,10 +722,8 @@ function renderWhaleChartImproved(data) {
     const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
     const whalePump = data.indicators.whale_pump || [];
     const whaleDump = data.indicators.whale_dump || [];
-    
-    // Añadir marcadores para señales confirmadas
-    const confirmedBuy = data.indicators.confirmed_buy || [];
-    const confirmedSell = data.indicators.confirmed_sell || [];
+    const diCrossBullish = data.indicators.di_cross_bullish || [];
+    const diCrossBearish = data.indicators.di_cross_bearish || [];
     
     const traces = [
         {
@@ -822,26 +741,26 @@ function renderWhaleChartImproved(data) {
             marker: {color: '#FF1744'}
         },
         {
-            x: dates.filter((_, i) => confirmedBuy[i] && whalePump[i] > 0),
-            y: whalePump.filter((_, i) => confirmedBuy[i] && whalePump[i] > 0),
+            x: dates.filter((_, i) => diCrossBullish[i] && whalePump[i] > 0),
+            y: whalePump.filter((_, i) => diCrossBullish[i] && whalePump[i] > 0),
             type: 'scatter',
             mode: 'markers',
-            name: 'Señal Compra Confirmada',
+            name: 'Cruce DI Compra',
             marker: {color: '#00FF00', size: 10, symbol: 'diamond'}
         },
         {
-            x: dates.filter((_, i) => confirmedSell[i] && whaleDump[i] > 0),
-            y: whaleDump.filter((_, i) => confirmedSell[i] && whaleDump[i] > 0),
+            x: dates.filter((_, i) => diCrossBearish[i] && whaleDump[i] > 0),
+            y: whaleDump.filter((_, i) => diCrossBearish[i] && whaleDump[i] > 0),
             type: 'scatter',
             mode: 'markers',
-            name: 'Señal Venta Confirmada',
+            name: 'Cruce DI Venta',
             marker: {color: '#FF0000', size: 10, symbol: 'diamond'}
         }
     ];
     
     const layout = {
         title: {
-            text: 'Indicador Ballenas - Compradoras vs Vendedoras',
+            text: 'Actividad de Ballenas - Compradoras vs Vendedoras',
             font: {color: '#ffffff', size: 14}
         },
         xaxis: {
@@ -879,7 +798,6 @@ function renderWhaleChartImproved(data) {
         modeBarButtonsToAdd: ['drawline', 'drawrect', 'drawcircle']
     };
     
-    // Destruir gráfico existente
     if (currentWhaleChart) {
         Plotly.purge('whale-chart');
     }
@@ -951,7 +869,7 @@ function renderAdxChartImproved(data) {
     
     const layout = {
         title: {
-            text: 'ADX con Indicadores Direccionales (+DI / -DI)',
+            text: 'ADX con Indicadores Direccionales (+DI / -DI) y Cruces',
             font: {color: '#ffffff', size: 14}
         },
         xaxis: {
@@ -987,7 +905,6 @@ function renderAdxChartImproved(data) {
         modeBarButtonsToAdd: ['drawline', 'drawrect', 'drawcircle']
     };
     
-    // Destruir gráfico existente
     if (currentAdxChart) {
         Plotly.purge('adx-chart');
     }
@@ -1010,8 +927,24 @@ function renderRsiComparisonChart(data) {
     const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
     const rsiTraditional = data.indicators.rsi_traditional || [];
     const rsiMaverick = data.indicators.rsi_maverick || [];
-    const bullishDivTraditional = data.indicators.bullish_divergence_rsi || [];
-    const bearishDivTraditional = data.indicators.bearish_divergence_rsi || [];
+    const bullishDivergence = data.indicators.rsi_maverick_bullish_div || [];
+    const bearishDivergence = data.indicators.rsi_maverick_bearish_div || [];
+    
+    const bullishDates = [];
+    const bullishValues = [];
+    const bearishDates = [];
+    const bearishValues = [];
+    
+    for (let i = 7; i < bullishDivergence.length; i++) {
+        if (bullishDivergence[i] && !bullishDivergence[i-1] && !bullishDivergence[i-2]) {
+            bullishDates.push(dates[i]);
+            bullishValues.push((rsiMaverick[i] * 100) || 50);
+        }
+        if (bearishDivergence[i] && !bearishDivergence[i-1] && !bearishDivergence[i-2]) {
+            bearishDates.push(dates[i]);
+            bearishValues.push((rsiMaverick[i] * 100) || 50);
+        }
+    }
     
     const traces = [
         {
@@ -1024,33 +957,43 @@ function renderRsiComparisonChart(data) {
         },
         {
             x: dates,
-            y: rsiMaverick,
+            y: rsiMaverick.map(x => x * 100),
             type: 'scatter',
             mode: 'lines',
-            name: 'RSI Maverick (%B)',
+            name: 'RSI Maverick (%B × 100)',
             line: {color: '#FF9800', width: 2}
         },
         {
-            x: dates.filter((_, i) => bullishDivTraditional[i]),
-            y: rsiTraditional.filter((_, i) => bullishDivTraditional[i]),
+            x: bullishDates,
+            y: bullishValues,
             type: 'scatter',
             mode: 'markers',
             name: 'Divergencia Alcista',
-            marker: {color: '#00FF00', size: 8, symbol: 'triangle-up'}
+            marker: {
+                color: '#00FF00',
+                size: 12,
+                symbol: 'triangle-up',
+                line: {color: 'white', width: 1}
+            }
         },
         {
-            x: dates.filter((_, i) => bearishDivTraditional[i]),
-            y: rsiTraditional.filter((_, i) => bearishDivTraditional[i]),
+            x: bearishDates,
+            y: bearishValues,
             type: 'scatter',
             mode: 'markers',
             name: 'Divergencia Bajista',
-            marker: {color: '#FF0000', size: 8, symbol: 'triangle-down'}
+            marker: {
+                color: '#FF0000',
+                size: 12,
+                symbol: 'triangle-down',
+                line: {color: 'white', width: 1}
+            }
         }
     ];
     
     const layout = {
         title: {
-            text: 'RSI Tradicional vs RSI Maverick (Bollinger %B)',
+            text: 'Comparación RSI Tradicional vs RSI Maverick',
             font: {color: '#ffffff', size: 14}
         },
         xaxis: {
@@ -1060,23 +1003,59 @@ function renderRsiComparisonChart(data) {
             zerolinecolor: '#444'
         },
         yaxis: {
-            title: 'Valor del Indicador',
+            title: 'Valor RSI',
+            range: [0, 100],
             gridcolor: '#444',
-            zerolinecolor: '#444',
-            range: [0, 1]
+            zerolinecolor: '#444'
         },
+        shapes: [
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 70,
+                y1: 70,
+                line: {color: 'red', width: 1, dash: 'dash'}
+            },
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 30,
+                y1: 30,
+                line: {color: 'green', width: 1, dash: 'dash'}
+            }
+        ],
+        annotations: [
+            {
+                x: dates[dates.length - 1],
+                y: 70,
+                xanchor: 'left',
+                text: 'Sobrecompra',
+                showarrow: false,
+                font: {color: 'red', size: 10}
+            },
+            {
+                x: dates[dates.length - 1],
+                y: 30,
+                xanchor: 'left',
+                text: 'Sobreventa',
+                showarrow: false,
+                font: {color: 'green', size: 10}
+            }
+        ],
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'rgba(0,0,0,0)',
         font: {color: '#ffffff'},
         showlegend: true,
         legend: {
             x: 0,
-            y: 1.1,
+            y: -0.2,
             orientation: 'h',
             font: {color: '#ffffff'},
             bgcolor: 'rgba(0,0,0,0)'
         },
-        margin: {t: 60, r: 50, b: 50, l: 50},
+        margin: {t: 60, r: 50, b: 80, l: 50},
         dragmode: drawingToolsActive ? 'drawline' : false
     };
     
@@ -1087,7 +1066,6 @@ function renderRsiComparisonChart(data) {
         modeBarButtonsToAdd: ['drawline', 'drawrect', 'drawcircle']
     };
     
-    // Destruir gráfico existente
     if (currentRsiComparisonChart) {
         Plotly.purge('rsi-comparison-chart');
     }
@@ -1111,6 +1089,10 @@ function renderMacdChartImproved(data) {
     const macdLine = data.indicators.macd_line || [];
     const macdSignal = data.indicators.macd_signal || [];
     const macdHistogram = data.indicators.macd_histogram || [];
+    const macdBullish = data.indicators.macd_bullish || [];
+    const macdBearish = data.indicators.macd_bearish || [];
+    
+    const histogramColors = macdHistogram.map(value => value >= 0 ? '#00C853' : '#FF1744');
     
     const traces = [
         {
@@ -1127,22 +1109,36 @@ function renderMacdChartImproved(data) {
             type: 'scatter',
             mode: 'lines',
             name: 'Señal',
-            line: {color: '#FF5722', width: 1.5}
+            line: {color: '#FF9800', width: 1}
         },
         {
             x: dates,
             y: macdHistogram,
             type: 'bar',
             name: 'Histograma',
-            marker: {
-                color: macdHistogram.map(val => val >= 0 ? '#00C853' : '#FF1744')
-            }
+            marker: {color: histogramColors}
+        },
+        {
+            x: dates.filter((_, i) => macdBullish[i]),
+            y: macdLine.filter((_, i) => macdBullish[i]),
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Cruce Alcista',
+            marker: {color: '#00FF00', size: 8, symbol: 'triangle-up'}
+        },
+        {
+            x: dates.filter((_, i) => macdBearish[i]),
+            y: macdLine.filter((_, i) => macdBearish[i]),
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Cruce Bajista',
+            marker: {color: '#FF0000', size: 8, symbol: 'triangle-down'}
         }
     ];
     
     const layout = {
         title: {
-            text: 'MACD con Histograma de Colores',
+            text: 'MACD con Histograma Coloreado',
             font: {color: '#ffffff', size: 14}
         },
         xaxis: {
@@ -1154,9 +1150,95 @@ function renderMacdChartImproved(data) {
         yaxis: {
             title: 'Valor MACD',
             gridcolor: '#444',
-            zerolinecolor: '#444',
-            zeroline: true,
-            zerolinewidth: 1
+            zerolinecolor: '#444'
+        },
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        font: {color: '#ffffff'},
+        showlegend: true,
+        legend: {
+            x: 0,
+            y: 1.1,
+            orientation: 'h',
+            font: {color: '#ffffff'},
+            bgcolor: 'rgba(0,0,0,0)'
+        },
+        margin: {t: 60, r: 50, b: 50, l: 50},
+        dragmode: drawingToolsActive ? 'drawline' : false,
+        annotations: [
+            {
+                x: 0.02,
+                y: 0.98,
+                xref: 'paper',
+                yref: 'paper',
+                text: '🟢 Verde: Histograma positivo | 🔴 Rojo: Histograma negativo',
+                showarrow: false,
+                font: {color: 'white', size: 10},
+                bgcolor: 'rgba(0,0,0,0.7)',
+                bordercolor: 'rgba(255,255,255,0.5)',
+                borderwidth: 1,
+                borderpad: 4
+            }
+        ]
+    };
+    
+    const config = {
+        responsive: true,
+        displayModeBar: true,
+        displaylogo: false,
+        modeBarButtonsToAdd: ['drawline', 'drawrect', 'drawcircle']
+    };
+    
+    if (currentMacdChart) {
+        Plotly.purge('macd-chart');
+    }
+    
+    currentMacdChart = Plotly.newPlot('macd-chart', traces, layout, config);
+}
+
+function renderSqueezeChart(data) {
+    const chartElement = document.getElementById('squeeze-chart');
+    
+    if (!data.indicators || !data.data) {
+        chartElement.innerHTML = `
+            <div class="alert alert-warning text-center">
+                <p class="mb-0">No hay datos de Squeeze Momentum disponibles</p>
+            </div>
+        `;
+        return;
+    }
+
+    const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
+    const squeezeOn = data.indicators.squeeze_on || [];
+    const squeezeOff = data.indicators.squeeze_off || [];
+    const squeezeMomentum = data.indicators.squeeze_momentum || [];
+    const squeezeColors = data.indicators.squeeze_colors || [];
+    
+    const traces = [
+        {
+            x: dates,
+            y: squeezeMomentum,
+            type: 'bar',
+            name: 'Squeeze Momentum',
+            marker: {color: squeezeColors}
+        }
+    ];
+    
+    const layout = {
+        title: {
+            text: 'Squeeze Momentum - Compresión/Expansión del Mercado',
+            font: {color: '#ffffff', size: 14}
+        },
+        xaxis: {
+            title: 'Fecha/Hora',
+            type: 'date',
+            gridcolor: '#444',
+            zerolinecolor: '#444'
+        },
+        yaxis: {
+            title: 'Momentum',
+            gridcolor: '#444',
+            zerolinecolor: '#444'
         },
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'rgba(0,0,0,0)',
@@ -1180,12 +1262,11 @@ function renderMacdChartImproved(data) {
         modeBarButtonsToAdd: ['drawline', 'drawrect', 'drawcircle']
     };
     
-    // Destruir gráfico existente
-    if (currentMacdChart) {
-        Plotly.purge('macd-chart');
+    if (currentSqueezeChart) {
+        Plotly.purge('squeeze-chart');
     }
     
-    currentMacdChart = Plotly.newPlot('macd-chart', traces, layout, config);
+    currentSqueezeChart = Plotly.newPlot('squeeze-chart', traces, layout, config);
 }
 
 function renderTrendStrengthChart(data) {
@@ -1202,8 +1283,10 @@ function renderTrendStrengthChart(data) {
 
     const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
     const trendStrength = data.indicators.trend_strength || [];
-    const colors = data.indicators.colors || [];
+    const bbWidth = data.indicators.bb_width || [];
     const noTradeZones = data.indicators.no_trade_zones || [];
+    const colors = data.indicators.colors || [];
+    const highZoneThreshold = data.indicators.high_zone_threshold || 5;
     
     const traces = [
         {
@@ -1211,23 +1294,28 @@ function renderTrendStrengthChart(data) {
             y: trendStrength,
             type: 'bar',
             name: 'Fuerza de Tendencia',
-            marker: {
-                color: colors
-            }
-        },
-        {
-            x: dates.filter((_, i) => noTradeZones[i]),
-            y: trendStrength.filter((_, i) => noTradeZones[i]),
-            type: 'scatter',
-            mode: 'markers',
-            name: 'Zona NO OPERAR',
-            marker: {
-                color: '#FF0000',
-                size: 12,
-                symbol: 'x'
-            }
+            marker: {color: colors}
         }
     ];
+    
+    traces.push({
+        x: [dates[0], dates[dates.length - 1]],
+        y: [highZoneThreshold, highZoneThreshold],
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Umbral Alto',
+        line: {color: 'orange', dash: 'dash', width: 1}
+    });
+    
+    traces.push({
+        x: [dates[0], dates[dates.length - 1]],
+        y: [-highZoneThreshold, -highZoneThreshold],
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Umbral Bajo',
+        line: {color: 'orange', dash: 'dash', width: 1},
+        showlegend: false
+    });
     
     const layout = {
         title: {
@@ -1243,9 +1331,7 @@ function renderTrendStrengthChart(data) {
         yaxis: {
             title: 'Fuerza de Tendencia (%)',
             gridcolor: '#444',
-            zerolinecolor: '#444',
-            zeroline: true,
-            zerolinewidth: 1
+            zerolinecolor: '#444'
         },
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'rgba(0,0,0,0)',
@@ -1269,7 +1355,6 @@ function renderTrendStrengthChart(data) {
         modeBarButtonsToAdd: ['drawline', 'drawrect', 'drawcircle']
     };
     
-    // Destruir gráfico existente
     if (currentTrendStrengthChart) {
         Plotly.purge('trend-strength-chart');
     }
@@ -1277,225 +1362,56 @@ function renderTrendStrengthChart(data) {
     currentTrendStrengthChart = Plotly.newPlot('trend-strength-chart', traces, layout, config);
 }
 
-function updateAuxChart() {
-    const indicatorType = document.getElementById('aux-indicator').value;
-    const chartElement = document.getElementById('aux-chart');
-    
-    if (!currentData || !currentData.indicators) {
-        chartElement.innerHTML = `
-            <div class="alert alert-warning text-center">
-                <p class="mb-0">No hay datos para el indicador auxiliar</p>
-            </div>
-        `;
-        return;
-    }
-
-    const dates = currentData.data.slice(-50).map(d => new Date(d.timestamp));
-    let traces = [];
-    let title = '';
-    
-    switch(indicatorType) {
-        case 'rsi':
-            const rsiTraditional = currentData.indicators.rsi_traditional || [];
-            traces = [{
-                x: dates,
-                y: rsiTraditional,
-                type: 'scatter',
-                mode: 'lines',
-                name: 'RSI Tradicional',
-                line: {color: '#2196F3', width: 2}
-            }];
-            title = 'RSI Tradicional (14 periodos)';
-            break;
-            
-        case 'macd':
-            const macdLine = currentData.indicators.macd_line || [];
-            const macdSignal = currentData.indicators.macd_signal || [];
-            traces = [
-                {
-                    x: dates,
-                    y: macdLine,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'MACD',
-                    line: {color: '#2196F3', width: 2}
-                },
-                {
-                    x: dates,
-                    y: macdSignal,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'Señal',
-                    line: {color: '#FF5722', width: 1.5}
-                }
-            ];
-            title = 'MACD (12,26,9)';
-            break;
-            
-        case 'squeeze':
-            const squeezeMomentum = currentData.indicators.squeeze_momentum || [];
-            const squeezeOn = currentData.indicators.squeeze_on || [];
-            traces = [
-                {
-                    x: dates,
-                    y: squeezeMomentum,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'Squeeze Momentum',
-                    line: {color: '#9C27B0', width: 2}
-                },
-                {
-                    x: dates.filter((_, i) => squeezeOn[i]),
-                    y: squeezeMomentum.filter((_, i) => squeezeOn[i]),
-                    type: 'scatter',
-                    mode: 'markers',
-                    name: 'Squeeze ON',
-                    marker: {color: '#FF0000', size: 6}
-                }
-            ];
-            title = 'Squeeze Momentum';
-            break;
-            
-        case 'moving_averages':
-            const ma9 = currentData.indicators.ma_9 || [];
-            const ma21 = currentData.indicators.ma_21 || [];
-            const ma50 = currentData.indicators.ma_50 || [];
-            traces = [
-                {
-                    x: dates,
-                    y: ma9,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'MA 9',
-                    line: {color: '#FF9800', width: 1}
-                },
-                {
-                    x: dates,
-                    y: ma21,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'MA 21',
-                    line: {color: '#2196F3', width: 1}
-                },
-                {
-                    x: dates,
-                    y: ma50,
-                    type: 'scatter',
-                    mode: 'lines',
-                    name: 'MA 50',
-                    line: {color: '#9C27B0', width: 1}
-                }
-            ];
-            title = 'Medias Móviles (9, 21, 50)';
-            break;
-    }
-    
-    const layout = {
-        title: {
-            text: title,
-            font: {color: '#ffffff', size: 14}
-        },
-        xaxis: {
-            title: 'Fecha/Hora',
-            type: 'date',
-            gridcolor: '#444',
-            zerolinecolor: '#444'
-        },
-        yaxis: {
-            title: 'Valor del Indicador',
-            gridcolor: '#444',
-            zerolinecolor: '#444'
-        },
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        font: {color: '#ffffff'},
-        showlegend: true,
-        legend: {
-            x: 0,
-            y: 1.1,
-            orientation: 'h',
-            font: {color: '#ffffff'},
-            bgcolor: 'rgba(0,0,0,0)'
-        },
-        margin: {t: 60, r: 50, b: 50, l: 50},
-        dragmode: drawingToolsActive ? 'drawline' : false
-    };
-    
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false,
-        modeBarButtonsToAdd: ['drawline', 'drawrect', 'drawcircle']
-    };
-    
-    // Destruir gráfico existente
-    if (currentAuxChart) {
-        Plotly.purge('aux-chart');
-    }
-    
-    currentAuxChart = Plotly.newPlot('aux-chart', traces, layout, config);
-}
-
 function updateScatterChartImproved(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage) {
-    const url = `/api/scatter_data_improved?interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&volume_filter=${volumeFilter}&leverage=${leverage}`;
-    
-    fetch(url)
+    fetch(`/api/scatter_data_improved?interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&volume_filter=${volumeFilter}&leverage=${leverage}`)
         .then(response => response.json())
         .then(scatterData => {
             renderScatterChartImproved(scatterData);
         })
         .catch(error => {
-            console.error('Error cargando datos del scatter plot:', error);
+            console.error('Error actualizando scatter chart:', error);
         });
 }
 
-function renderScatterChartImproved(data) {
+function renderScatterChartImproved(scatterData) {
     const chartElement = document.getElementById('scatter-chart');
     
-    if (!data || data.length === 0) {
+    if (!scatterData || scatterData.length === 0) {
         chartElement.innerHTML = `
             <div class="alert alert-warning text-center">
-                <h5>No hay datos disponibles</h5>
-                <p>No se pudieron cargar los datos para el mapa de oportunidades.</p>
+                <p class="mb-0">No hay datos para el mapa de oportunidades</p>
             </div>
         `;
         return;
     }
 
     const traces = [];
-    const riskCategories = {
-        'bajo': {color: '#00C853', name: 'Bajo Riesgo'},
-        'medio': {color: '#FF9800', name: 'Medio Riesgo'},
-        'alto': {color: '#FF1744', name: 'Alto Riesgo'},
-        'memecoins': {color: '#9C27B0', name: 'Memecoins'}
-    };
-    
-    // Crear trazas por categoría de riesgo
-    Object.keys(riskCategories).forEach(category => {
-        const categoryData = data.filter(item => item.risk_category === category);
+    const riskCategories = ['bajo', 'medio', 'alto', 'memecoins'];
+    const colors = ['#00C853', '#FFC107', '#FF1744', '#9C27B0'];
+    const symbols = ['circle', 'square', 'diamond', 'cross'];
+
+    riskCategories.forEach((category, index) => {
+        const categoryData = scatterData.filter(d => d.risk_category === category);
         
         if (categoryData.length > 0) {
             traces.push({
-                x: categoryData.map(item => item.x),
-                y: categoryData.map(item => item.y),
-                text: categoryData.map(item => 
-                    `${item.symbol}<br>Score: ${item.signal_score}%<br>Winrate: ${item.winrate.toFixed(1)}%<br>Señal: ${item.signal}`
-                ),
+                x: categoryData.map(d => d.x),
+                y: categoryData.map(d => d.y),
+                text: categoryData.map(d => d.symbol),
                 mode: 'markers',
                 type: 'scatter',
-                name: riskCategories[category].name,
+                name: category.toUpperCase(),
                 marker: {
-                    color: riskCategories[category].color,
-                    size: categoryData.map(item => Math.max(8, item.signal_score / 3)),
-                    sizemode: 'diameter',
-                    sizeref: 8,
-                    opacity: 0.7
+                    size: categoryData.map(d => Math.max(10, d.signal_score / 3)),
+                    color: colors[index],
+                    symbol: symbols[index],
+                    line: {width: 1, color: 'white'}
                 },
-                hovertemplate: '<b>%{text}</b><br>Compra: %{x:.1f}%<br>Venta: %{y:.1f}%<extra></extra>'
+                hovertemplate: '<b>%{text}</b><br>Presión Compra: %{x}<br>Presión Venta: %{y}<br>Score: %{marker.size}<extra></extra>'
             });
         }
     });
-    
+
     const layout = {
         title: {
             text: 'Mapa de Oportunidades - Presión Compradora vs Vendedora',
@@ -1503,15 +1419,15 @@ function renderScatterChartImproved(data) {
         },
         xaxis: {
             title: 'Presión Compradora (%)',
+            range: [0, 100],
             gridcolor: '#444',
-            zerolinecolor: '#444',
-            range: [0, 100]
+            zerolinecolor: '#444'
         },
         yaxis: {
             title: 'Presión Vendedora (%)',
+            range: [0, 100],
             gridcolor: '#444',
-            zerolinecolor: '#444',
-            range: [0, 100]
+            zerolinecolor: '#444'
         },
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'rgba(0,0,0,0)',
@@ -1526,132 +1442,109 @@ function renderScatterChartImproved(data) {
         },
         margin: {t: 80, r: 50, b: 50, l: 50},
         shapes: [
-            // Zona de oportunidades LONG (esquina inferior derecha)
             {
-                type: 'rect',
-                xref: 'x',
-                yref: 'y',
-                x0: 70,
+                type: 'line',
+                x0: 50,
                 y0: 0,
-                x1: 100,
-                y1: 30,
-                fillcolor: 'rgba(0, 200, 83, 0.1)',
-                line: {color: 'rgba(0, 200, 83, 0.5)'},
-                linewidth: 1
-            },
-            // Zona de oportunidades SHORT (esquina superior izquierda)
-            {
-                type: 'rect',
-                xref: 'x',
-                yref: 'y',
-                x0: 0,
-                y0: 70,
-                x1: 30,
+                x1: 50,
                 y1: 100,
-                fillcolor: 'rgba(255, 23, 68, 0.1)',
-                line: {color: 'rgba(255, 23, 68, 0.5)'},
-                linewidth: 1
+                line: {color: 'white', width: 1, dash: 'dash'}
+            },
+            {
+                type: 'line',
+                x0: 0,
+                y0: 50,
+                x1: 100,
+                y1: 50,
+                line: {color: 'white', width: 1, dash: 'dash'}
             }
         ],
         annotations: [
             {
-                x: 85,
-                y: 15,
-                text: 'ZONA<br>LONG',
+                x: 75,
+                y: 25,
+                xref: 'x',
+                yref: 'y',
+                text: 'Zona LONG',
                 showarrow: false,
-                font: {color: '#00C853', size: 12},
-                bgcolor: 'rgba(0, 0, 0, 0.7)',
-                bordercolor: '#00C853'
+                font: {color: 'green', size: 14}
             },
             {
-                x: 15,
-                y: 85,
-                text: 'ZONA<br>SHORT',
+                x: 25,
+                y: 75,
+                xref: 'x',
+                yref: 'y',
+                text: 'Zona SHORT',
                 showarrow: false,
-                font: {color: '#FF1744', size: 12},
-                bgcolor: 'rgba(0, 0, 0, 0.7)',
-                bordercolor: '#FF1744'
+                font: {color: 'red', size: 14}
             }
         ]
     };
-    
+
     const config = {
         responsive: true,
         displayModeBar: true,
-        displaylogo: false,
-        toImageButtonOptions: {
-            format: 'png',
-            filename: 'scatter_opportunities_map',
-            height: 600,
-            width: 800,
-            scale: 2
-        }
+        displaylogo: false
     };
-    
-    // Destruir gráfico existente
+
     if (currentScatterChart) {
         Plotly.purge('scatter-chart');
     }
-    
+
     currentScatterChart = Plotly.newPlot('scatter-chart', traces, layout, config);
 }
 
 function updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage) {
-    const url = `/api/multiple_signals?interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&volume_filter=${volumeFilter}&leverage=${leverage}`;
-    
-    fetch(url)
+    fetch(`/api/multiple_signals?interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&volume_filter=${volumeFilter}&leverage=${leverage}`)
         .then(response => response.json())
-        .then(data => {
-            updateSignalsTable(data.long_signals, 'long-table');
-            updateSignalsTable(data.short_signals, 'short-table');
+        .then(signalsData => {
+            updateSignalsTable(signalsData);
         })
         .catch(error => {
-            console.error('Error cargando señales múltiples:', error);
+            console.error('Error actualizando múltiples señales:', error);
         });
 }
 
-function updateSignalsTable(signals, tableId) {
-    const tableBody = document.getElementById(tableId);
-    
-    if (!signals || signals.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="4" class="text-center py-3 text-muted">
-                    No hay señales disponibles
-                </td>
+function updateSignalsTable(signalsData) {
+    const longTable = document.getElementById('long-table');
+    const shortTable = document.getElementById('short-table');
+
+    if (signalsData.long_signals && signalsData.long_signals.length > 0) {
+        longTable.innerHTML = signalsData.long_signals.map((signal, index) => `
+            <tr class="hover-row" onclick="showSignalDetails('${signal.symbol}', '${signal.interval}')">
+                <td>${index + 1}</td>
+                <td>${signal.symbol}</td>
+                <td><span class="badge bg-success">${signal.signal_score.toFixed(1)}%</span></td>
+                <td>${signal.entry.toFixed(6)}</td>
             </tr>
-        `;
-        return;
+        `).join('');
+    } else {
+        longTable.innerHTML = '<tr><td colspan="4" class="text-center py-3">No hay señales LONG</td></tr>';
     }
-    
-    let html = '';
-    signals.slice(0, 5).forEach((signal, index) => {
-        const scoreClass = signal.signal_score >= 80 ? 'text-success' : 
-                          signal.signal_score >= 70 ? 'text-warning' : 'text-danger';
-        
-        html += `
-            <tr style="cursor: pointer;" onclick="showSignalDetails('${signal.symbol}', '${signal.signal}')">
-                <td class="text-center">${index + 1}</td>
-                <td>
-                    <small>${signal.symbol}</small>
-                    ${signal.winrate > 70 ? '<span class="badge bg-success ms-1">★</span>' : ''}
-                </td>
-                <td class="${scoreClass} fw-bold">${signal.signal_score.toFixed(1)}%</td>
-                <td class="text-end">
-                    <small>${signal.entry ? signal.entry.toFixed(6) : 'N/A'}</small>
-                </td>
+
+    if (signalsData.short_signals && signalsData.short_signals.length > 0) {
+        shortTable.innerHTML = signalsData.short_signals.map((signal, index) => `
+            <tr class="hover-row" onclick="showSignalDetails('${signal.symbol}', '${signal.interval}')">
+                <td>${index + 1}</td>
+                <td>${signal.symbol}</td>
+                <td><span class="badge bg-danger">${signal.signal_score.toFixed(1)}%</span></td>
+                <td>${signal.entry.toFixed(6)}</td>
             </tr>
-        `;
-    });
-    
-    tableBody.innerHTML = html;
+        `).join('');
+    } else {
+        shortTable.innerHTML = '<tr><td colspan="4" class="text-center py-3">No hay señales SHORT</td></tr>';
+    }
 }
 
-function showSignalDetails(symbol, signalType) {
-    // Aquí puedes implementar la lógica para mostrar detalles de la señal
-    // Por ahora, simplemente seleccionamos la crypto y actualizamos los gráficos
-    selectCrypto(symbol);
-    showNotification(`Analizando ${symbol} - Señal ${signalType}`, 'info');
+function showSignalDetails(symbol, interval) {
+    currentSymbol = symbol;
+    document.getElementById('selected-crypto').textContent = symbol;
+    updateCharts();
+}
+
+function updateAuxChart() {
+    const auxIndicator = document.getElementById('aux-indicator').value;
+    console.log('Indicador auxiliar seleccionado:', auxIndicator);
 }
 
 function updateMarketSummary(data) {
@@ -1659,74 +1552,68 @@ function updateMarketSummary(data) {
     
     if (!data) {
         marketSummary.innerHTML = `
-            <div class="alert alert-warning text-center">
-                <p class="mb-0">No hay datos disponibles</p>
+            <div class="alert alert-danger text-center">
+                <p class="mb-0">Error cargando resumen del mercado</p>
             </div>
         `;
         return;
     }
-    
-    const signalClass = data.signal === 'LONG' ? 'text-success' : 
-                       data.signal === 'SHORT' ? 'text-danger' : 'text-muted';
-    
-    const signalIcon = data.signal === 'LONG' ? '🟢' : 
-                      data.signal === 'SHORT' ? '🔴' : '⚪';
-    
-    const scoreClass = data.signal_score >= 80 ? 'text-success' : 
-                      data.signal_score >= 70 ? 'text-warning' : 'text-danger';
-    
-    const riskLevel = getRiskLevel(data.atr_percentage);
+
+    const signalClass = data.signal === 'LONG' ? 'success' : data.signal === 'SHORT' ? 'danger' : 'secondary';
+    const signalIcon = data.signal === 'LONG' ? 'fa-arrow-up' : data.signal === 'SHORT' ? 'fa-arrow-down' : 'fa-pause';
     
     marketSummary.innerHTML = `
-        <div class="row text-center mb-3">
-            <div class="col-12">
-                <h4 class="${signalClass}">
-                    ${signalIcon} ${data.signal}
-                </h4>
-                <div class="display-6 fw-bold ${scoreClass}">
-                    ${data.signal_score.toFixed(1)}%
-                </div>
-                <small class="text-muted">Score de Confianza</small>
-            </div>
-        </div>
-        
         <div class="row">
             <div class="col-12">
-                <div class="d-flex justify-content-between mb-2">
-                    <small>Precio Actual:</small>
-                    <small class="fw-bold">$${data.current_price.toFixed(6)}</small>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">${data.symbol}</h5>
+                    <span class="badge bg-${signalClass}"><i class="fas ${signalIcon} me-1"></i>${data.signal}</span>
                 </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <small>Volumen:</small>
-                    <small class="fw-bold">${formatVolume(data.volume)}</small>
+                <div class="mb-2">
+                    <strong>Precio Actual:</strong> $${data.current_price.toFixed(6)}
                 </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <small>ATR:</small>
-                    <small class="fw-bold ${riskLevel.class}">${(data.atr_percentage * 100).toFixed(2)}%</small>
+                <div class="mb-2">
+                    <strong>Score Señal:</strong> 
+                    <span class="badge bg-${data.signal_score >= 70 ? 'success' : data.signal_score >= 50 ? 'warning' : 'danger'}">
+                        ${data.signal_score.toFixed(1)}%
+                    </span>
                 </div>
-                <div class="d-flex justify-content-between mb-2">
-                    <small>Winrate:</small>
-                    <small class="fw-bold ${data.winrate >= 70 ? 'text-success' : data.winrate >= 60 ? 'text-warning' : 'text-danger'}">
-                        ${data.winrate.toFixed(1)}%
-                    </small>
+                <div class="mb-2">
+                    <strong>Volumen (24h):</strong> ${(data.volume / 1000000).toFixed(2)}M
                 </div>
-                <div class="d-flex justify-content-between">
-                    <small>Condiciones:</small>
-                    <small class="fw-bold ${data.obligatory_conditions_met ? 'text-success' : 'text-danger'}">
-                        ${data.obligatory_conditions_met ? '✅' : '❌'}
-                    </small>
+                <div class="mb-2">
+                    <strong>ADX:</strong> ${data.adx.toFixed(2)}
                 </div>
-            </div>
-        </div>
-        
-        <div class="row mt-3">
-            <div class="col-12">
-                <div class="progress mb-2" style="height: 8px;">
-                    <div class="progress-bar ${scoreClass}" 
-                         style="width: ${data.signal_score}%">
-                    </div>
+                <div class="mb-2">
+                    <strong>+DI:</strong> ${data.plus_di.toFixed(2)} | <strong>-DI:</strong> ${data.minus_di.toFixed(2)}
                 </div>
-                <small class="text-muted">Fuerza de la Señal</small>
+                <div class="mb-2">
+                    <strong>RSI Maverick:</strong> ${(data.rsi_maverick * 100).toFixed(2)}%
+                </div>
+                <div class="mb-2">
+                    <strong>Ballenas Compradoras:</strong> ${data.whale_pump.toFixed(2)}
+                </div>
+                <div class="mb-2">
+                    <strong>Ballenas Vendedoras:</strong> ${data.whale_dump.toFixed(2)}
+                </div>
+                <div class="mb-2">
+                    <strong>Fuerza Tendencia:</strong> 
+                    <span class="trend-strength-indicator badge-${data.trend_strength_signal.toLowerCase().replace('_', '-')}">
+                        ${data.trend_strength_signal}
+                    </span>
+                </div>
+                <div class="mb-2">
+                    <strong>Zona NO OPERAR:</strong> 
+                    <span class="badge ${data.no_trade_zone ? 'bg-danger' : 'bg-success'}">
+                        ${data.no_trade_zone ? 'ACTIVA' : 'INACTIVA'}
+                    </span>
+                </div>
+                <div class="mb-2">
+                    <strong>Condiciones Obligatorias:</strong> 
+                    <span class="badge ${data.obligatory_conditions_met ? 'bg-success' : 'bg-danger'}">
+                        ${data.obligatory_conditions_met ? 'CUMPLIDAS' : 'NO CUMPLIDAS'}
+                    </span>
+                </div>
             </div>
         </div>
     `;
@@ -1737,175 +1624,89 @@ function updateSignalAnalysis(data) {
     
     if (!data) {
         signalAnalysis.innerHTML = `
-            <div class="alert alert-warning text-center">
-                <p class="mb-0">No hay datos para análisis</p>
+            <div class="alert alert-danger text-center">
+                <p class="mb-0">Error en el análisis de señal</p>
             </div>
         `;
         return;
     }
-    
-    let analysisHTML = '';
-    
-    if (data.signal === 'NEUTRAL') {
-        analysisHTML = `
-            <div class="text-center">
-                <div class="text-muted mb-2">
-                    <i class="fas fa-pause-circle fa-2x"></i>
-                </div>
-                <h6 class="text-muted">SIN SEÑAL ACTIVA</h6>
-                <p class="small text-muted">
-                    El análisis no detecta oportunidades de trading con suficiente confianza en este momento.
-                </p>
-            </div>
-        `;
-    } else {
-        const signalColor = data.signal === 'LONG' ? 'success' : 'danger';
-        const signalDirection = data.signal === 'LONG' ? 'ALCISTA' : 'BAJISTA';
-        
-        analysisHTML = `
-            <div class="alert alert-${signalColor} border-${signalColor}">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h6 class="mb-0">SEÑAL ${signalDirection} CONFIRMADA</h6>
-                    <span class="badge bg-${signalColor}">${data.signal_score.toFixed(1)}%</span>
-                </div>
-                
-                <div class="row small">
-                    <div class="col-6">
-                        <strong>Entrada:</strong><br>
-                        $${data.entry.toFixed(6)}
-                    </div>
-                    <div class="col-6">
-                        <strong>Stop Loss:</strong><br>
-                        $${data.stop_loss.toFixed(6)}
-                    </div>
-                </div>
-                
-                <div class="row small mt-2">
-                    <div class="col-6">
-                        <strong>Take Profit:</strong><br>
-                        $${data.take_profit[0].toFixed(6)}
-                    </div>
-                    <div class="col-6">
-                        <strong>Riesgo:</strong><br>
-                        ${calculateRiskReward(data).toFixed(2)}:1
-                    </div>
-                </div>
-                
-                ${data.fulfilled_conditions.length > 0 ? `
-                    <div class="mt-2">
-                        <small><strong>Condiciones Cumplidas:</strong></small>
-                        <div class="mt-1">
-                            ${data.fulfilled_conditions.slice(0, 3).map(cond => 
-                                `<span class="badge bg-success me-1 mb-1 small">${cond}</span>`
-                            ).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-            </div>
-        `;
-    }
-    
-    signalAnalysis.innerHTML = analysisHTML;
-}
 
-function updateObligatoryConditions(data) {
-    const obligatoryConditions = document.getElementById('obligatory-conditions');
-    
-    if (!data) {
-        obligatoryConditions.innerHTML = `
-            <div class="alert alert-warning text-center">
-                <p class="mb-0">No hay datos de condiciones</p>
-            </div>
-        `;
-        return;
-    }
-    
-    const conditionsMet = data.obligatory_conditions_met;
-    const noTradeZone = data.no_trade_zone;
-    const trendStrength = data.trend_strength_signal;
-    
-    let conditionsHTML = '';
-    
-    if (conditionsMet && !noTradeZone) {
-        conditionsHTML = `
-            <div class="alert alert-success border-success">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-check-circle fa-2x me-3"></i>
-                    <div>
-                        <h6 class="mb-1">CONDICIONES OBLIGATORIAS: CUMPLIDAS</h6>
-                        <p class="mb-0 small">
-                            ✅ Multi-temporalidad confirmada<br>
-                            ✅ ${trendStrength.replace('_', ' ')}<br>
-                            ✅ Sin zona de NO OPERAR
-                        </p>
-                    </div>
-                </div>
-            </div>
-        `;
-    } else {
-        const reasons = [];
-        if (!conditionsMet) reasons.push('Condiciones multi-temporalidad no cumplidas');
-        if (noTradeZone) reasons.push('Zona de NO OPERAR activa');
-        if (trendStrength.includes('WEAK')) reasons.push('Fuerza de tendencia débil');
-        
-        conditionsHTML = `
-            <div class="alert alert-danger border-danger">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-times-circle fa-2x me-3"></i>
-                    <div>
-                        <h6 class="mb-1">CONDICIONES OBLIGATORIAS: NO CUMPLIDAS</h6>
-                        <p class="mb-0 small">
-                            ${reasons.map(reason => `❌ ${reason}`).join('<br>')}
-                        </p>
-                    </div>
-                </div>
+    let conditionsHtml = '';
+    if (data.fulfilled_conditions && data.fulfilled_conditions.length > 0) {
+        conditionsHtml = `
+            <div class="mt-3">
+                <strong>Condiciones Cumplidas:</strong>
+                <ul class="mt-2 small">
+                    ${data.fulfilled_conditions.map(condition => `<li>${condition}</li>`).join('')}
+                </ul>
             </div>
         `;
     }
-    
-    obligatoryConditions.innerHTML = conditionsHTML;
+
+    signalAnalysis.innerHTML = `
+        <div class="row">
+            <div class="col-12">
+                <div class="mb-3">
+                    <strong>Entrada:</strong> $${data.entry.toFixed(6)}
+                </div>
+                <div class="mb-3">
+                    <strong>Stop Loss:</strong> $${data.stop_loss.toFixed(6)}
+                </div>
+                <div class="mb-3">
+                    <strong>Take Profit:</strong> 
+                    <ul class="mt-1 small">
+                        ${data.take_profit.map((tp, index) => `<li>TP${index + 1}: $${tp.toFixed(6)}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="mb-3">
+                    <strong>Soporte:</strong> $${data.support.toFixed(6)}
+                </div>
+                <div class="mb-3">
+                    <strong>Resistencia:</strong> $${data.resistance.toFixed(6)}
+                </div>
+                <div class="mb-3">
+                    <strong>ATR:</strong> ${data.atr.toFixed(6)} (${(data.atr_percentage * 100).toFixed(2)}%)
+                </div>
+                ${conditionsHtml}
+            </div>
+        </div>
+    `;
 }
 
 function updateFearGreedIndex() {
-    // Simulación del índice de miedo y codicia
-    // En una implementación real, esto vendría de una API
     const fearGreedIndex = document.getElementById('fear-greed-index');
+    const randomIndex = Math.floor(Math.random() * 100);
     
-    const indexValue = Math.floor(Math.random() * 100);
-    let level = '';
-    let color = '';
-    let description = '';
-    
-    if (indexValue >= 75) {
-        level = 'Codicia Extrema';
+    let level, color, description;
+    if (randomIndex >= 80) {
+        level = 'Extrema Codicia';
         color = 'danger';
-        description = 'Mercado sobrecomprado - Posible corrección';
-    } else if (indexValue >= 55) {
+        description = 'Mercado sobrecomprado, posible corrección';
+    } else if (randomIndex >= 60) {
         level = 'Codicia';
         color = 'warning';
-        description = 'Mercado optimista - Cautela recomendada';
-    } else if (indexValue >= 45) {
+        description = 'Mercado alcista, cuidado con entradas';
+    } else if (randomIndex >= 40) {
         level = 'Neutral';
-        color = 'info';
-        description = 'Mercado equilibrado - Buenas condiciones';
-    } else if (indexValue >= 25) {
+        color = 'secondary';
+        description = 'Mercado en equilibrio';
+    } else if (randomIndex >= 20) {
         level = 'Miedo';
-        color = 'primary';
-        description = 'Mercado pesimista - Oportunidades emergentes';
+        color = 'info';
+        description = 'Mercado bajista, oportunidades de compra';
     } else {
         level = 'Miedo Extremo';
         color = 'success';
-        description = 'Mercado sobrevendido - Oportunidad de compra';
+        description = 'Mercado sobrevendido, posible rebote';
     }
     
     fearGreedIndex.innerHTML = `
         <div class="text-center">
-            <div class="display-6 fw-bold text-${color}">${indexValue}</div>
-            <div class="small text-${color} mb-2">${level}</div>
-            <div class="progress mb-2" style="height: 8px;">
-                <div class="progress-bar bg-${color}" style="width: ${indexValue}%"></div>
+            <div class="display-4 fw-bold text-${color}">${randomIndex}</div>
+            <div class="mt-2">
+                <span class="badge bg-${color}">${level}</span>
             </div>
-            <small class="text-muted">${description}</small>
+            <p class="small text-muted mt-2">${description}</p>
         </div>
     `;
 }
@@ -1913,27 +1714,27 @@ function updateFearGreedIndex() {
 function updateMarketRecommendations() {
     const marketRecommendations = document.getElementById('market-recommendations');
     
-    // Simulación de recomendaciones de mercado
     const recommendations = [
-        {type: 'success', icon: '🟢', text: 'BTC: Fuerte tendencia alcista en 4H'},
-        {type: 'warning', icon: '🟡', text: 'ETH: Consolidación - Esperar breakout'},
-        {type: 'danger', icon: '🔴', text: 'Altcoins: Alta volatilidad - Riesgo elevado'},
-        {type: 'info', icon: '🔵', text: 'DXY: En niveles clave - Monitorear'}
+        { type: 'success', text: 'Mercado alcista en BTC y ETH' },
+        { type: 'warning', text: 'Posible corrección en memecoins' },
+        { type: 'info', text: 'Alta volatilidad en altcoins' }
     ];
     
-    let html = '';
-    recommendations.forEach(rec => {
-        html += `
-            <div class="alert alert-${rec.type} border-${rec.type} py-2 mb-2">
-                <div class="d-flex align-items-center">
-                    <span class="me-2">${rec.icon}</span>
-                    <small class="mb-0">${rec.text}</small>
-                </div>
+    marketRecommendations.innerHTML = `
+        <div class="card bg-dark border-secondary">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-bullhorn me-2"></i>Recomendaciones</h6>
             </div>
-        `;
-    });
-    
-    marketRecommendations.innerHTML = html;
+            <div class="card-body">
+                ${recommendations.map(rec => `
+                    <div class="alert alert-${rec.type} py-2 mb-2 small" role="alert">
+                        <i class="fas fa-${rec.type === 'success' ? 'check' : rec.type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-1"></i>
+                        ${rec.text}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
 }
 
 function updateScalpingAlerts() {
@@ -1944,45 +1745,30 @@ function updateScalpingAlerts() {
             
             if (!data.alerts || data.alerts.length === 0) {
                 scalpingAlerts.innerHTML = `
-                    <div class="text-center py-3">
-                        <i class="fas fa-bed fa-2x text-muted mb-2"></i>
-                        <p class="small text-muted mb-0">No hay alertas activas</p>
+                    <div class="text-center py-2">
+                        <p class="text-muted mb-0">No hay alertas activas</p>
                     </div>
                 `;
                 return;
             }
             
-            let html = '';
-            data.alerts.slice(0, 5).forEach(alert => {
-                const signalClass = alert.signal === 'LONG' ? 'success' : 'danger';
-                const riskClass = alert.risk_category === 'bajo' ? 'success' : 
-                                 alert.risk_category === 'medio' ? 'warning' : 
-                                 alert.risk_category === 'alto' ? 'danger' : 'info';
-                
-                html += `
-                    <div class="alert alert-${signalClass} border-${signalClass} py-2 mb-2">
-                        <div class="d-flex justify-content-between align-items-start mb-1">
-                            <strong class="small">${alert.symbol}</strong>
-                            <span class="badge bg-${riskClass} small">${alert.risk_category}</span>
+            scalpingAlerts.innerHTML = data.alerts.map(alert => `
+                <div class="alert alert-warning py-2 mb-2 small scalping-alert" role="alert">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${alert.symbol}</strong> (${alert.interval})<br>
+                            <span class="badge bg-${alert.signal === 'LONG' ? 'success' : 'danger'}">${alert.signal}</span>
+                            Score: ${alert.score.toFixed(1)}%<br>
+                            Entrada: $${alert.entry.toFixed(6)}<br>
+                            SL: $${alert.stop_loss.toFixed(6)} | TP: $${alert.take_profit.toFixed(6)}
                         </div>
-                        <div class="small">
-                            <div class="d-flex justify-content-between">
-                                <span>${alert.signal}</span>
-                                <span class="fw-bold">${alert.score.toFixed(1)}%</span>
-                            </div>
-                            <div class="d-flex justify-content-between text-muted">
-                                <span>${alert.interval}</span>
-                                <span>x${alert.leverage}</span>
-                            </div>
-                        </div>
+                        <small class="text-muted">${alert.timestamp}</small>
                     </div>
-                `;
-            });
-            
-            scalpingAlerts.innerHTML = html;
+                </div>
+            `).join('');
         })
         .catch(error => {
-            console.error('Error cargando alertas de scalping:', error);
+            console.error('Error actualizando alertas de scalping:', error);
         });
 }
 
@@ -1994,113 +1780,58 @@ function updateExitSignals() {
             
             if (!data.exit_signals || data.exit_signals.length === 0) {
                 exitSignals.innerHTML = `
-                    <div class="text-center py-3">
-                        <i class="fas fa-check-circle fa-2x text-muted mb-2"></i>
-                        <p class="small text-muted mb-0">Sin señales de salida</p>
+                    <div class="text-center py-2">
+                        <p class="text-muted mb-0">No hay señales de salida</p>
                     </div>
                 `;
                 return;
             }
             
-            let html = '';
-            data.exit_signals.slice(0, 3).forEach(signal => {
-                const pnlClass = signal.pnl_percent >= 0 ? 'success' : 'danger';
-                const pnlIcon = signal.pnl_percent >= 0 ? '📈' : '📉';
-                
-                html += `
-                    <div class="alert alert-${pnlClass} border-${pnlClass} py-2 mb-2">
-                        <div class="d-flex justify-content-between align-items-start mb-1">
-                            <strong class="small">${signal.symbol}</strong>
-                            <span class="badge bg-${pnlClass} small">
-                                ${pnlIcon} ${signal.pnl_percent.toFixed(2)}%
-                            </span>
+            exitSignals.innerHTML = data.exit_signals.map(signal => `
+                <div class="alert alert-danger py-2 mb-2 small" role="alert">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${signal.symbol}</strong> (${signal.interval})<br>
+                            <span class="badge bg-${signal.signal === 'LONG' ? 'success' : 'danger'}">${signal.signal}</span>
+                            P&L: <span class="text-${signal.pnl_percent >= 0 ? 'success' : 'danger'}">${signal.pnl_percent.toFixed(2)}%</span><br>
+                            Razón: ${signal.reason}
                         </div>
-                        <div class="small text-muted">
-                            ${signal.reason}<br>
-                            <small>${signal.timestamp}</small>
-                        </div>
+                        <small class="text-muted">${signal.timestamp}</small>
                     </div>
-                `;
-            });
-            
-            exitSignals.innerHTML = html;
+                </div>
+            `).join('');
         })
         .catch(error => {
-            console.error('Error cargando señales de salida:', error);
+            console.error('Error actualizando señales de salida:', error);
         });
 }
 
-// Funciones utilitarias
-function formatVolume(volume) {
-    if (volume >= 1000000) {
-        return (volume / 1000000).toFixed(2) + 'M';
-    } else if (volume >= 1000) {
-        return (volume / 1000).toFixed(2) + 'K';
-    }
-    return volume.toFixed(2);
-}
-
-function getRiskLevel(atrPercentage) {
-    const risk = atrPercentage * 100;
-    if (risk >= 5) return {level: 'Alto', class: 'text-danger'};
-    if (risk >= 2) return {level: 'Medio', class: 'text-warning'};
-    return {level: 'Bajo', class: 'text-success'};
-}
-
-function calculateRiskReward(data) {
-    if (!data.entry || !data.stop_loss || !data.take_profit || data.take_profit.length === 0) {
-        return 0;
-    }
-    
-    const risk = Math.abs(data.entry - data.stop_loss);
-    const reward = Math.abs(data.take_profit[0] - data.entry);
-    
-    return risk > 0 ? reward / risk : 0;
-}
-
 function showError(message) {
-    showNotification(message, 'danger');
-}
-
-function showNotification(message, type = 'info') {
     const toastContainer = document.getElementById('toast-container');
     const toastId = 'toast-' + Date.now();
     
-    const toastHTML = `
-        <div id="${toastId}" class="toast align-items-center text-bg-${type} border-0" role="alert">
+    const toastHtml = `
+        <div id="${toastId}" class="toast align-items-center text-white bg-danger border-0" role="alert">
             <div class="d-flex">
                 <div class="toast-body">
-                    ${message}
+                    <i class="fas fa-exclamation-circle me-2"></i>${message}
                 </div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
         </div>
     `;
     
-    toastContainer.innerHTML += toastHTML;
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
     
     const toastElement = document.getElementById(toastId);
     const toast = new bootstrap.Toast(toastElement);
     toast.show();
     
-    // Remover el toast del DOM después de que se oculte
-    toastElement.addEventListener('hidden.bs.toast', function() {
+    toastElement.addEventListener('hidden.bs.toast', () => {
         toastElement.remove();
     });
 }
 
-function downloadReport() {
-    const symbol = document.getElementById('selected-crypto').textContent || 'BTC-USDT';
-    const interval = document.getElementById('interval-select').value;
-    const leverage = document.getElementById('leverage').value;
-    
-    const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}`;
-    window.open(url, '_blank');
-    
-    showNotification('📊 Generando reporte técnico completo...', 'info');
-}
-
-// Inicializar el reloj de Bolivia
 function updateBoliviaClock() {
     fetch('/api/bolivia_time')
         .then(response => response.json())
@@ -2110,17 +1841,48 @@ function updateBoliviaClock() {
         })
         .catch(error => {
             console.error('Error actualizando reloj:', error);
-            // Fallback a JavaScript local
             const now = new Date();
             document.getElementById('bolivia-clock').textContent = now.toLocaleTimeString('es-BO');
             document.getElementById('bolivia-date').textContent = now.toLocaleDateString('es-BO');
         });
 }
 
+function updateWinrate() {
+    fetch('/api/winrate')
+        .then(response => response.json())
+        .then(data => {
+            const winrateDisplay = document.getElementById('winrate-display');
+            if (data.winrate) {
+                winrateDisplay.innerHTML = `
+                    <div class="winrate-value display-4 fw-bold text-success">${data.winrate}%</div>
+                    <div class="winrate-label small text-muted">Tasa de Acierto</div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error actualizando winrate:', error);
+        });
+}
+
+function downloadStrategicReport() {
+    const symbol = currentSymbol;
+    const interval = document.getElementById('interval-select').value;
+    const leverage = document.getElementById('leverage').value;
+    
+    const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}&strategic=true`;
+    window.open(url, '_blank');
+}
+
+function downloadReport() {
+    const symbol = currentSymbol;
+    const interval = document.getElementById('interval-select').value;
+    const leverage = document.getElementById('leverage').value;
+    
+    const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}`;
+    window.open(url, '_blank');
+}
+
 // Actualizar el reloj cada segundo
 setInterval(updateBoliviaClock, 1000);
-
-// Inicializar el reloj al cargar la página
-document.addEventListener('DOMContentLoaded', function() {
-    updateBoliviaClock();
-});
+// Actualizar winrate cada 2 minutos
+setInterval(updateWinrate, 120000);
