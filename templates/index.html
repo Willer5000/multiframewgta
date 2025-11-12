@@ -58,13 +58,16 @@
                         <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Winrate del Sistema</h6>
                     </div>
                     <div class="card-body text-center">
-                        <div id="system-winrate" class="mb-3">
-                            <div class="winrate-value display-4 fw-bold text-success">--%</div>
-                            <div class="winrate-label small text-muted">Performance Histórica</div>
+                        <div id="winrate-display" class="mb-3">
+                            <div class="spinner-border spinner-border-sm text-success" role="status">
+                                <span class="visually-hidden">Calculando...</span>
+                            </div>
+                            <p class="mt-2 mb-0 small">Calculando winrate...</p>
                         </div>
                         <button class="btn btn-sm btn-outline-success w-100" onclick="downloadStrategicReport()">
                             <i class="fas fa-download me-1"></i>Reporte Estratégico
                         </button>
+                        <small class="text-muted mt-2 d-block">Basado en análisis histórico de señales</small>
                     </div>
                 </div>
 
@@ -236,8 +239,8 @@
                         </div>
                         <div class="mt-3">
                             <p class="small">
-                                <strong>Experiencia:</strong> 15+ años en análisis multi-temporalidad y estrategias institucionales.
-                                Certificado en análisis técnico avanzado y gestión de riesgo.
+                                <strong>Experiencia:</strong> 15+ años en análisis de mercados y trading algorítmico.
+                                Especializado en estrategias multi-temporalidad y análisis institucional.
                             </p>
                         </div>
                     </div>
@@ -305,10 +308,20 @@
                 <!-- Gráfico MACD Mejorado -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
-                        <h5 class="mb-0">MACD con Histograma de Colores</h5>
+                        <h5 class="mb-0">MACD con Histograma Coloreado</h5>
                     </div>
                     <div class="card-body">
                         <div id="macd-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- Gráfico Squeeze Momentum -->
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Squeeze Momentum</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="squeeze-chart" style="height: 300px;"></div>
                     </div>
                 </div>
 
@@ -327,7 +340,7 @@
                                 <i class="fas fa-info-circle me-1"></i>
                                 <strong>🟢 VERDE:</strong> Fuerza creciente (Operar) | 
                                 <strong>🔴 ROJO:</strong> Fuerza decreciente (Evitar) |
-                                <strong>❌ X ROJO:</strong> Zona de NO OPERAR
+                                <strong>❌ ZONA ROJA:</strong> NO OPERAR
                             </small>
                         </div>
                     </div>
@@ -342,6 +355,7 @@
                             <option value="macd" selected>MACD</option>
                             <option value="squeeze">Squeeze Momentum</option>
                             <option value="moving_averages">Medias Móviles</option>
+                            <option value="bollinger">Bandas Bollinger</option>
                         </select>
                     </div>
                     <div class="card-body">
@@ -405,23 +419,6 @@
                         <div id="signal-analysis">
                             <div class="text-center py-3">
                                 <p class="text-muted mb-0">Esperando datos para análisis...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Condiciones Obligatorias -->
-                <div class="card bg-dark border-warning mb-4">
-                    <div class="card-header bg-warning bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Condiciones Obligatorias</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="obligatory-conditions">
-                            <div class="text-center py-2">
-                                <div class="spinner-border spinner-border-sm text-warning" role="status">
-                                    <span class="visually-hidden">Cargando...</span>
-                                </div>
-                                <p class="mt-2 mb-0 small">Verificando condiciones...</p>
                             </div>
                         </div>
                     </div>
@@ -546,44 +543,26 @@
                 .then(data => {
                     document.getElementById('bolivia-clock').textContent = data.time;
                     document.getElementById('bolivia-date').textContent = data.date;
-                    
-                    // Actualizar información del calendario
-                    const calendarInfo = document.getElementById('calendar-info');
-                    if (calendarInfo) {
-                        const scalpingStatus = data.is_scalping_time ? 
-                            '<span class="text-success">🟢 ACTIVO</span>' : 
-                            '<span class="text-danger">🔴 INACTIVO</span>';
-                        
-                        calendarInfo.innerHTML = `
-                            <small class="text-muted">
-                                📅 ${data.day_of_week} | Scalping 15m/30m: ${scalpingStatus} | Horario: 4am-4pm L-V
-                            </small>
-                        `;
-                    }
                 })
                 .catch(error => {
                     console.error('Error actualizando reloj:', error);
-                    // Fallback a JavaScript local
                     const now = new Date();
                     document.getElementById('bolivia-clock').textContent = now.toLocaleTimeString('es-BO');
                     document.getElementById('bolivia-date').textContent = now.toLocaleDateString('es-BO');
                 });
         }
 
-        // Función para actualizar el winrate del sistema
-        function updateSystemWinrate() {
-            fetch('/api/winrate?symbol=BTC-USDT&interval=4h')
+        // Función para actualizar el winrate
+        function updateWinrate() {
+            fetch('/api/winrate')
                 .then(response => response.json())
                 .then(data => {
-                    const winrateElement = document.querySelector('.winrate-value');
-                    const winrateLabel = document.querySelector('.winrate-label');
-                    
-                    if (data.winrate && data.winrate > 0) {
-                        winrateElement.textContent = `${data.winrate.toFixed(1)}%`;
-                        winrateElement.className = 'winrate-value display-4 fw-bold ' + 
-                            (data.winrate >= 70 ? 'text-success' : 
-                             data.winrate >= 60 ? 'text-warning' : 'text-danger');
-                        winrateLabel.textContent = `Performance Histórica (${data.interval})`;
+                    const winrateDisplay = document.getElementById('winrate-display');
+                    if (data.winrate) {
+                        winrateDisplay.innerHTML = `
+                            <div class="winrate-value display-4 fw-bold text-success">${data.winrate}%</div>
+                            <div class="winrate-label small text-muted">Tasa de Acierto</div>
+                        `;
                     }
                 })
                 .catch(error => {
@@ -593,33 +572,24 @@
 
         // Función para descargar reporte estratégico
         function downloadStrategicReport() {
-            const symbol = document.getElementById('selected-crypto').textContent || 'BTC-USDT';
+            const symbol = currentSymbol;
             const interval = document.getElementById('interval-select').value;
             const leverage = document.getElementById('leverage').value;
             
-            const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}`;
+            const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}&strategic=true`;
             window.open(url, '_blank');
-            
-            // Mostrar notificación
-            showNotification('📊 Generando reporte estratégico...', 'info');
         }
 
         // Actualizar el reloj cada segundo
         setInterval(updateBoliviaClock, 1000);
         
         // Actualizar winrate cada 2 minutos
-        setInterval(updateSystemWinrate, 120000);
+        setInterval(updateWinrate, 120000);
         
         // Inicializar el reloj y winrate al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             updateBoliviaClock();
-            updateSystemWinrate();
-            
-            // Configurar tooltip para winrate
-            const winrateContainer = document.getElementById('system-winrate');
-            if (winrateContainer) {
-                winrateContainer.title = "Winrate calculado basado en análisis histórico de 100 periodos. Incluye todas las temporalidades y criptomonedas.";
-            }
+            updateWinrate();
         });
     </script>
 </body>
