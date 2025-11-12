@@ -23,7 +23,7 @@
         </div>
     </div>
 
-    <!-- Información del Calendario de Scalping -->
+    <!-- Información del Calendario de Trading -->
     <div class="container-fluid bg-dark border-bottom border-warning py-1">
         <div class="row">
             <div class="col-12">
@@ -41,8 +41,8 @@
                 MULTI-TIMEFRAME CRYPTO WGTA PRO
             </a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/manual">
-                    <i class="fas fa-book me-1"></i>Manual
+                <a class="nav-link" href="#" onclick="downloadStrategicReport()">
+                    <i class="fas fa-chart-line me-1"></i>Reporte Estratégico
                 </a>
             </div>
         </div>
@@ -142,55 +142,27 @@
                             </select>
                         </div>
 
-                        <!-- Herramientas de Dibujo -->
+                        <!-- Indicadores Operativos -->
                         <div class="mb-3">
-                            <label class="form-label">Herramientas de Dibujo</label>
-                            <div class="btn-group w-100 mb-2">
-                                <button type="button" class="btn btn-outline-warning btn-sm drawing-tool" data-tool="line">
-                                    <i class="fas fa-slash"></i>
-                                </button>
-                                <button type="button" class="btn btn-outline-warning btn-sm drawing-tool" data-tool="rectangle">
-                                    <i class="fas fa-square"></i>
-                                </button>
-                                <button type="button" class="btn btn-outline-warning btn-sm drawing-tool" data-tool="circle">
-                                    <i class="fas fa-circle"></i>
-                                </button>
-                                <button type="button" class="btn btn-outline-warning btn-sm drawing-tool" data-tool="text">
-                                    <i class="fas fa-font"></i>
-                                </button>
-                            </div>
-                            <div class="btn-group w-100">
-                                <button type="button" class="btn btn-outline-warning btn-sm drawing-tool" data-tool="freehand">
-                                    <i class="fas fa-pencil-alt"></i>
-                                </button>
-                                <button type="button" class="btn btn-outline-warning btn-sm drawing-tool" data-tool="marker">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                </button>
-                                <input type="color" class="btn btn-outline-warning btn-sm" id="drawing-color" value="#FFD700" title="Color de dibujo">
-                            </div>
-                        </div>
-
-                        <!-- Indicadores Informativos -->
-                        <div class="mb-3">
-                            <label class="form-label">Indicadores Informativos</label>
+                            <label class="form-label">Indicadores Operativos</label>
                             <div class="form-check form-switch">
-                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma9">
+                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma9" checked>
                                 <label class="form-check-label" for="show-ma9">MA 9</label>
                             </div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma21">
+                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma21" checked>
                                 <label class="form-check-label" for="show-ma21">MA 21</label>
                             </div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma50">
+                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma50" checked>
                                 <label class="form-check-label" for="show-ma50">MA 50</label>
                             </div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma200">
+                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma200" checked>
                                 <label class="form-check-label" for="show-ma200">MA 200</label>
                             </div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input indicator-control" type="checkbox" id="show-bollinger">
+                                <input class="form-check-input indicator-control" type="checkbox" id="show-bollinger" checked>
                                 <label class="form-check-label" for="show-bollinger">Bandas Bollinger</label>
                             </div>
                         </div>
@@ -201,28 +173,46 @@
                     </div>
                 </div>
 
+                <!-- Winrate del Sistema -->
+                <div class="card bg-dark border-success mb-4">
+                    <div class="card-header bg-success bg-opacity-25">
+                        <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Winrate del Sistema</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <div id="winrate-display">
+                            <div class="spinner-border spinner-border-sm text-success" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                            <p class="mt-2 mb-1 small">Calculando winrate...</p>
+                        </div>
+                        <button class="btn btn-sm btn-outline-success w-100 mt-2" onclick="downloadStrategicReport()">
+                            <i class="fas fa-download me-1"></i>Reporte Estratégico
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Información del Autor -->
                 <div class="card bg-dark border-secondary">
                     <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-user me-2"></i>Autor</h6>
+                        <h6 class="mb-0"><i class="fas fa-user me-2"></i>Sistema</h6>
                     </div>
                     <div class="card-body">
                         <div class="text-center">
                             <div class="bg-primary bg-opacity-25 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 80px; height: 80px;">
-                                <i class="fas fa-chart-line fa-2x"></i>
+                                <i class="fas fa-layer-group fa-2x"></i>
                             </div>
-                            <h6>Willer Gianni Torrico Arispe</h6>
-                            <p class="small text-muted">Especialista en Análisis de Datos y Trading</p>
-                            <p class="small text-muted">© 2025 MULTI-TIMEFRAME CRYPTO WGTA PRO</p>
-                            <a href="https://github.com/Willer5000" target="_blank" class="btn btn-outline-light btn-sm">
-                                <i class="fab fa-github me-1"></i>GitHub
-                            </a>
-                        </div>
-                        <div class="mt-3">
-                            <p class="small">
-                                <strong>Experiencia:</strong> 10+ años en análisis de datos, GIS y recursos hídricos.
-                                Certificado IBM Data Scientist con experiencia en organizaciones internacionales.
-                            </p>
+                            <h6>MULTI-TIMEFRAME CRYPTO WGTA PRO</h6>
+                            <p class="small text-muted">Sistema Profesional de Trading</p>
+                            <p class="small text-muted">© 2025 WGTA Trading Systems</p>
+                            <div class="mt-3">
+                                <p class="small">
+                                    <strong>Características:</strong><br>
+                                    • Análisis Multi-Timeframe<br>
+                                    • 40 Criptomonedas Top<br>
+                                    • Indicadores Operativos<br>
+                                    • Gestión Riesgo Avanzada
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -230,7 +220,7 @@
 
             <!-- Contenido Principal -->
             <div class="col-lg-8">
-                <!-- Gráfico de Dispersión MEJORADO -->
+                <!-- Mapa de Oportunidades -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Mapa de Oportunidades - Análisis Multi-Indicador (40 Criptomonedas)</h5>
@@ -240,10 +230,10 @@
                     </div>
                 </div>
 
-                <!-- Gráfico de Velas -->
+                <!-- Gráfico de Velas con Indicadores -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0" id="chart-title">Gráfico de Velas</h5>
+                        <h5 class="mb-0" id="chart-title">Gráfico de Velas con Indicadores Operativos</h5>
                         <div class="btn-group">
                             <button class="btn btn-sm btn-outline-secondary" onclick="downloadReport()">
                                 <i class="fas fa-download me-1"></i>Reporte Completo
@@ -255,7 +245,47 @@
                     </div>
                 </div>
 
-                <!-- Gráfico de Ballenas MEJORADO -->
+                <!-- RSI Tradicional -->
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">RSI Tradicional con Divergencias</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="rsi-traditional-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- RSI Maverick -->
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">RSI Maverick (%B) con Divergencias</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="rsi-maverick-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- MACD -->
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">MACD con Histograma</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="macd-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- ADX + DMI -->
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">ADX con DMI (+DI y -DI)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="adx-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- Indicador Ballenas -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
@@ -265,48 +295,8 @@
                     </div>
                 </div>
 
-                <!-- Gráfico ADX + DMI MEJORADO -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">ADX con DMI (+D y -D)</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="adx-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Gráfico RSI Tradicional -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">RSI Tradicional</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="rsi-traditional-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Gráfico RSI Maverick -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">RSI Modificado Maverick (%B)</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="rsi-maverick-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Gráfico MACD -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">MACD</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="macd-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Gráfico Fuerza de Tendencia Maverick -->
-                <div class="card bg-dark border-warning mb-4">
+                <!-- Fuerza de Tendencia Maverick -->
+                <div class="card bg-dark border-warning">
                     <div class="card-header">
                         <h5 class="mb-0">
                             <i class="fas fa-chart-line me-2"></i>
@@ -329,39 +319,6 @@
 
             <!-- Panel Derecho - Resumen del Mercado -->
             <div class="col-lg-2">
-                <!-- Winrate del Sistema -->
-                <div class="card bg-dark border-success mb-4">
-                    <div class="card-header bg-success bg-opacity-25">
-                        <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Winrate del Sistema</h6>
-                    </div>
-                    <div class="card-body text-center">
-                        <div id="winrate-display" class="mb-3">
-                            <div class="winrate-value display-4 fw-bold text-success">72.5%</div>
-                            <small class="text-muted">Tasa de acierto histórica</small>
-                        </div>
-                        <button class="btn btn-sm btn-outline-success w-100" onclick="downloadStrategicReport()">
-                            <i class="fas fa-chart-bar me-1"></i>Reporte Estratégico
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Índice de Miedo y Codicia -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0"><i class="fas fa-brain me-2"></i>Sentimiento del Mercado</h6>
-                    </div>
-                    <div class="card-body">
-                        <div id="fear-greed-index">
-                            <div class="text-center py-2">
-                                <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                    <span class="visually-hidden">Cargando...</span>
-                                </div>
-                                <p class="mt-2 mb-0 small">Cargando índice...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Resumen del Mercado -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
@@ -393,7 +350,7 @@
                     </div>
                 </div>
 
-                <!-- Alertas de Scalping -->
+                <!-- Alertas de Entrada -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header bg-warning bg-opacity-25">
                         <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Alertas de Entrada</h5>
@@ -427,7 +384,7 @@
                     </div>
                 </div>
 
-                <!-- Señales LONG -->
+                <!-- Señales LONG Confirmadas -->
                 <div class="card bg-dark border-success mb-4">
                     <div class="card-header bg-success bg-opacity-25">
                         <h5 class="mb-0"><i class="fas fa-arrow-up me-2"></i>Señales LONG Confirmadas</h5>
@@ -453,7 +410,7 @@
                     </div>
                 </div>
 
-                <!-- Señales SHORT -->
+                <!-- Señales SHORT Confirmadas -->
                 <div class="card bg-dark border-danger">
                     <div class="card-header bg-danger bg-opacity-25">
                         <h5 class="mb-0"><i class="fas fa-arrow-down me-2"></i>Señales SHORT Confirmadas</h5>
@@ -487,7 +444,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content bg-dark">
                 <div class="modal-header">
-                    <h5 class="modal-title">Detalles de Señal - Análisis Completo</h5>
+                    <h5 class="modal-title">Detalles de Señal - Análisis Multi-Timeframe</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="signal-details">
@@ -529,8 +486,8 @@
                     const winrateElement = document.getElementById('winrate-display');
                     if (winrateElement) {
                         winrateElement.innerHTML = `
-                            <div class="winrate-value display-4 fw-bold text-success">${data.winrate.toFixed(1)}%</div>
-                            <small class="text-muted">Tasa de acierto histórica</small>
+                            <h3 class="text-success mb-1">${data.winrate.toFixed(1)}%</h3>
+                            <p class="small text-muted mb-0">Tasa de acierto del sistema</p>
                         `;
                     }
                 })
@@ -541,19 +498,19 @@
 
         // Función para descargar reporte estratégico
         function downloadStrategicReport() {
-            const symbol = 'STRATEGIC_ANALYSIS';
-            const interval = '1D';
-            const leverage = 15;
+            const symbol = document.getElementById('selected-crypto').textContent;
+            const interval = document.getElementById('interval-select').value;
+            const leverage = document.getElementById('leverage').value;
             
-            const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}`;
+            const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}&strategic=true`;
             window.open(url, '_blank');
         }
 
         // Actualizar el reloj cada segundo
         setInterval(updateBoliviaClock, 1000);
         
-        // Actualizar winrate cada 5 minutos
-        setInterval(updateWinrate, 300000);
+        // Actualizar winrate cada 2 minutos
+        setInterval(updateWinrate, 120000);
         
         // Inicializar el reloj y winrate al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
