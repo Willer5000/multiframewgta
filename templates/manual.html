@@ -6,6 +6,7 @@
     <title>Manual Técnico - Multi-Timeframe Crypto WGTA Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary-color: #0d6efd;
@@ -28,7 +29,19 @@
             color: white;
             padding: 3rem 0;
             margin-bottom: 2rem;
-            border-bottom: 4px solid var(--warning-color);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .manual-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" opacity="0.1"><path d="M0,50 Q250,0 500,50 T1000,50 V100 H0 Z" fill="white"/></svg>');
+            background-size: cover;
         }
         
         .section-card {
@@ -36,13 +49,15 @@
             border: 1px solid #444;
             border-radius: 15px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
             margin-bottom: 2rem;
             padding: 2rem;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
         .section-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
         }
         
         .feature-icon {
@@ -55,6 +70,7 @@
             justify-content: center;
             margin: 0 auto 1rem;
             font-size: 1.5rem;
+            box-shadow: 0 4px 15px rgba(13, 110, 253, 0.3);
         }
         
         .strategy-step {
@@ -70,42 +86,82 @@
             border-radius: 10px;
             padding: 1.5rem;
             margin-bottom: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .indicator-card:hover {
+            transform: translateY(-5px);
         }
         
         .risk-badge {
             font-size: 0.8rem;
             padding: 0.3rem 0.6rem;
             border-radius: 15px;
+            font-weight: 600;
         }
         
-        .nav-tabs .nav-link {
-            color: rgba(255, 255, 255, 0.7);
-            border: none;
-            padding: 1rem 1.5rem;
-        }
-        
-        .nav-tabs .nav-link.active {
-            color: var(--primary-color);
-            background: transparent;
-            border-bottom: 3px solid var(--primary-color);
-        }
-        
-        .comparison-table {
-            width: 100%;
-            border-collapse: collapse;
+        .chart-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 1.5rem;
             margin: 1.5rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        .comparison-table th,
-        .comparison-table td {
-            padding: 0.8rem;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            z-index: 1000;
+            transition: all 0.3s ease;
         }
         
-        .comparison-table th {
-            background: rgba(255, 255, 255, 0.05);
+        .back-to-top:hover {
+            background: var(--info-color);
+            transform: scale(1.1);
+        }
+        
+        .back-to-top.show {
+            display: flex;
+        }
+        
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s ease forwards;
+        }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .dominance-card {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border-radius: 10px;
+            color: white;
+            padding: 1.5rem;
+        }
+        
+        .telegram-alert {
+            background: rgba(0, 123, 255, 0.1);
+            border: 1px solid var(--primary-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            font-family: 'Courier New', monospace;
+            margin: 1rem 0;
         }
         
         .signal-condition {
@@ -130,36 +186,170 @@
             padding: 0.2rem 0.5rem;
             border-radius: 15px;
             font-size: 0.8rem;
+            font-weight: bold;
         }
-        
-        .telegram-alert {
-            background: rgba(0, 123, 255, 0.1);
-            border: 1px solid var(--primary-color);
+
+        .calendar-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            color: white;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .multi-timeframe-card {
+            background: linear-gradient(135deg, rgba(32, 201, 151, 0.1), rgba(32, 201, 151, 0.05));
+            border: 1px solid rgba(32, 201, 151, 0.3);
             border-radius: 10px;
             padding: 1.5rem;
-            font-family: 'Courier New', monospace;
             margin: 1rem 0;
         }
         
-        .back-to-top {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: var(--primary-color);
-            color: white;
+        .nav-tabs .nav-link {
+            color: rgba(255, 255, 255, 0.7);
             border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2rem;
-            z-index: 1000;
+            padding: 0.8rem 1.2rem;
         }
         
-        .back-to-top.show {
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color);
+            background: transparent;
+            border-bottom: 3px solid var(--primary-color);
+        }
+        
+        .nav-tabs .nav-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .progress {
+            height: 8px;
+            margin: 0.8rem 0;
+        }
+        
+        .hierarchy-visual {
             display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .hierarchy-level {
+            text-align: center;
+            margin: 0 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            min-width: 100px;
+        }
+        
+        .hierarchy-arrow {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin: 0 0.8rem;
+        }
+        
+        .signal-visualization {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+        
+        .signal-meter {
+            width: 100%;
+            max-width: 300px;
+            height: 25px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .signal-fill {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.5s ease;
+        }
+        
+        .fill-long {
+            background: linear-gradient(90deg, var(--success-color), #4CAF50);
+        }
+        
+        .fill-short {
+            background: linear-gradient(90deg, var(--danger-color), #F44336);
+        }
+        
+        .signal-threshold {
+            position: absolute;
+            height: 100%;
+            width: 2px;
+            background: white;
+            top: 0;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .comparison-table th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+        }
+        
+        .comparison-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .timeline {
+            position: relative;
+            margin: 2rem 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--primary-color);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+            padding-left: 70px;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            left: 20px;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            border: 4px solid var(--dark-color);
+        }
+        
+        .timeline-content {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
         }
         
         @media (max-width: 768px) {
@@ -167,8 +357,18 @@
                 padding: 1.5rem;
             }
             
-            .manual-header {
-                padding: 2rem 0;
+            .hierarchy-visual {
+                flex-direction: column;
+            }
+            
+            .hierarchy-arrow {
+                transform: rotate(90deg);
+                margin: 1rem 0;
+            }
+            
+            .signal-visualization {
+                flex-direction: column;
+                gap: 1rem;
             }
         }
     </style>
@@ -184,26 +384,32 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <h1 class="display-5 fw-bold mb-3">
+                    <h1 class="display-4 fw-bold mb-3">
                         <i class="fas fa-chart-network me-3"></i>
                         Manual Técnico - Multi-Timeframe Crypto WGTA Pro
                     </h1>
                     <p class="lead mb-4">
                         Sistema Profesional de Trading Algorítmico con Análisis Multi-Temporalidad
                     </p>
-                    <div class="d-flex flex-wrap gap-2">
+                    <div class="d-flex flex-wrap gap-2 mb-4">
                         <span class="badge bg-primary fs-6">40 Criptomonedas Top</span>
                         <span class="badge bg-success fs-6">Análisis Multi-Timeframe</span>
-                        <span class="badge bg-info fs-6">Fuerza Tendencia Maverick</span>
+                        <span class="badge bg-info fs-6">Smart Money Levels</span>
                         <span class="badge bg-warning fs-6">Señales de Salida</span>
+                        <span class="badge bg-danger fs-6">Alertas Inteligentes</span>
                     </div>
                 </div>
                 <div class="col-lg-4 text-lg-end">
-                    <div class="card bg-dark border-primary">
+                    <div class="card bg-dark border-primary shadow-lg">
                         <div class="card-body">
-                            <h5 class="card-title">Willer Gianni Torrico Arispe</h5>
-                            <p class="card-text small">Especialista en Trading Algorítmico</p>
-                            <p class="card-text small text-muted">© 2025 Multi-Timeframe Crypto WGTA Pro</p>
+                            <h4 class="card-title">Sistema WGTA Pro</h4>
+                            <p class="card-text mb-2">Trading Algorítmico Multi-Temporalidad</p>
+                            <p class="card-text small text-muted mb-2">© 2025 Multi-Timeframe Crypto WGTA Pro</p>
+                            <div class="d-flex gap-2">
+                                <a href="/" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-rocket me-1"></i>Ir al Sistema
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -218,23 +424,43 @@
                 <h3 class="mb-3 text-center"><i class="fas fa-compass me-2"></i>Navegación Rápida</h3>
                 <div class="row g-2">
                     <div class="col-md-3 col-6">
-                        <a href="#introduccion" class="btn btn-outline-primary w-100 btn-sm">
-                            <i class="fas fa-play me-1"></i>Introducción
+                        <a href="#introduccion" class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-play-circle me-2"></i>Introducción
                         </a>
                     </div>
                     <div class="col-md-3 col-6">
-                        <a href="#estrategia" class="btn btn-outline-info w-100 btn-sm">
-                            <i class="fas fa-chess-knight me-1"></i>Estrategia
+                        <a href="#multi-timeframe" class="btn btn-outline-info w-100 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-layer-group me-2"></i>Multi-Timeframe
                         </a>
                     </div>
                     <div class="col-md-3 col-6">
-                        <a href="#indicadores" class="btn btn-outline-success w-100 btn-sm">
-                            <i class="fas fa-chart-line me-1"></i>Indicadores
+                        <a href="#estrategia" class="btn btn-outline-success w-100 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-chess-knight me-2"></i>Estrategia
                         </a>
                     </div>
                     <div class="col-md-3 col-6">
-                        <a href="#operacion" class="btn btn-outline-warning w-100 btn-sm">
-                            <i class="fas fa-hand-holding-usd me-1"></i>Operación
+                        <a href="#gestion" class="btn btn-outline-warning w-100 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-shield-alt me-2"></i>Gestión Riesgo
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="#operacion" class="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-chart-candlestick me-2"></i>Operación
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="#indicadores" class="btn btn-outline-teal w-100 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-chart-line me-2"></i>Indicadores
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="#alertas" class="btn btn-outline-purple w-100 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-bell me-2"></i>Alertas
+                        </a>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <a href="#manual" class="btn btn-outline-pink w-100 d-flex align-items-center justify-content-center">
+                            <i class="fas fa-book me-2"></i>Manual Práctico
                         </a>
                     </div>
                 </div>
@@ -242,336 +468,1018 @@
         </nav>
 
         <!-- Introducción -->
-        <section id="introduccion">
+        <section id="introduccion" class="fade-in-up">
             <div class="card section-card">
-                <h2 class="mb-4"><i class="fas fa-star me-2"></i>Introducción al Sistema</h2>
+                <h2 class="mb-4"><i class="fas fa-star me-2"></i>🌟 Introducción al Sistema Multi-Timeframe Crypto WGTA Pro</h2>
                 
-                <h4>🎯 ¿Qué es Multi-Timeframe Crypto WGTA Pro?</h4>
-                <p>Es un sistema de trading algorítmico avanzado diseñado específicamente para operar en el mercado de criptomonedas mediante futuros. Combina análisis técnico multi-temporalidad con indicadores propietarios para identificar oportunidades de alta probabilidad.</p>
+                <h4>🎯 ¿Qué es el Sistema WGTA Pro?</h4>
+                <p>El <strong>Multi-Timeframe Crypto WGTA Pro</strong> es un sistema de trading algorítmico avanzado diseñado específicamente para operar en el mercado de criptomonedas mediante futuros. Combina análisis técnico multi-temporalidad con detección de movimientos de Smart Money para identificar oportunidades de alta probabilidad.</p>
                 
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-lightbulb me-2"></i>Características Principales</h5>
+                    <ul class="mb-0">
+                        <li><strong>Análisis Multi-Temporalidad:</strong> Confirmación en 3 timeframe simultáneos</li>
+                        <li><strong>Smart Money Levels:</strong> Detección de niveles institucionales</li>
+                        <li><strong>40 Criptomonedas:</strong> Selección optimizada de activos top</li>
+                        <li><strong>Señales de Salida:</strong> Cierre automático basado en condiciones</li>
+                        <li><strong>Gestión Activa:</strong> Tracking de operaciones en tiempo real</li>
+                        <li><strong>Alertas Inteligentes:</strong> Telegram con P&L y recomendaciones</li>
+                    </ul>
+                </div>
+
+                <h4>🚀 Filosofía de Trading</h4>
                 <div class="row">
-                    <div class="col-md-6">
-                        <h5>Características Principales</h5>
-                        <ul>
-                            <li><strong>Análisis Multi-Temporalidad:</strong> Confirmación en 3 timeframe simultáneos</li>
-                            <li><strong>40 Criptomonedas Top:</strong> Selección optimizada de activos</li>
-                            <li><strong>Indicador Maverick:</strong> Filtro exclusivo de fuerza de tendencia</li>
-                            <li><strong>Señales de Salida:</strong> Cierre automático basado en condiciones</li>
-                            <li><strong>Alertas Inteligentes:</strong> Telegram con información completa</li>
-                            <li><strong>Gestión de Riesgo:</strong> Sistema dinámico adaptativo</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h5>Ventajas del Sistema</h5>
-                        <ul>
-                            <li><strong>Mayor Probabilidad:</strong> Confirmación múltiple reduce falsas señales</li>
-                            <li><strong>Timing Preciso:</strong> Entradas en puntos óptimos del mercado</li>
-                            <li><strong>Protección Automática:</strong> Señales de salida protegen ganancias</li>
-                            <li><strong>Optimización Continua:</strong> Sistema que aprende y mejora</li>
-                            <li><strong>Facilidad de Uso:</strong> Interface intuitiva y alertas automáticas</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="alert alert-info mt-3">
-                    <h5><i class="fas fa-lightbulb me-2"></i>Filosofía del Sistema</h5>
-                    <p class="mb-0">El sistema se basa en la premisa de que las operaciones más rentables ocurren cuando múltiples temporalidades están alineadas. 
-                    Al analizar el mercado en diferentes timeframe simultáneamente, aumentamos significativamente la probabilidad de éxito y reducimos el riesgo.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Estrategia de Trading -->
-        <section id="estrategia">
-            <div class="card section-card">
-                <h2 class="mb-4"><i class="fas fa-chess-knight me-2"></i>Estrategia de Trading</h2>
-                
-                <h4>🎯 Sistema Multi-Temporalidad</h4>
-                <p>La estrategia se basa en el análisis simultáneo de 3 temporalidades diferentes para cada operación:</p>
-                
-                <div class="row text-center mb-4">
                     <div class="col-md-4">
-                        <div class="strategy-step">
-                            <div class="feature-icon">
-                                <i class="fas fa-mountain"></i>
-                            </div>
-                            <h5>Tendencia Mayor</h5>
-                            <p class="small">Define la dirección principal del mercado</p>
-                            <span class="badge bg-primary">4H - 1D</span>
+                        <div class="indicator-card text-center">
+                            <i class="fas fa-brain fa-3x text-primary mb-3"></i>
+                            <h5>Seguir al Smart Money</h5>
+                            <p class="mb-0">Identificar movimientos institucionales mediante volumen y price action en niveles clave</p>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="strategy-step">
-                            <div class="feature-icon">
-                                <i class="fas fa-hill-rockslide"></i>
-                            </div>
-                            <h5>Tendencia Media</h5>
-                            <p class="small">Confirma la dirección intermedia</p>
-                            <span class="badge bg-info">1H - 4H</span>
+                        <div class="indicator-card text-center">
+                            <i class="fas fa-filter fa-3x text-warning mb-3"></i>
+                            <h5>Confirmación Múltiple</h5>
+                            <p class="mb-0">Múltiples capas de confirmación para eliminar falsas señales</p>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="strategy-step">
-                            <div class="feature-icon">
-                                <i class="fas fa-wave-square"></i>
-                            </div>
-                            <h5>Señal de Entrada</h5>
-                            <p class="small">Timing preciso para la operación</p>
-                            <span class="badge bg-success">15M - 1H</span>
+                        <div class="indicator-card text-center">
+                            <i class="fas fa-chess-board fa-3x text-success mb-3"></i>
+                            <h5>Gestión Conservadora</h5>
+                            <p class="mb-0">Enfoque conservador con protección de capital prioritaria</p>
                         </div>
                     </div>
                 </div>
 
-                <h4>⚡ Condiciones Obligatorias</h4>
-                <p>Para que una señal sea considerada válida, debe cumplir con estas condiciones obligatorias:</p>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5>Para Operaciones LONG</h5>
-                        <div class="signal-condition condition-long">
-                            <h6>1. Tendencia Mayor Alcista/Neutral</h6>
-                            <p class="mb-0">El timeframe mayor debe mostrar tendencia alcista o al menos neutral</p>
-                        </div>
-                        <div class="signal-condition condition-long">
-                            <h6>2. Tendencia Media EXCLUSIVAMENTE Alcista</h6>
-                            <p class="mb-0">Confirmación absoluta en el timeframe medio</p>
-                        </div>
-                        <div class="signal-condition condition-long">
-                            <h6>3. Tendencia Menor Alcista</h6>
-                            <p class="mb-0">Fuerza Maverick favorable en timeframe menor</p>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <h5>Para Operaciones SHORT</h5>
-                        <div class="signal-condition condition-short">
-                            <h6>1. Tendencia Mayor Bajista/Neutral</h6>
-                            <p class="mb-0">El timeframe mayor debe mostrar tendencia bajista o neutral</p>
-                        </div>
-                        <div class="signal-condition condition-short">
-                            <h6>2. Tendencia Media EXCLUSIVAMENTE Bajista</h6>
-                            <p class="mb-0">Confirmación absoluta en el timeframe medio</p>
-                        </div>
-                        <div class="signal-condition condition-short">
-                            <h6>3. Tendencia Menor Bajista</h6>
-                            <p class="mb-0">Fuerza Maverick favorable en timeframe menor</p>
-                        </div>
-                    </div>
-                </div>
-
-                <h4 class="mt-4">📊 Sistema de Puntuación</h4>
-                <p>El sistema asigna puntuaciones basadas en condiciones ponderadas:</p>
+                <h4>📊 Selección de Criptomonedas</h4>
+                <p>El sistema analiza 40 criptomonedas cuidadosamente seleccionadas y clasificadas por riesgo:</p>
                 
                 <div class="table-responsive">
-                    <table class="comparison-table">
+                    <table class="table table-dark table-striped">
                         <thead>
                             <tr>
-                                <th>Condición</th>
-                                <th>Peso LONG</th>
-                                <th>Peso SHORT</th>
-                                <th>Descripción</th>
+                                <th>Categoría Riesgo</th>
+                                <th>Cantidad</th>
+                                <th>Ejemplos</th>
+                                <th>Características</th>
+                                <th>Apalancamiento Sugerido</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Multi-Timeframe</td>
-                                <td>30%</td>
-                                <td>30%</td>
-                                <td>Confirmación en 3 temporalidades</td>
+                                <td><span class="badge bg-success">Bajo Riesgo</span></td>
+                                <td>20</td>
+                                <td>BTC, ETH, BNB, SOL</td>
+                                <td>Alta capitalización, alta liquidez</td>
+                                <td>15-20x</td>
                             </tr>
                             <tr>
-                                <td>Actividad Ballenas</td>
-                                <td>15%</td>
-                                <td>15%</td>
-                                <td>Volumen anómalo en zonas clave</td>
+                                <td><span class="badge bg-warning">Medio Riesgo</span></td>
+                                <td>10</td>
+                                <td>NEAR, FTM, EGLD</td>
+                                <td>Proyectos consolidados</td>
+                                <td>10-15x</td>
                             </tr>
                             <tr>
-                                <td>Cruce DMI</td>
-                                <td>12%</td>
-                                <td>12%</td>
-                                <td>Cruce direccional confirmado</td>
+                                <td><span class="badge bg-danger">Alto Riesgo</span></td>
+                                <td>7</td>
+                                <td>APE, GMT, GAL</td>
+                                <td>Proyectos emergentes</td>
+                                <td>5-10x</td>
                             </tr>
                             <tr>
-                                <td>RSI Extremo</td>
-                                <td>10%</td>
-                                <td>10%</td>
-                                <td>Sobrecompra/sobreventa</td>
-                            </tr>
-                            <tr>
-                                <td>RSI Maverick</td>
-                                <td>10%</td>
-                                <td>10%</td>
-                                <td>Indicador propietario</td>
-                            </tr>
-                            <tr>
-                                <td>Señal MACD</td>
-                                <td>8%</td>
-                                <td>8%</td>
-                                <td>Confirmación momentum</td>
-                            </tr>
-                            <tr>
-                                <td>Patrón Chartista</td>
-                                <td>8%</td>
-                                <td>8%</td>
-                                <td>Patrones de precio</td>
-                            </tr>
-                            <tr>
-                                <td>Toque Banda Bollinger</td>
-                                <td>7%</td>
-                                <td>7%</td>
-                                <td>Niveles extremos</td>
+                                <td><span class="badge bg-purple">Memecoins</span></td>
+                                <td>3</td>
+                                <td>SHIB, PEPE, FLOKI</td>
+                                <td>Alta volatilidad</td>
+                                <td>3-5x</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
+                <div class="chart-container mt-4">
+                    <h5 class="text-center mb-3">Arquitectura del Sistema Multi-Timeframe</h5>
+                    <canvas id="systemArchitectureChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Análisis Multi-Temporalidad -->
+        <section id="multi-timeframe" class="fade-in-up">
+            <div class="card section-card">
+                <h2 class="mb-4"><i class="fas fa-layer-group me-2"></i>🔄 Análisis Multi-Temporalidad - El Corazón del Sistema</h2>
+                
+                <h4>🎯 ¿Qué es el Análisis Multi-Temporalidad?</h4>
+                <p>El análisis multi-temporalidad es una técnica profesional que consiste en analizar un mismo activo en diferentes timeframe simultáneamente para obtener una visión completa del mercado y aumentar la probabilidad de éxito de las operaciones.</p>
+
+                <div class="multi-timeframe-card">
+                    <h5 class="text-center mb-3"><i class="fas fa-sitemap me-2"></i>Jerarquía de Temporalidades</h5>
+                    
+                    <div class="hierarchy-visual">
+                        <div class="hierarchy-level">
+                            <div class="feature-icon">
+                                <i class="fas fa-mountain"></i>
+                            </div>
+                            <h6>Tendencia Mayor</h6>
+                            <p class="small mb-0">Define dirección principal</p>
+                            <span class="badge bg-primary mt-1">4H - 1D</span>
+                        </div>
+                        
+                        <div class="hierarchy-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                        
+                        <div class="hierarchy-level">
+                            <div class="feature-icon">
+                                <i class="fas fa-hill-rockslide"></i>
+                            </div>
+                            <h6>Tendencia Media</h6>
+                            <p class="small mb-0">Confirma dirección</p>
+                            <span class="badge bg-info mt-1">1H - 4H</span>
+                        </div>
+                        
+                        <div class="hierarchy-arrow">
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                        
+                        <div class="hierarchy-level">
+                            <div class="feature-icon">
+                                <i class="fas fa-wave-square"></i>
+                            </div>
+                            <h6>Señal de Entrada</h6>
+                            <p class="small mb-0">Timing preciso</p>
+                            <span class="badge bg-success mt-1">15M - 1H</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="mt-4">⚡ Sistema de Confirmación Jerárquica</h4>
+                
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h5>Para Operaciones LONG</h5>
+                        <div class="signal-condition condition-long">
+                            <h6>1. Tendencia Mayor Alcista/Neutral</h6>
+                            <p class="mb-0">El timeframe mayor debe mostrar tendencia alcista o al menos neutral. Evita operar en contra de la tendencia principal.</p>
+                        </div>
+                        <div class="signal-condition condition-long">
+                            <h6>2. Tendencia Media EXCLUSIVAMENTE Alcista</h6>
+                            <p class="mb-0">El timeframe medio debe confirmar dirección alcista sin ambigüedades.</p>
+                        </div>
+                        <div class="signal-condition condition-long">
+                            <h6>3. Señal de Entrada en Timeframe Menor</h6>
+                            <p class="mb-0">Timing preciso en el timeframe operativo con confirmación de indicadores.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <h5>Para Operaciones SHORT</h5>
+                        <div class="signal-condition condition-short">
+                            <h6>1. Tendencia Mayor Bajista/Neutral</h6>
+                            <p class="mb-0">El timeframe mayor debe mostrar tendencia bajista o neutral, evitando operaciones en contra.</p>
+                        </div>
+                        <div class="signal-condition condition-short">
+                            <h6>2. Tendencia Media EXCLUSIVAMENTE Bajista</h6>
+                            <p class="mb-0">Confirmación del contexto intermedio que valida la dirección bajista.</p>
+                        </div>
+                        <div class="signal-condition condition-short">
+                            <h6>3. Señal de Entrada en Timeframe Menor</h6>
+                            <p class="mb-0">Timing preciso en el timeframe operativo con confirmación de indicadores.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-success mt-4">
+                    <h5><i class="fas fa-chart-line me-2"></i>Ventajas del Análisis Multi-Temporalidad</h5>
+                    <ul class="mb-0">
+                        <li><strong>Mayor probabilidad de éxito:</strong> Operaciones alineadas con tendencias mayores</li>
+                        <li><strong>Mejor timing:</strong> Entradas en puntos óptimos del mercado</li>
+                        <li><strong>Reducción de falsas señales:</strong> Múltiples capas de filtrado</li>
+                        <li><strong>Gestión de riesgo mejorada:</strong> Contexto completo del mercado</li>
+                        <li><strong>Operaciones más consistentes:</strong> Enfoque sistemático y repetible</li>
+                    </ul>
+                </div>
+
+                <h4>📊 Mapeo de Temporalidades</h4>
+                <div class="table-responsive">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Timeframe Operativo</th>
+                                <th>Timeframe Mayor</th>
+                                <th>Timeframe Medio</th>
+                                <th>Timeframe Menor</th>
+                                <th>Uso Recomendado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>15M</strong></td>
+                                <td>1H</td>
+                                <td>30M</td>
+                                <td>5M</td>
+                                <td>Scalping agresivo</td>
+                            </tr>
+                            <tr>
+                                <td><strong>30M</strong></td>
+                                <td>2H</td>
+                                <td>1H</td>
+                                <td>15M</td>
+                                <td>Scalping</td>
+                            </tr>
+                            <tr>
+                                <td><strong>1H</strong></td>
+                                <td>4H</td>
+                                <td>2H</td>
+                                <td>30M</td>
+                                <td>Intradía</td>
+                            </tr>
+                            <tr>
+                                <td><strong>2H</strong></td>
+                                <td>8H</td>
+                                <td>4H</td>
+                                <td>1H</td>
+                                <td>Intradía/Swing</td>
+                            </tr>
+                            <tr>
+                                <td><strong>4H</strong></td>
+                                <td>12H</td>
+                                <td>8H</td>
+                                <td>2H</td>
+                                <td>Swing Trading</td>
+                            </tr>
+                            <tr>
+                                <td><strong>8H</strong></td>
+                                <td>1D</td>
+                                <td>12H</td>
+                                <td>4H</td>
+                                <td>Swing Trading</td>
+                            </tr>
+                            <tr>
+                                <td><strong>12H</strong></td>
+                                <td>3D</td>
+                                <td>1D</td>
+                                <td>8H</td>
+                                <td>Position Trading</td>
+                            </tr>
+                            <tr>
+                                <td><strong>1D</strong></td>
+                                <td>3D</td>
+                                <td>1D</td>
+                                <td>12H</td>
+                                <td>Inversión</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="chart-container mt-4">
+                    <h5 class="text-center mb-3">Ejemplo Visual - Análisis Multi-Temporalidad BTC/USDT</h5>
+                    <canvas id="multiTimeframeChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Estrategia de Trading -->
+        <section id="estrategia" class="fade-in-up">
+            <div class="card section-card">
+                <h2 class="mb-4"><i class="fas fa-chess-knight me-2"></i>♟️ Estrategia de Trading Completa</h2>
+                
+                <h4>⚡ Sistema de Señales con Confirmación Multi-Nivel</h4>
+                <p>La estrategia se basa en condiciones obligatorias que deben cumplirse simultáneamente:</p>
+                
                 <div class="alert alert-warning">
-                    <h5><i class="fas fa-exclamation-triangle me-2"></i>Puntuación Mínima Requerida</h5>
-                    <p class="mb-0">Para que una señal sea considerada válida, debe alcanzar al menos <strong>70 puntos</strong> en el sistema de puntuación 
-                    y cumplir con TODAS las condiciones obligatorias del multi-timeframe.</p>
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>CONDICIONES OBLIGATORIAS</h5>
+                    <p class="mb-0">Estas condiciones deben cumplirse SIEMPRE para que una señal sea considerada válida. Si alguna falla, la señal es automáticamente descartada.</p>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h5>🔴 Condiciones OBLIGATORIAS LONG</h5>
+                        <div class="signal-condition condition-long">
+                            <h6>1. Tendencia Mayor ALCISTA/NEUTRAL</h6>
+                            <p class="mb-0">Timeframe mayor con tendencia alcista o neutral (NO bajista)</p>
+                        </div>
+                        <div class="signal-condition condition-long">
+                            <h6>2. Tendencia Media EXCLUSIVAMENTE ALCISTA</h6>
+                            <p class="mb-0">Timeframe medio debe ser alcista sin ambigüedades</p>
+                        </div>
+                        <div class="signal-condition condition-long">
+                            <h6>3. Tendencia Menor ALCISTA</h6>
+                            <p class="mb-0">Timeframe menor confirmando dirección alcista</p>
+                        </div>
+                        <div class="signal-condition condition-long">
+                            <h6>4. SIN Zonas de NO OPERAR</h6>
+                            <p class="mb-0">Ninguna temporalidad en zona de no operar</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <h5>🔴 Condiciones OBLIGATORIAS SHORT</h5>
+                        <div class="signal-condition condition-short">
+                            <h6>1. Tendencia Mayor BAJISTA/NEUTRAL</h6>
+                            <p class="mb-0">Timeframe mayor con tendencia bajista o neutral (NO alcista)</p>
+                        </div>
+                        <div class="signal-condition condition-short">
+                            <h6>2. Tendencia Media EXCLUSIVAMENTE BAJISTA</h6>
+                            <p class="mb-0">Timeframe medio debe ser bajista sin ambigüedades</p>
+                        </div>
+                        <div class="signal-condition condition-short">
+                            <h6>3. Tendencia Menor BAJISTA</h6>
+                            <p class="mb-0">Timeframe menor confirmando dirección bajista</p>
+                        </div>
+                        <div class="signal-condition condition-short">
+                            <h6>4. SIN Zonas de NO OPERAR</h6>
+                            <p class="mb-0">Ninguna temporalidad en zona de no operar</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="mt-4">📈 Sistema de Puntuación de Señales</h4>
+                <p>Una vez cumplidas las condiciones obligatorias, el sistema evalúa condiciones adicionales con un sistema de pesos:</p>
+
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h5>Condiciones LONG (Puntuación)</h5>
+                        <div class="signal-condition">
+                            <h6>Multi-Timeframe Confirmado <span class="weight-badge">30%</span></h6>
+                            <p class="mb-0">Condiciones obligatorias cumplidas</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>Ballena Compradora Activa <span class="weight-badge">15%</span></h6>
+                            <p class="mb-0">Indicador whale_pump > 25 (solo 12H y 1D)</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>Cruce DI Alcista <span class="weight-badge">12%</span></h6>
+                            <p class="mb-0">+DI cruza por encima de -DI</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>RSI en Sobreventa <span class="weight-badge">10%</span></h6>
+                            <p class="mb-0">RSI tradicional < 30</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>RSI Maverick Sobreventa <span class="weight-badge">10%</span></h6>
+                            <p class="mb-0">RSI Maverick < 0.2</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>MACD Alcista <span class="weight-badge">8%</span></h6>
+                            <p class="mb-0">Señal MACD de compra</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>Patrón Chartista Alcista <span class="weight-badge">8%</span></h6>
+                            <p class="mb-0">Doble fondo, banderín alcista</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>Toque Banda Inferior <span class="weight-badge">7%</span></h6>
+                            <p class="mb-0">Precio toca banda inferior Bollinger</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <h5>Condiciones SHORT (Puntuación)</h5>
+                        <div class="signal-condition">
+                            <h6>Multi-Timeframe Confirmado <span class="weight-badge">30%</span></h6>
+                            <p class="mb-0">Condiciones obligatorias cumplidas</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>Ballena Vendedora Activa <span class="weight-badge">15%</span></h6>
+                            <p class="mb-0">Indicador whale_dump > 25 (solo 12H y 1D)</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>Cruce DI Bajista <span class="weight-badge">12%</span></h6>
+                            <p class="mb-0">-DI cruza por encima de +DI</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>RSI en Sobrecompra <span class="weight-badge">10%</span></h6>
+                            <p class="mb-0">RSI tradicional > 70</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>RSI Maverick Sobrecompra <span class="weight-badge">10%</span></h6>
+                            <p class="mb-0">RSI Maverick > 0.8</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>MACD Bajista <span class="weight-badge">8%</span></h6>
+                            <p class="mb-0">Señal MACD de venta</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>Patrón Chartista Bajista <span class="weight-badge">8%</span></h6>
+                            <p class="mb-0">Doble techo</p>
+                        </div>
+                        <div class="signal-condition">
+                            <h6>Toque Banda Superior <span class="weight-badge">7%</span></h6>
+                            <p class="mb-0">Precio toca banda superior Bollinger</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-4">
+                    <h5><i class="fas fa-calculator me-2"></i>Cálculo del Score de Señal</h5>
+                    <p class="mb-2">
+                        <strong>Fórmula:</strong> Score = (Suma de pesos de condiciones cumplidas / 100) × 100<br>
+                        <strong>Mínimo para operar:</strong> 70% (Score mínimo requerido)
+                    </p>
+                    <p class="mb-0">
+                        <strong>Ejemplo:</strong> Si se cumplen condiciones con pesos 30+15+12+10 = 67 puntos → Score = 67% → SEÑAL NO VÁLIDA<br>
+                        Se necesitan al menos 70 puntos para considerar la señal.
+                    </p>
+                </div>
+
+                <h4>🎯 Ejemplo Práctico de Evaluación</h4>
+                <div class="signal-visualization">
+                    <div class="signal-info">
+                        <h6>BTC-USDT | 4H | LONG</h6>
+                        <p class="mb-1">Condiciones Obligatorias: ✅ CUMPLIDAS</p>
+                        <p class="mb-1">Multi-Timeframe: 30/30</p>
+                        <p class="mb-1">Ballena Compradora: 15/15</p>
+                        <p class="mb-1">Cruce DI: 12/12</p>
+                        <p class="mb-1">RSI Sobreventa: 0/10</p>
+                        <p class="mb-1">RSI Maverick: 10/10</p>
+                        <p class="mb-1">MACD: 8/8</p>
+                        <p class="mb-1">Patrón: 0/8</p>
+                        <p class="mb-1">Banda Bollinger: 7/7</p>
+                    </div>
+                    <div class="signal-meter-container">
+                        <div class="signal-meter">
+                            <div class="signal-fill fill-long" style="width: 82%"></div>
+                            <div class="signal-threshold" style="left: 70%"></div>
+                        </div>
+                        <div class="text-center mt-2">
+                            <strong>Score: 82%</strong> - SEÑAL VÁLIDA ✅
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gestión de Riesgo -->
+        <section id="gestion" class="fade-in-up">
+            <div class="card section-card">
+                <h2 class="mb-4"><i class="fas fa-shield-alt me-2"></i>🛡️ Gestión de Riesgo Avanzada</h2>
+                
+                <h4>💰 Sistema de Tamaño de Posición</h4>
+                <p>El sistema implementa gestión de riesgo dinámica basada en múltiples factores:</p>
+                
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-dark border-success h-100 text-center">
+                            <div class="card-body">
+                                <div class="feature-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <h5>Bajo Riesgo</h5>
+                                <div class="mt-2">
+                                    <span class="risk-badge bg-success">2-3% del capital</span>
+                                    <p class="small mt-2 mb-0">BTC, ETH, BNB - Alta liquidez</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-dark border-warning h-100 text-center">
+                            <div class="card-body">
+                                <div class="feature-icon">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <h5>Medio Riesgo</h5>
+                                <div class="mt-2">
+                                    <span class="risk-badge bg-warning">1-2% del capital</span>
+                                    <p class="small mt-2 mb-0">SOL, ADA, DOT - Consolidados</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-dark border-danger h-100 text-center">
+                            <div class="card-body">
+                                <div class="feature-icon">
+                                    <i class="fas fa-radiation"></i>
+                                </div>
+                                <h5>Alto Riesgo</h5>
+                                <div class="mt-2">
+                                    <span class="risk-badge bg-danger">0.5-1% del capital</span>
+                                    <p class="small mt-2 mb-0">APE, GMT - Emergentes</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-dark border-purple h-100 text-center">
+                            <div class="card-body">
+                                <div class="feature-icon">
+                                    <i class="fas fa-gem"></i>
+                                </div>
+                                <h5>Memecoins</h5>
+                                <div class="mt-2">
+                                    <span class="risk-badge bg-purple">0.2-0.5% del capital</span>
+                                    <p class="small mt-2 mb-0">SHIB, PEPE - Alta volatilidad</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>🎯 Apalancamiento Óptimo Dinámico</h4>
+                <p>El sistema calcula automáticamente el apalancamiento óptimo basado en 4 factores críticos:</p>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="indicator-card text-center">
+                            <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+                            <h6>Volatilidad (ATR)</h6>
+                            <p class="small mb-0">Mayor volatilidad = Menor apalancamiento</p>
+                            <div class="progress mt-2">
+                                <div class="progress-bar bg-info" style="width: 70%">Alta: x10</div>
+                            </div>
+                            <div class="progress mt-1">
+                                <div class="progress-bar bg-warning" style="width: 50%">Media: x15</div>
+                            </div>
+                            <div class="progress mt-1">
+                                <div class="progress-bar bg-success" style="width: 30%">Baja: x20</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="indicator-card text-center">
+                            <i class="fas fa-bullseye fa-2x text-success mb-2"></i>
+                            <h6>Score de Señal</h6>
+                            <p class="small mb-0">Mayor score = Mayor apalancamiento</p>
+                            <div class="progress mt-2">
+                                <div class="progress-bar bg-danger" style="width: 40%">70-75%: x10</div>
+                            </div>
+                            <div class="progress mt-1">
+                                <div class="progress-bar bg-warning" style="width: 60%">75-85%: x15</div>
+                            </div>
+                            <div class="progress mt-1">
+                                <div class="progress-bar bg-success" style="width: 80%">85%+: x20</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="indicator-card text-center">
+                            <i class="fas fa-chess-queen fa-2x text-warning mb-2"></i>
+                            <h6>Categoría de Riesgo</h6>
+                            <p class="small mb-0">Mayor riesgo = Menor apalancamiento</p>
+                            <div class="progress mt-2">
+                                <div class="progress-bar bg-success" style="width: 90%">Bajo: x20</div>
+                            </div>
+                            <div class="progress mt-1">
+                                <div class="progress-bar bg-warning" style="width: 60%">Medio: x15</div>
+                            </div>
+                            <div class="progress mt-1">
+                                <div class="progress-bar bg-danger" style="width: 30%">Alto: x10</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="indicator-card text-center">
+                            <i class="fas fa-layer-group fa-2x text-teal mb-2"></i>
+                            <h6>Confirmación Multi-TF</h6>
+                            <p class="small mb-0">Mejor alineación = Mayor apalancamiento</p>
+                            <div class="progress mt-2">
+                                <div class="progress-bar bg-success" style="width: 95%">3 TF: x20</div>
+                            </div>
+                            <div class="progress mt-1">
+                                <div class="progress-bar bg-warning" style="width: 65%">2 TF: x15</div>
+                            </div>
+                            <div class="progress mt-1">
+                                <div class="progress-bar bg-danger" style="width: 30%">1 TF: x10</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="mt-4">🛑 Stop Loss y Take Profit Inteligentes</h4>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h5>Stop Loss con Smart Money Levels</h5>
+                        <p>El sistema utiliza niveles Smart Money para colocar stops más efectivos:</p>
+                        <ul>
+                            <li><strong>LONG Stop Loss:</strong> Soporte Smart Money - (ATR × 1.5)</li>
+                            <li><strong>SHORT Stop Loss:</strong> Resistencia Smart Money + (ATR × 1.5)</li>
+                            <li><strong>Protección Anti-Mechazos:</strong> Stops más amplios para evitar cierres prematuros</li>
+                            <li><strong>Move to Breakeven:</strong> Al alcanzar 1:1 risk/reward</li>
+                        </ul>
+                        
+                        <div class="alert alert-warning mt-3">
+                            <h6><i class="fas fa-exclamation-triangle me-2"></i>Smart Money Levels</h6>
+                            <p class="mb-0">Los niveles Smart Money se calculan identificando zonas de precio con múltiples 
+                            toques históricos (mínimo 2 confirmaciones), donde es probable que el Smart Money tenga órdenes 
+                            significativas colocadas.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <h5>Take Profit Optimizado</h5>
+                        <p>El sistema utiliza un único take profit principal basado en niveles clave:</p>
+                        <div class="table-responsive">
+                            <table class="table table-dark table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Escenario</th>
+                                        <th>LONG</th>
+                                        <th>SHORT</th>
+                                        <th>Relación R/B</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>TP Principal</td>
+                                        <td>Resistencia × 0.995</td>
+                                        <td>Soporte × 1.005</td>
+                                        <td>Mínimo 1:2</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Condición Mínima</td>
+                                        <td colspan="2">Relación riesgo/beneficio ≥ 1:2</td>
+                                        <td>Obligatorio</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>📈 Señales de Salida Inteligentes</h4>
+                <div class="multi-timeframe-card">
+                    <h5 class="text-center mb-3"><i class="fas fa-door-open me-2"></i>Sistema de Salida Automática</h5>
+                    <p>El sistema realiza tracking continuo de operaciones activas y genera señales de salida cuando detecta cambios adversos:</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>🚪 Razones para Salir LONG:</h6>
+                            <ul>
+                                <li>Fuerza de tendencia cambia a desfavorable</li>
+                                <li>Ruptura de soporte clave Smart Money</li>
+                                <li>Cambio de tendencia en temporalidad menor</li>
+                                <li>Pérdida de momentum sostenida</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>🚪 Razones para Salir SHORT:</h6>
+                            <ul>
+                                <li>Fuerza de tendencia cambia a desfavorable</li>
+                                <li>Ruptura de resistencia clave Smart Money</li>
+                                <li>Cambio de tendencia en temporalidad menor</li>
+                                <li>Pérdida de momentum sostenida</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-danger mt-4">
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>Reglas de Oro del Riesgo</h5>
+                    <ul class="mb-0">
+                        <li>Nunca arriesgar más del 3% del capital total por operación</li>
+                        <li>Relación riesgo/beneficio mínima de 1:2 en todas las operaciones</li>
+                        <li>Diversificar entre categorías de riesgo</li>
+                        <li>Usar apalancamiento conservador según categoría</li>
+                        <li>RESPETAR condiciones obligatorias automáticamente</li>
+                        <li>Siempre usar stop loss y tomar profits en objetivos claros</li>
+                        <li>Prestar atención a señales de salida automática</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Operación Paso a Paso -->
+        <section id="operacion" class="fade-in-up">
+            <div class="card section-card">
+                <h2 class="mb-4"><i class="fas fa-chart-candlestick me-2"></i>📊 Operación Paso a Paso</h2>
+                
+                <h4>🎯 Proceso Completo de Trading</h4>
+                
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker" style="background: var(--info-color);"></div>
+                        <div class="timeline-content">
+                            <h6>Paso 1: Recepción de Alerta</h6>
+                            <p class="mb-0">Recibe la alerta de Telegram con todos los detalles de la operación. Verifica que el score sea ≥ 70% y que las condiciones obligatorias estén cumplidas.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker" style="background: var(--info-color);"></div>
+                        <div class="timeline-content">
+                            <h6>Paso 2: Verificación en Plataforma</h6>
+                            <p class="mb-0">Abre el chart del par en tu plataforma de trading (Bitget recomendado) y verifica que coincide con la alerta. Confirma niveles de entrada, stop loss y take profit.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker" style="background: var(--info-color);"></div>
+                        <div class="timeline-content">
+                            <h6>Paso 3: Configuración de Órdenes</h6>
+                            <p class="mb-0">Configura la orden LIMIT de entrada, STOP-MARKET de SL y LIMIT de TP. Usa el apalancamiento sugerido por el sistema.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker" style="background: var(--info-color);"></div>
+                        <div class="timeline-content">
+                            <h6>Paso 4: Ejecución y Monitoring</h6>
+                            <p class="mb-0">Ejecuta la operación y monitorea según las reglas del sistema. Presta atención a posibles alertas de salida.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker" style="background: var(--info-color);"></div>
+                        <div class="timeline-content">
+                            <h6>Paso 5: Gestión y Cierre</h6>
+                            <p class="mb-0">Gestiona la operación según evolucione. Cierra según señales del sistema o al alcanzar take profit.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker" style="background: var(--info-color);"></div>
+                        <div class="timeline-content">
+                            <h6>Paso 6: Registro y Análisis</h6>
+                            <p class="mb-0">Registra la operación en tu journal de trading. Analiza el resultado y aprende para futuras operaciones.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="mt-4">⚡ Configuración de Bitget</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="indicator-card">
+                            <h6><i class="fas fa-chart-line me-2"></i>Configuración del Chart</h6>
+                            <ul class="mb-0">
+                                <li>Velas Japonesas como tipo de chart principal</li>
+                                <li>Configuración de colores para mejor visibilidad</li>
+                                <li>Mostrar volumen en cada temporalidad</li>
+                                <li>Configurar alertas de precio para niveles clave</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="indicator-card">
+                            <h6><i class="fas fa-cog me-2"></i>Configuración de Trading</h6>
+                            <ul class="mb-0">
+                                <li>Modo de trading: Futuros USDT-M</li>
+                                <li>Modo de margen: Aislado (recomendado)</li>
+                                <li>Confirmación antes de ejecutar órdenes</li>
+                                <li>Mostrar P&L en tiempo real</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <h4>📱 Ejemplo Práctico de Operación</h4>
+                <div class="chart-container">
+                    <h5 class="text-center mb-3">Operación LONG en BTC/USDT - Timeframe 4H</h5>
+                    <canvas id="operationExampleChart"></canvas>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="telegram-alert">
+                            <h6 class="text-warning">📱 Alerta de Entrada:</h6>
+                            <pre class="text-light small">
+BTC-USDT | 4H | LONG | Score: 82%
+Entry: $45,230 | SL: $43,150 | TP: $47,250
+Leverage: 15x | Risk: Bajo
+                            </pre>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="telegram-alert">
+                            <h6 class="text-info">📊 Configuración en Bitget:</h6>
+                            <pre class="text-light small">
+Orden LIMIT: $45,230
+Stop Loss: $43,150 (STOP-MARKET)
+Take Profit: $47,250 (LIMIT)
+Margin: Aislado | Leverage: 15x
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-success mt-4">
+                    <h5><i class="fas fa-trophy me-2"></i>Mejores Prácticas para Operar</h5>
+                    <ul class="mb-0">
+                        <li><strong>Empieza en Demo:</strong> Practica primero con cuenta demo</li>
+                        <li><strong>Capital Pequeño:</strong> Comienza con capital que puedas permitirte perder</li>
+                        <li><strong>Sigue el Sistema:</strong> No modifiques las reglas del sistema</li>
+                        <li><strong>Gestión Emocional:</strong> Mantén la disciplina en ganancias y pérdidas</li>
+                        <li><strong>Analiza Resultados:</strong> Revisa tu performance regularmente</li>
+                    </ul>
                 </div>
             </div>
         </section>
 
         <!-- Indicadores Técnicos -->
-        <section id="indicadores">
+        <section id="indicadores" class="fade-in-up">
             <div class="card section-card">
-                <h2 class="mb-4"><i class="fas fa-chart-line me-2"></i>Indicadores Técnicos</h2>
+                <h2 class="mb-4"><i class="fas fa-chart-line me-2"></i>📈 Indicadores Técnicos Explicados</h2>
                 
-                <h4>📊 Indicadores Principales del Sistema</h4>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="indicator-card">
-                            <h5><i class="fas fa-whale me-2"></i>Indicador de Ballenas</h5>
-                            <p class="small">Detección de movimientos institucionales mediante análisis de volumen anómalo.</p>
-                            <ul class="small">
-                                <li><strong>Función:</strong> Identificar acumulación/distribución institucional</li>
-                                <li><strong>Uso:</strong> Solo activo en temporalidades 12H y 1D</li>
-                                <li><strong>Señal:</strong> Volumen 1.5x superior al promedio en soportes/resistencias</li>
-                                <li><strong>Umbral:</strong> 25 puntos para considerar señal válida</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="indicator-card">
-                            <h5><i class="fas fa-wave-square me-2"></i>DMI/ADX</h5>
-                            <p class="small">Directional Movement Index con Average Directional Index.</p>
-                            <ul class="small">
-                                <li><strong>+DI:</strong> Fuerza movimiento alcista</li>
-                                <li><strong>-DI:</strong> Fuerza movimiento bajista</li>
-                                <li><strong>ADX:</strong> Fuerza general de tendencia (umbral: 25)</li>
-                                <li><strong>Señal:</strong> Cruce +DI/-DI con ADX > 25</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+                <h4>🎯 Sistema Multi-Indicador</h4>
+                <p>El sistema utiliza múltiples indicadores técnicos que trabajan en conjunto para generar señales de alta calidad:</p>
 
                 <div class="row">
                     <div class="col-md-6">
                         <div class="indicator-card">
-                            <h5><i class="fas fa-arrows-alt-h me-2"></i>RSI Maverick</h5>
-                            <p class="small">Indicador propietario basado en Bandas de Bollinger (%B).</p>
-                            <ul class="small">
-                                <li><strong>Fórmula:</strong> (Precio - Banda Inferior) / (Banda Superior - Banda Inferior)</li>
-                                <li><strong>Sobrecompra:</strong> > 0.8</li>
-                                <li><strong>Sobreventa:</strong> < 0.2</li>
-                                <li><strong>Ventaja:</strong> Mejor adaptación a la volatilidad</li>
-                            </ul>
+                            <h5><i class="fas fa-whale me-2 text-primary"></i>Indicador de Ballenas</h5>
+                            <p><strong>Propósito:</strong> Detectar movimientos institucionales</p>
+                            <p><strong>Funcionamiento:</strong> Analiza volumen anómalo en niveles clave de soporte/resistencia</p>
+                            <p><strong>Uso:</strong> Solo se activa en temporalidades 12H y 1D</p>
+                            <p><strong>Señales:</strong> 
+                                <span class="badge bg-success">whale_pump > 25</span> para LONG,
+                                <span class="badge bg-danger">whale_dump > 25</span> para SHORT
+                            </p>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="indicator-card">
-                            <h5><i class="fas fa-filter me-2"></i>Fuerza Tendencia Maverick</h5>
-                            <p class="small">Indicador exclusivo que mide la fuerza de la tendencia.</p>
-                            <ul class="small">
-                                <li><strong>Base:</strong> Ancho de Bandas de Bollinger normalizado</li>
-                                <li><strong>Señales:</strong> STRONG_UP, WEAK_UP, STRONG_DOWN, WEAK_DOWN</li>
-                                <li><strong>Zonas No Operar:</strong> Detección automática de pérdida de momentum</li>
-                                <li><strong>Uso:</strong> Filtro obligatorio para todas las operaciones</li>
-                            </ul>
+                            <h5><i class="fas fa-wave-square me-2 text-info"></i>ADX + DMI</h5>
+                            <p><strong>Propósito:</strong> Medir fuerza y dirección de tendencia</p>
+                            <p><strong>Componentes:</strong> ADX (fuerza), +DI (dirección alcista), -DI (dirección bajista)</p>
+                            <p><strong>Umbral:</strong> ADX > 25 indica tendencia fuerte</p>
+                            <p><strong>Señales:</strong> Cruce +DI/-DI con ADX > 25</p>
                         </div>
                     </div>
                 </div>
 
-                <h4 class="mt-4">🎯 Patrones de Chartismo Detectados</h4>
-                <p>El sistema analiza automáticamente patrones de precio en los últimos 50 periodos:</p>
-                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="indicator-card">
+                            <h5><i class="fas fa-tachometer-alt me-2 text-warning"></i>RSI Tradicional</h5>
+                            <p><strong>Propósito:</strong> Medir condiciones de sobrecompra/sobreventa</p>
+                            <p><strong>Rango:</strong> 0-100</p>
+                            <p><strong>Niveles:</strong> 
+                                <span class="badge bg-success">< 30</span> sobreventa,
+                                <span class="badge bg-danger">> 70</span> sobrecompra
+                            </p>
+                            <p><strong>Uso:</strong> Confirmación de momentum</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="indicator-card">
+                            <h5><i class="fas fa-robot me-2 text-success"></i>RSI Maverick</h5>
+                            <p><strong>Propósito:</strong> Versión mejorada basada en Bandas de Bollinger</p>
+                            <p><strong>Rango:</strong> 0-1 (normalizado)</p>
+                            <p><strong>Niveles:</strong> 
+                                <span class="badge bg-success">< 0.2</span> sobreventa,
+                                <span class="badge bg-danger">> 0.8</span> sobrecompra
+                            </p>
+                            <p><strong>Ventaja:</strong> Más estable y menos propenso a señales falsas</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="indicator-card">
+                            <h5><i class="fas fa-arrows-alt-h me-2 text-danger"></i>MACD</h5>
+                            <p><strong>Propósito:</strong> Identificar cambios en el momentum</p>
+                            <p><strong>Componentes:</strong> Línea MACD, línea de señal, histograma</p>
+                            <p><strong>Señales:</strong> Cruce de líneas y cambios en histograma</p>
+                            <p><strong>Uso:</strong> Confirmación de cambios de tendencia</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="indicator-card">
+                            <h5><i class="fas fa-chart-area me-2 text-purple"></i>Bandas de Bollinger</h5>
+                            <p><strong>Propósito:</strong> Medir volatilidad y niveles de sobrecompra/sobreventa</p>
+                            <p><strong>Componentes:</strong> Banda superior, media e inferior</p>
+                            <p><strong>Señales:</strong> Toques de bandas y cambios en amplitud</p>
+                            <p><strong>Uso:</strong> También para calcular RSI Maverick</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h4 class="mt-4">🔍 Patrones de Chartismo Detectados</h4>
+                <p>El sistema analiza automáticamente patrones de price action:</p>
+
                 <div class="row">
                     <div class="col-md-4">
-                        <div class="strategy-step text-center">
+                        <div class="indicator-card text-center">
                             <h6>Doble Techo</h6>
-                            <p class="small mb-0">Dos máximos similares en resistencia clave, señal bajista</p>
+                            <p class="small mb-2">Patrón de reversión bajista</p>
+                            <span class="badge bg-danger">SHORT Signal</span>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="strategy-step text-center">
+                        <div class="indicator-card text-center">
                             <h6>Doble Fondo</h6>
-                            <p class="small mb-0">Dos mínimos similares en soporte clave, señal alcista</p>
+                            <p class="small mb-2">Patrón de reversión alcista</p>
+                            <span class="badge bg-success">LONG Signal</span>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <div class="strategy-step text-center">
+                        <div class="indicator-card text-center">
                             <h6>Banderín Alcista</h6>
-                            <p class="small mb-0">Consolidación después de movimiento alcista, continuación</p>
+                            <p class="small mb-2">Patrón de continuación alcista</p>
+                            <span class="badge bg-success">LONG Signal</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="alert alert-info mt-3">
-                    <h5><i class="fas fa-cogs me-2"></i>Integración de Indicadores</h5>
-                    <p class="mb-0">El sistema no utiliza los indicadores de forma aislada, sino que los combina de manera inteligente. 
-                    Cada indicador aporta una pieza diferente del puzzle, y solo cuando todas las piezas encajan se genera una señal válida.</p>
+                <h4 class="mt-4">📊 Smart Money Levels</h4>
+                <p>Los niveles Smart Money son calculados identificando zonas de precio con múltiples toques históricos:</p>
+
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-brain me-2"></i>¿Cómo se calculan los niveles Smart Money?</h6>
+                    <ul class="mb-0">
+                        <li><strong>Mínimo 2 toques confirmados:</strong> El precio debe tocar el nivel al menos 2 veces</li>
+                        <li><strong>Zonas de acumulación/distribución:</strong> Donde el Smart Money coloca órdenes grandes</li>
+                        <li><strong>Reacción del precio:</strong> El precio muestra reacción significativa en estos niveles</li>
+                        <li><strong>Volumen confirmatorio:</strong> Aumento de volumen en las reacciones</li>
+                    </ul>
+                </div>
+
+                <div class="chart-container mt-4">
+                    <h5 class="text-center mb-3">Ejemplo de Niveles Smart Money en BTC/USDT</h5>
+                    <canvas id="smartMoneyChart"></canvas>
                 </div>
             </div>
         </section>
 
-        <!-- Operación del Sistema -->
-        <section id="operacion">
+        <!-- Sistema de Alertas -->
+        <section id="alertas" class="fade-in-up">
             <div class="card section-card">
-                <h2 class="mb-4"><i class="fas fa-hand-holding-usd me-2"></i>Operación del Sistema</h2>
+                <h2 class="mb-4"><i class="fas fa-bell me-2"></i>🔔 Sistema de Alertas Inteligentes</h2>
                 
-                <h4>🚀 Proceso de Trading Paso a Paso</h4>
+                <h4>⏰ Temporalidades y Horarios Optimizados</h4>
+                <p>El sistema está sincronizado con horario Bolivia (America/La_Paz) y optimiza los tiempos de alerta:</p>
                 
-                <div class="strategy-step">
-                    <h5>Paso 1: Recepción de Alerta</h5>
-                    <p class="mb-0">Recibir la alerta de Telegram con todos los detalles de la operación. Verificar que la puntuación sea ≥70 y que se muestren las condiciones cumplidas.</p>
-                </div>
-                
-                <div class="strategy-step">
-                    <h5>Paso 2: Verificación en Plataforma</h5>
-                    <p class="mb-0">Abrir el chart del par en Bitget y verificar que los niveles de entrada, stop loss y take profit coinciden con la alerta.</p>
-                </div>
-                
-                <div class="strategy-step">
-                    <h5>Paso 3: Configuración de Órdenes</h5>
-                    <p class="mb-0">
-                        <strong>Orden LIMIT</strong> para la entrada<br>
-                        <strong>Orden STOP-MARKET</strong> para el stop loss<br>
-                        <strong>Orden LIMIT</strong> para el take profit<br>
-                        Usar modo margen aislado
-                    </p>
-                </div>
-                
-                <div class="strategy-step">
-                    <h5>Paso 4: Ejecución y Monitoring</h5>
-                    <p class="mb-0">Ejecutar la operación y monitorear según las reglas del sistema. Prestar atención a las alertas de salida.</p>
-                </div>
-                
-                <div class="strategy-step">
-                    <h5>Paso 5: Gestión y Cierre</h5>
-                    <p class="mb-0">Gestionar la operación según evolucione y cerrar según señales del sistema o al alcanzar objetivos.</p>
+                <div class="table-responsive">
+                    <table class="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Temporalidad</th>
+                                <th>Frecuencia Análisis</th>
+                                <th>Envío Telegram</th>
+                                <th>Anticipación Cierre</th>
+                                <th>Señales Salida</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>15m</strong></td>
+                                <td>60 segundos</td>
+                                <td>7.5 minutos antes</td>
+                                <td>50% de la vela</td>
+                                <td>✅ ACTIVAS</td>
+                            </tr>
+                            <tr>
+                                <td><strong>30m</strong></td>
+                                <td>60 segundos</td>
+                                <td>15 minutos antes</td>
+                                <td>50% de la vela</td>
+                                <td>✅ ACTIVAS</td>
+                            </tr>
+                            <tr>
+                                <td><strong>1H</strong></td>
+                                <td>60 segundos</td>
+                                <td>30 minutos antes</td>
+                                <td>50% de la vela</td>
+                                <td>✅ ACTIVAS</td>
+                            </tr>
+                            <tr>
+                                <td><strong>2H</strong></td>
+                                <td>60 segundos</td>
+                                <td>1 hora antes</td>
+                                <td>50% de la vela</td>
+                                <td>✅ ACTIVAS</td>
+                            </tr>
+                            <tr>
+                                <td><strong>4H</strong></td>
+                                <td>60 segundos</td>
+                                <td>2 horas antes</td>
+                                <td>50% de la vela</td>
+                                <td>✅ ACTIVAS</td>
+                            </tr>
+                            <tr>
+                                <td><strong>8H</strong></td>
+                                <td>60 segundos</td>
+                                <td>4 horas antes</td>
+                                <td>50% de la vela</td>
+                                <td>✅ ACTIVAS</td>
+                            </tr>
+                            <tr>
+                                <td><strong>12H</strong></td>
+                                <td>60 segundos</td>
+                                <td>6 horas antes</td>
+                                <td>50% de la vela</td>
+                                <td>✅ ACTIVAS</td>
+                            </tr>
+                            <tr>
+                                <td><strong>1D</strong></td>
+                                <td>60 segundos</td>
+                                <td>12 horas antes</td>
+                                <td>50% de la vela</td>
+                                <td>✅ ACTIVAS</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
-                <h4 class="mt-4">📱 Ejemplo de Alerta de Entrada</h4>
-                <div class="telegram-alert">
-                    <pre>
+                <h4>📱 Alertas de Telegram Mejoradas</h4>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="telegram-alert">
+                            <h6 class="text-success"><i class="fab fa-telegram me-2"></i>Alerta de ENTRADA</h6>
+                            <pre class="text-light small">
 🚨 ALERTA DE TRADING - MULTI-TIMEFRAME CRYPTO WGTA PRO 🚨
 
 📈 Crypto: BTC-USDT (Bajo Riesgo)
 ⏰ Temporalidad: 4H
-🎯 Señal: LONG
-📊 Score: 78.5%
-🏆 Winrate: 72.3% (Sistema: 68.5%)
+🎯 Señal: LONG | 📊 Score: 82%
 
 💰 Precio actual: $45,250.500000
 🎯 ENTRADA: $45,230.500000
@@ -579,6 +1487,7 @@
 🎯 TAKE PROFIT: $47,250.800000
 
 📈 Apalancamiento: x15
+🕐 Hora: 2025-01-20 16:00:00
 
 ✅ Condiciones Multi-Timeframe:
 • Mayor: BULLISH
@@ -586,267 +1495,260 @@
 • Menor: BULLISH
 
 🔔 Condiciones Cumplidas:
-• Confirmación Multi-Timeframe
+• Multi-Timeframe confirmado
+• Ballena compradora activa
 • +DI cruza -DI positivamente
-• RSI en sobreventa
-                    </pre>
+• RSI Maverick en sobreventa
+
+📊 Revisa la señal en: https://multiframewgta.onrender.com/
+                            </pre>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="telegram-alert">
+                            <h6 class="text-warning"><i class="fab fa-telegram me-2"></i>Alerta de SALIDA</h6>
+                            <pre class="text-light small">
+🚨 ALERTA DE SALIDA - MULTI-TIMEFRAME CRYPTO WGTA PRO 🚨
+
+📈 Crypto: BTC-USDT (Bajo Riesgo)
+⏰ Temporalidad: 4H
+🎯 Señal: LONG - CERRAR POSICIÓN
+
+💰 Entrada: $45,230.500000
+💰 Salida: $46,850.300000
+📊 P&L: +3.58%
+
+📊 Razón de Salida:
+Fuerza de tendencia desfavorable
+y pérdida de momentum en TF menor
+
+🎯 Operación: EXITOSA ✅
+⏱️ Duración: 18 horas
+
+⚠️ Recuerda registrar la operación
+en tu journal de trading.
+                            </pre>
+                        </div>
+                    </div>
                 </div>
 
-                <h4>🛡️ Gestión de Riesgo</h4>
-                <p>El sistema implementa un enfoque conservador de gestión de riesgo:</p>
-                
-                <div class="table-responsive">
-                    <table class="comparison-table">
-                        <thead>
-                            <tr>
-                                <th>Categoría Riesgo</th>
-                                <th>Tamaño Posición</th>
-                                <th>Apalancamiento Máx</th>
-                                <th>Ejemplos</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><span class="badge bg-success">Bajo Riesgo</span></td>
-                                <td>1-3% del capital</td>
-                                <td>20x</td>
-                                <td>BTC, ETH, BNB</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge bg-warning">Medio Riesgo</span></td>
-                                <td>0.5-1.5% del capital</td>
-                                <td>15x</td>
-                                <td>SOL, ADA, DOT</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge bg-danger">Alto Riesgo</span></td>
-                                <td>0.2-0.7% del capital</td>
-                                <td>10x</td>
-                                <td>APE, GMT, GAL</td>
-                            </tr>
-                            <tr>
-                                <td><span class="badge bg-purple">Memecoins</span></td>
-                                <td>0.1-0.3% del capital</td>
-                                <td>5x</td>
-                                <td>SHIB, PEPE, FLOKI</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <h4 class="mt-4">📊 Señales de Salida</h4>
-                <p>El sistema genera alertas de salida automática basadas en:</p>
-                
+                <h4 class="mt-4">🆕 Características de Alertas</h4>
                 <div class="row">
                     <div class="col-md-6">
-                        <h6>🚪 Salida LONG:</h6>
-                        <ul class="small">
-                            <li>Fuerza Maverick cambia a WEAK_UP/STRONG_DOWN</li>
-                            <li>Ruptura de soporte clave</li>
-                            <li>Cambio de tendencia en TF menor</li>
-                            <li>Pérdida de momentum sostenida</li>
+                        <h5>Alertas de Entrada</h5>
+                        <ul>
+                            <li><strong>Información Multi-TF:</strong> Estado de todas las temporalidades</li>
+                            <li><strong>Score Detallado:</strong> Puntuación completa de la señal</li>
+                            <li><strong>Condiciones Específicas:</strong> Lista de condiciones cumplidas</li>
+                            <li><strong>Niveles Precisos:</strong> Entrada, SL y TP exactos</li>
+                            <li><strong>Apalancamiento Sugerido:</strong> Calculado automáticamente</li>
+                            <li><strong>Botón de Descarga:</strong> Reporte técnico completo</li>
                         </ul>
                     </div>
                     <div class="col-md-6">
-                        <h6>🚪 Salida SHORT:</h6>
-                        <ul class="small">
-                            <li>Fuerza Maverick cambia a WEAK_DOWN/STRONG_UP</li>
-                            <li>Ruptura de resistencia clave</li>
-                            <li>Cambio de tendencia en TF menor</li>
-                            <li>Pérdida de momentum sostenida</li>
+                        <h5>Alertas de Salida</h5>
+                        <ul>
+                            <li><strong>P&L Automático:</strong> Cálculo de ganancias/pérdidas</li>
+                            <li><strong>Razón Detallada:</strong> Explicación del cierre</li>
+                            <li><strong>Duración:</strong> Tiempo total de la operación</li>
+                            <li><strong>Calificación:</strong> Operación exitosa/no exitosa</li>
+                            <li><strong>Recomendaciones:</strong> Próximos pasos sugeridos</li>
                         </ul>
                     </div>
                 </div>
 
-                <div class="alert alert-danger mt-3">
-                    <h5><i class="fas fa-exclamation-triangle me-2"></i>Reglas de Oro</h5>
-                    <ul class="mb-0">
-                        <li>Nunca arriesgar más del 2% del capital total por operación</li>
-                        <li>Siempre usar stop loss y respetarlo</li>
-                        <li>Diversificar entre categorías de riesgo</li>
-                        <li>Seguir el sistema exactamente, sin modificaciones</li>
-                        <li>Mantener disciplina emocional en ganancias y pérdidas</li>
-                    </ul>
+                <div class="alert alert-info mt-4">
+                    <h5><i class="fas fa-robot me-2"></i>Gestión Activa de Operaciones</h5>
+                    <p class="mb-0">El sistema realiza tracking continuo de todas las operaciones activas y envía alertas de salida 
+                    cuando detecta cambios adversos en las condiciones del mercado. Este sistema proactivo ayuda a proteger 
+                    ganancias y limitar pérdidas antes de que se conviertan en problemas mayores.</p>
                 </div>
             </div>
         </section>
 
-        <!-- Configuración y Optimización -->
-        <section id="configuracion">
+        <!-- Manual Práctico -->
+        <section id="manual" class="fade-in-up">
             <div class="card section-card">
-                <h2 class="mb-4"><i class="fas fa-cogs me-2"></i>Configuración y Optimización</h2>
+                <h2 class="mb-4"><i class="fas fa-book me-2"></i>📚 Manual Práctico de Implementación</h2>
                 
-                <h4>⚙️ Parámetros del Sistema</h4>
-                <p>El sistema funciona con parámetros optimizados, pero puedes ajustarlos según tu estilo de trading:</p>
-                
-                <div class="table-responsive">
-                    <table class="comparison-table">
-                        <thead>
-                            <tr>
-                                <th>Parámetro</th>
-                                <th>Valor Default</th>
-                                <th>Rango Recomendado</th>
-                                <th>Función</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>ADX Threshold</td>
-                                <td>25</td>
-                                <td>20-30</td>
-                                <td>Fuerza mínima de tendencia</td>
-                            </tr>
-                            <tr>
-                                <td>RSI Period</td>
-                                <td>14</td>
-                                <td>10-20</td>
-                                <td>Suavizado del RSI tradicional</td>
-                            </tr>
-                            <tr>
-                                <td>DMI Period</td>
-                                <td>14</td>
-                                <td>10-20</td>
-                                <td>Suavizado del indicador direccional</td>
-                            </tr>
-                            <tr>
-                                <td>BB Multiplier</td>
-                                <td>2.0</td>
-                                <td>1.5-2.5</td>
-                                <td>Ancho de Bandas de Bollinger</td>
-                            </tr>
-                            <tr>
-                                <td>Support/Resistance Period</td>
-                                <td>50</td>
-                                <td>30-70</td>
-                                <td>Periodos para calcular niveles clave</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <h4 class="mt-4">📈 Temporalidades Recomendadas</h4>
-                <p>Diferentes temporalidades para diferentes estilos de trading:</p>
+                <h4>🎯 Guía de Implementación Paso a Paso</h4>
                 
                 <div class="row">
-                    <div class="col-md-4">
-                        <div class="strategy-step text-center">
-                            <h5>Scalping</h5>
-                            <p class="small mb-2">Operaciones de minutos a horas</p>
-                            <span class="badge bg-success">15M - 1H</span>
+                    <div class="col-lg-6">
+                        <h5>Fase 1: Preparación (Días 1-7)</h5>
+                        <div class="strategy-step">
+                            <h6>Día 1-2: Educación</h6>
+                            <p class="mb-2">Estudia este manual completo y familiarízate con todos los conceptos.</p>
+                            
+                            <h6>Día 3-4: Configuración</h6>
+                            <p class="mb-2">Configura tu cuenta de Bitget y conecta Telegram.</p>
+                            
+                            <h6>Día 5-7: Paper Trading</h6>
+                            <p class="mb-0">Practica con cuenta demo siguiendo exactamente las reglas del sistema.</p>
+                        </div>
+                        
+                        <h5 class="mt-4">Fase 2: Implementación (Días 8-30)</h5>
+                        <div class="strategy-step">
+                            <h6>Semana 1: Operaciones Mínimas</h6>
+                            <p class="mb-2">Opera solo 1-2 señales de alta calidad con capital mínimo.</p>
+                            
+                            <h6>Semana 2-3: Expansión Controlada</h6>
+                            <p class="mb-2">Aumenta gradualmente el número de operaciones según confianza.</p>
+                            
+                            <h6>Semana 4: Evaluación</h6>
+                            <p class="mb-0">Analiza resultados y ajusta según aprendizaje.</p>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="strategy-step text-center">
-                            <h5>Intradía</h5>
-                            <p class="small mb-2">Operaciones de horas</p>
-                            <span class="badge bg-info">1H - 4H</span>
+                    
+                    <div class="col-lg-6">
+                        <h5>Fase 3: Optimización (Mes 2+)</h5>
+                        <div class="strategy-step">
+                            <h6>Mes 2: Refinamiento</h6>
+                            <p class="mb-2">Optimiza tu proceso basado en resultados del primer mes.</p>
+                            
+                            <h6>Mes 3: Expansión</h6>
+                            <p class="mb-2">Considera aumentar tamaño de posición si los resultados son consistentes.</p>
+                            
+                            <h6>Mes 4+: Maestría</h6>
+                            <p class="mb-0">Desarrolla tu propia variación del sistema basada en experiencia.</p>
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="strategy-step text-center">
-                            <h5>Swing Trading</h5>
-                            <p class="small mb-2">Operaciones de días</p>
-                            <span class="badge bg-primary">4H - 1D</span>
+                        
+                        <h5 class="mt-4">Checklist Diario de Trading</h5>
+                        <div class="strategy-step">
+                            <h6>Pre-Mercado</h6>
+                            <p class="mb-2">Revisar alertas pendientes, verificar conexiones, establecer mindset.</p>
+                            
+                            <h6>Durante Sesión</h6>
+                            <p class="mb-2">Seguir alertas, ejecutar según reglas, mantener disciplina.</p>
+                            
+                            <h6>Post-Mercado</h6>
+                            <p class="mb-0">Registrar operaciones, analizar performance, planificar siguiente día.</p>
                         </div>
                     </div>
                 </div>
 
-                <h4 class="mt-4">🔔 Configuración de Alertas</h4>
-                <p>El sistema envía alertas en momentos óptimos según la temporalidad:</p>
+                <h4 class="mt-4">📊 Journal de Trading</h4>
+                <p>Mantener un journal detallado es crucial para el éxito a largo plazo:</p>
                 
                 <div class="table-responsive">
-                    <table class="comparison-table">
+                    <table class="table table-dark table-striped">
                         <thead>
                             <tr>
-                                <th>Temporalidad</th>
-                                <th>Anticipación</th>
-                                <th>Frecuencia</th>
-                                <th>Horario Bolivia</th>
+                                <th>Fecha</th>
+                                <th>Par</th>
+                                <th>Señal</th>
+                                <th>Score</th>
+                                <th>Entrada</th>
+                                <th>Salida</th>
+                                <th>P&L %</th>
+                                <th>Lección</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td>15M</td>
-                                <td>7.5 minutos antes</td>
-                                <td>Cada 60 segundos</td>
-                                <td>4:00 - 16:00 L-V</td>
+                                <td>2025-01-20</td>
+                                <td>BTC-USDT</td>
+                                <td>LONG</td>
+                                <td>82%</td>
+                                <td>$45,230</td>
+                                <td>$46,850</td>
+                                <td class="text-success">+3.58%</td>
+                                <td>Paciencia en entrada dio mejor precio</td>
                             </tr>
                             <tr>
-                                <td>1H</td>
-                                <td>30 minutos antes</td>
-                                <td>Cada 60 segundos</td>
-                                <td>24/7</td>
+                                <td>2025-01-21</td>
+                                <td>ETH-USDT</td>
+                                <td>SHORT</td>
+                                <td>75%</td>
+                                <td>$2,850</td>
+                                <td>$2,790</td>
+                                <td class="text-success">+2.11%</td>
+                                <td>Salida temprana por cambio de fuerza</td>
                             </tr>
                             <tr>
-                                <td>4H</td>
-                                <td>2 horas antes</td>
-                                <td>Cada 60 segundos</td>
-                                <td>24/7</td>
-                            </tr>
-                            <tr>
-                                <td>1D</td>
-                                <td>12 horas antes</td>
-                                <td>Cada 5 minutos</td>
-                                <td>24/7</td>
+                                <td>2025-01-22</td>
+                                <td>SOL-USDT</td>
+                                <td>LONG</td>
+                                <td>68%</td>
+                                <td>$98.50</td>
+                                <td>$95.20</td>
+                                <td class="text-danger">-3.35%</td>
+                                <td>Score bajo, debería haber evitado</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
 
-                <div class="alert alert-success mt-3">
-                    <h5><i class="fas fa-graduation-cap me-2"></i>Consejos de Optimización</h5>
+                <h4>🔧 Solución de Problemas Comunes</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="indicator-card">
+                            <h6><i class="fas fa-exclamation-triangle me-2 text-warning"></i>No Recibo Alertas</h6>
+                            <ul class="mb-0">
+                                <li>Verificar que el bot no esté bloqueado en Telegram</li>
+                                <li>Revisar configuración de notificaciones</li>
+                                <li>Confirmar que el sistema esté operativo</li>
+                                <li>Contactar soporte si persiste el problema</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="indicator-card">
+                            <h6><i class="fas fa-chart-line me-2 text-info"></i>Señales de Baja Calidad</h6>
+                            <ul class="mb-0">
+                                <li>Verificar conexión a datos de mercado</li>
+                                <li>Esperar condiciones de mercado más claras</li>
+                                <li>Revisar que todos los indicadores estén cargando</li>
+                                <li>Analizar en múltiples temporalidades</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="indicator-card">
+                            <h6><i class="fas fa-bolt me-2 text-danger"></i>Ejecución Lenta</h6>
+                            <ul class="mb-0">
+                                <li>Verificar velocidad de internet</li>
+                                <li>Usar app móvil para ejecución rápida</li>
+                                <li>Pre-configurar órdenes con parámetros</li>
+                                <li>Practicar proceso de ejecución</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="indicator-card">
+                            <h6><i class="fas fa-brain me-2 text-success"></i>Falta de Disciplina</h6>
+                            <ul class="mb-0">
+                                <li>Revisar journal de trading regularmente</li>
+                                <li>Establecer metas realistas</li>
+                                <li>Tomar descansos cuando sea necesario</li>
+                                <li>Buscar comunidad de traders para apoyo</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning mt-4">
+                    <h5><i class="fas fa-graduation-cap me-2"></i>Consejos para el Éxito a Largo Plazo</h5>
                     <ul class="mb-0">
-                        <li><strong>Empieza en Demo:</strong> Practica 2-4 semanas antes de usar capital real</li>
-                        <li><strong>Capital Pequeño:</strong> Comienza con el mínimo posible</li>
-                        <li><strong>Consistencia:</strong> Sigue el sistema exactamente por 3 meses antes de hacer ajustes</li>
-                        <li><strong>Journal:</strong> Registra cada operación para análisis posterior</li>
+                        <li><strong>Consistencia sobre Ganancia Rápida:</strong> Enfócate en seguir el sistema consistentemente</li>
+                        <li><strong>Gestión de Capital Primero:</strong> La protección de capital es más importante que las ganancias</li>
+                        <li><strong>Aprendizaje Continuo:</strong> El mercado evoluciona, mantente actualizado</li>
                         <li><strong>Paciencia:</strong> Las mejores oportunidades llegan a quienes esperan</li>
+                        <li><strong>Autoevaluación:</strong> Analiza tus operaciones regularmente</li>
+                        <li><strong>Balance:</strong> Mantén un balance saludable entre trading y vida personal</li>
                     </ul>
-                </div>
-            </div>
-        </section>
-
-        <!-- Resumen Final -->
-        <section id="resumen">
-            <div class="card section-card">
-                <h2 class="mb-4"><i class="fas fa-flag-checkered me-2"></i>Resumen Final</h2>
-                
-                <h4>✅ Lo Que Has Aprendido</h4>
-                <div class="row">
-                    <div class="col-md-6">
-                        <ul>
-                            <li><strong>Análisis Multi-Temporalidad:</strong> Sistema jerárquico de confirmación</li>
-                            <li><strong>Estrategia Completa:</strong> Condiciones específicas para LONG/SHORT</li>
-                            <li><strong>Indicadores:</strong> Uso combinado de herramientas técnicas</li>
-                            <li><strong>Gestión de Riesgo:</strong> Enfoque conservador y profesional</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <ul>
-                            <li><strong>Operación Práctica:</strong> Proceso paso a paso</li>
-                            <li><strong>Alertas Inteligentes:</strong> Entrada y salida automáticas</li>
-                            <li><strong>Configuración:</strong> Optimización para diferentes estilos</li>
-                            <li><strong>Psicología:</strong> Disciplina y consistencia</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <h4 class="mt-4">🚀 Próximos Pasos</h4>
-                <ol>
-                    <li><strong>Paper Trading:</strong> Practicar 2-4 semanas con cuenta demo</li>
-                    <li><strong>Capital Mínimo:</strong> Comenzar con capital pequeño y real</li>
-                    <li><strong>Consistencia:</strong> Seguir el sistema exactamente por 3 meses</li>
-                    <li><strong>Análisis:</strong> Revisar journal semanalmente</li>
-                    <li><strong>Comunidad:</strong> Unirse a grupo de traders para apoyo</li>
-                </ol>
-
-                <div class="alert alert-primary mt-4">
-                    <h5><i class="fas fa-rocket me-2"></i>¡Estás Listo para Operar!</h5>
-                    <p class="mb-0">Has completado el manual técnico del sistema Multi-Timeframe Crypto WGTA Pro. 
-                    Recuerda que la consistencia y disciplina son las claves del éxito en trading. ¡Buena suerte!</p>
                 </div>
 
                 <div class="text-center mt-4">
+                    <div class="alert alert-primary">
+                        <h5><i class="fas fa-flag-checkered me-2"></i>¡Estás Listo para Comenzar!</h5>
+                        <p class="mb-0">Has completado el manual técnico del Sistema Multi-Timeframe Crypto WGTA Pro. 
+                        Recuerda que la consistencia, disciplina y gestión de riesgo son las claves para el éxito en trading.</p>
+                    </div>
+                    
                     <a href="/" class="btn btn-primary btn-lg">
                         <i class="fas fa-play me-2"></i>Comenzar a Operar
                     </a>
@@ -860,19 +1762,22 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h6>Multi-Timeframe Crypto WGTA Pro</h6>
-                    <p class="small mb-2">Sistema profesional de trading algorítmico</p>
-                    <p class="small text-muted mb-0">© 2025 Willer Gianni Torrico Arispe</p>
+                    <h5>Multi-Timeframe Crypto WGTA Pro</h5>
+                    <p class="mb-2">Sistema profesional de trading algorítmico para criptomonedas</p>
+                    <p class="mb-0 small text-muted">© 2025 Sistema Multi-Timeframe Crypto WGTA Pro</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="small mb-1">
+                    <p class="mb-2">
+                        <strong>Recursos:</strong>
+                    </p>
+                    <p class="mb-1">
                         <a href="/" class="text-decoration-none">
-                            <i class="fas fa-arrow-left me-1"></i>Sistema Principal
+                            <i class="fas fa-arrow-left me-2"></i>Sistema Principal
                         </a>
                     </p>
-                    <p class="small mb-0">
+                    <p class="mb-0">
                         <a href="#introduccion" class="text-decoration-none">
-                            <i class="fas fa-book me-1"></i>Manual Técnico
+                            <i class="fas fa-book me-2"></i>Manual Técnico
                         </a>
                     </p>
                 </div>
@@ -910,6 +1815,281 @@
                         behavior: 'smooth',
                         block: 'start'
                     });
+                }
+            });
+        });
+
+        // Add fade-in animation to sections
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all sections
+        document.querySelectorAll('section').forEach(section => {
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(20px)';
+            section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(section);
+        });
+
+        // Chart.js visualizations
+        document.addEventListener('DOMContentLoaded', function() {
+            // System Architecture Chart
+            const systemCtx = document.getElementById('systemArchitectureChart').getContext('2d');
+            new Chart(systemCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Análisis Multi-TF', 'Indicadores Técnicos', 'Smart Money Levels', 'Gestión Riesgo', 'Alertas'],
+                    datasets: [{
+                        data: [30, 25, 20, 15, 10],
+                        backgroundColor: [
+                            '#0dcaf0',
+                            '#198754',
+                            '#ffc107',
+                            '#dc3545',
+                            '#6f42c1'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#1a1a1a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: 'white',
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Multi-Timeframe Analysis Chart
+            const multiTfCtx = document.getElementById('multiTimeframeChart').getContext('2d');
+            new Chart(multiTfCtx, {
+                type: 'line',
+                data: {
+                    labels: ['-10', '-9', '-8', '-7', '-6', '-5', '-4', '-3', '-2', '-1', 'Ahora'],
+                    datasets: [
+                        {
+                            label: 'Timeframe Mayor (4H)',
+                            data: [44200, 44400, 44600, 44800, 45000, 45200, 45400, 45600, 45800, 46000, 46200],
+                            borderColor: '#0dcaf0',
+                            backgroundColor: 'rgba(13, 202, 240, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Timeframe Medio (1H)',
+                            data: [45400, 45200, 45000, 44800, 44600, 44400, 44600, 44800, 45000, 45200, 45400],
+                            borderColor: '#198754',
+                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Timeframe Menor (15M)',
+                            data: [44800, 44600, 44400, 44200, 44000, 43800, 43600, 43800, 44000, 44200, 44400],
+                            borderColor: '#ffc107',
+                            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                            borderWidth: 1,
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'white'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Operation Example Chart
+            const operationCtx = document.getElementById('operationExampleChart').getContext('2d');
+            new Chart(operationCtx, {
+                type: 'line',
+                data: {
+                    labels: ['-12', '-10', '-8', '-6', '-4', '-2', 'Entrada', '+2', '+4', '+6', '+8', 'TP'],
+                    datasets: [
+                        {
+                            label: 'Precio BTC/USDT',
+                            data: [43000, 43200, 43400, 43600, 43800, 44000, 45230, 45400, 45600, 45800, 46000, 47250],
+                            borderColor: '#0dcaf0',
+                            backgroundColor: 'rgba(13, 202, 240, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Entrada',
+                            data: [null, null, null, null, null, null, 45230, null, null, null, null, null],
+                            borderColor: '#198754',
+                            backgroundColor: '#198754',
+                            borderWidth: 0,
+                            pointRadius: 8,
+                            pointStyle: 'triangle'
+                        },
+                        {
+                            label: 'Take Profit',
+                            data: [null, null, null, null, null, null, null, null, null, null, null, 47250],
+                            borderColor: '#ffc107',
+                            backgroundColor: '#ffc107',
+                            borderWidth: 0,
+                            pointRadius: 8,
+                            pointStyle: 'triangle'
+                        },
+                        {
+                            label: 'Stop Loss',
+                            data: [43150, 43150, 43150, 43150, 43150, 43150, 43150, 43150, 43150, 43150, 43150, 43150],
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'white'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'white'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Smart Money Chart
+            const smartMoneyCtx = document.getElementById('smartMoneyChart').getContext('2d');
+            new Chart(smartMoneyCtx, {
+                type: 'line',
+                data: {
+                    labels: ['-20', '-18', '-16', '-14', '-12', '-10', '-8', '-6', '-4', '-2', 'Ahora'],
+                    datasets: [
+                        {
+                            label: 'Precio BTC/USDT',
+                            data: [42500, 42800, 43200, 43500, 43800, 44200, 44500, 44800, 45200, 45500, 45800],
+                            borderColor: '#0dcaf0',
+                            backgroundColor: 'rgba(13, 202, 240, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Resistencia Smart Money',
+                            data: [46000, 46000, 46000, 46000, 46000, 46000, 46000, 46000, 46000, 46000, 46000],
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false
+                        },
+                        {
+                            label: 'Soporte Smart Money',
+                            data: [43000, 43000, 43000, 43000, 43000, 43000, 43000, 43000, 43000, 43000, 43000],
+                            borderColor: '#198754',
+                            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: 'white'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'white'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: 'white'
+                            }
+                        }
+                    }
                 }
             });
         });
