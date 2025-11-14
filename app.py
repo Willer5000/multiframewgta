@@ -90,12 +90,12 @@ class TradingIndicator:
         """Obtener hora actual de Bolivia"""
         return datetime.now(self.bolivia_tz)
     
-    def is_scalping_time(self):
-        """Verificar si es horario de scalping"""
+    def is_trading_time(self):
+        """Verificar si es horario de trading (lunes a viernes de 4am a 4pm hora boliviana)"""
         now = self.get_bolivia_time()
-        if now.weekday() >= 5:
+        if now.weekday() >= 5:  # Sábado o Domingo
             return False
-        return 4 <= now.hour < 16
+        return 4 <= now.hour < 16  # De 4am a 4pm
 
     def calculate_remaining_time(self, interval, current_time):
         """Calcular tiempo restante para el cierre de la vela"""
@@ -971,7 +971,7 @@ class TradingIndicator:
         return conditions
 
     def calculate_signal_score(self, conditions, signal_type, ma200_condition):
-        """Calcular puntuación de señal basada en condiciones ponderadas - NUEVA LÓGICA"""
+        """Calcular puntuación de señal basada en condiciones ponderadas - CORREGIDO"""
         total_weight = 0
         achieved_weight = 0
         fulfilled_conditions = []
@@ -1001,18 +1001,19 @@ class TradingIndicator:
         
         base_score = (achieved_weight / total_weight * 100)
         
-        # NUEVA LÓGICA: Ajustar score mínimo según MA200 - IMPLEMENTACIÓN MEJORADA
+        # IMPLEMENTACIÓN CORREGIDA DE LOS SCORES MÍNIMOS SEGÚN MA200
         if signal_type == 'long':
             if ma200_condition == 'above':
-                min_score = 65  # Más fácil entrar en LONG cuando precio está sobre MA200
+                min_score = 65  # LONG con precio sobre MA200 - Score más bajo
             else:
-                min_score = 70  # Más difícil entrar en LONG cuando precio está bajo MA200
-        else:  # SHORT
+                min_score = 70  # LONG con precio bajo MA200 - Score más alto
+        else:  # short
             if ma200_condition == 'above':
-                min_score = 75  # Más difícil entrar en SHORT cuando precio está sobre MA200
+                min_score = 75  # SHORT con precio sobre MA200 - Score más alto
             else:
-                min_score = 70  # Más fácil entrar en SHORT cuando precio está bajo MA200
+                min_score = 70  # SHORT con precio bajo MA200 - Score más bajo
 
+        # Solo retornar score si supera el mínimo
         final_score = base_score if base_score >= min_score else 0
 
         return min(final_score, 100), fulfilled_conditions
@@ -1219,12 +1220,11 @@ class TradingIndicator:
             signal_score = 0
             fulfilled_conditions = []
             
-            # NUEVA LÓGICA: Score mínimo reducido según MA200
-            if long_score >= 65 and multi_timeframe_long:  # Reducido de 70 a 65
+            if long_score >= 65 and multi_timeframe_long:  # Score mínimo reducido a 65
                 signal_type = 'LONG'
                 signal_score = long_score
                 fulfilled_conditions = long_conditions
-            elif short_score >= 70 and multi_timeframe_short:  # Mantenemos 70 para SHORT
+            elif short_score >= 70 and multi_timeframe_short:  # Score mínimo ajustado
                 signal_type = 'SHORT'
                 signal_score = short_score
                 fulfilled_conditions = short_conditions
@@ -1236,7 +1236,7 @@ class TradingIndicator:
             levels_data = self.calculate_optimal_entry_exit(df, signal_type, leverage)
             
             # Registrar señal activa si es válida
-            if signal_type in ['LONG', 'SHORT'] and signal_score >= 65:  # Reducido el mínimo
+            if signal_type in ['LONG', 'SHORT'] and signal_score >= 65:  # Umbral reducido
                 signal_key = f"{symbol}_{interval}_{signal_type}"
                 self.active_signals[signal_key] = {
                     'symbol': symbol,
@@ -1351,7 +1351,7 @@ class TradingIndicator:
         current_time = self.get_bolivia_time()
         
         for interval in telegram_intervals:
-            if interval in ['15m', '30m'] and not self.is_scalping_time():
+            if interval in ['15m', '30m'] and not self.is_trading_time():
                 continue
                 
             should_send_alert = self.calculate_remaining_time(interval, current_time)
@@ -1363,53 +1363,10 @@ class TradingIndicator:
                 try:
                     signal_data = self.generate_signals_improved(symbol, interval)
                     
-                    # NUEVA LÓGICA: Score mínimo reducido para LONG
-                    if signal_data['signal'] == 'LONG' and signal_data['signal_score'] >= 65 and signal_data['multi_timeframe_ok']:
-                        risk_category = next(
-                            (cat for cat, symbols in CRYPTO_RISK_CLASSIFICATION.items() 
-                             if symbol in symbols), 'medio'
-                        )
+                    if (signal_data['signal'] in ['LONG', 'SHORT'] and 
+                        signal_data['signal_score'] >= 65 and  # Umbral reducido
+                        signal_data['multi_timeframe_ok']):
                         
-                        volatility = signal_data['atr_percentage']
-                        if volatility > 0.05:
-                            optimal_leverage = 10
-                        elif volatility > 0.02:
-                            optimal_leverage = 15
-                        else:
-                            optimal_leverage = 20
-                        
-                        risk_factors = {'bajo': 1.0, 'medio': 0.8, 'alto': 0.6, 'memecoins': 0.5}
-                        risk_factor = risk_factors.get(risk_category, 0.7)
-                        optimal_leverage = int(optimal_leverage * risk_factor)
-                        
-                        alert = {
-                            'symbol': symbol,
-                            'interval': interval,
-                            'signal': signal_data['signal'],
-                            'score': signal_data['signal_score'],
-                            'winrate': signal_data['winrate'],
-                            'entry': signal_data['entry'],
-                            'stop_loss': signal_data['stop_loss'],
-                            'take_profit': signal_data['take_profit'][0],
-                            'leverage': optimal_leverage,
-                            'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S"),
-                            'fulfilled_conditions': signal_data.get('fulfilled_conditions', []),
-                            'risk_category': risk_category,
-                            'current_price': signal_data['current_price'],
-                            'support': signal_data['support'],
-                            'resistance': signal_data['resistance'],
-                            'ma200_condition': signal_data.get('ma200_condition', 'below')
-                        }
-                        
-                        alert_key = f"{symbol}_{interval}_{signal_data['signal']}"
-                        if (alert_key not in self.alert_cache or 
-                            (datetime.now() - self.alert_cache[alert_key]).seconds > 300):
-                            
-                            alerts.append(alert)
-                            self.alert_cache[alert_key] = datetime.now()
-                    
-                    # Mantenemos score 70 para SHORT
-                    elif signal_data['signal'] == 'SHORT' and signal_data['signal_score'] >= 70 and signal_data['multi_timeframe_ok']:
                         risk_category = next(
                             (cat for cat, symbols in CRYPTO_RISK_CLASSIFICATION.items() 
                              if symbol in symbols), 'medio'
@@ -1665,7 +1622,7 @@ def get_multiple_signals():
                     rsi_length, bb_multiplier, volume_filter, leverage
                 )
                 
-                if signal_data and signal_data['signal'] != 'NEUTRAL' and signal_data['signal_score'] >= 65:  # Reducido a 65
+                if signal_data and signal_data['signal'] != 'NEUTRAL' and signal_data['signal_score'] >= 65:  # Umbral reducido
                     all_signals.append(signal_data)
                 
                 time.sleep(0.1)
@@ -1692,7 +1649,7 @@ def get_multiple_signals():
 
 @app.route('/api/scatter_data_improved')
 def get_scatter_data_improved():
-    """Endpoint para datos del scatter plot mejorado"""
+    """Endpoint para datos del scatter plot mejorado - CORREGIDO"""
     try:
         interval = request.args.get('interval', '4h')
         di_period = int(request.args.get('di_period', 14))
@@ -1709,7 +1666,7 @@ def get_scatter_data_improved():
                 signal_data = indicator.generate_signals_improved(symbol, interval, di_period, adx_threshold)
                 if signal_data and signal_data['current_price'] > 0:
                     
-                    # Calcular presiones basadas en nuevos indicadores
+                    # Calcular presiones basadas en nuevos indicadores - CORREGIDO
                     buy_pressure = min(100, max(0,
                         (1 if signal_data['multi_timeframe_ok'] and signal_data['signal'] == 'LONG' else 0) * 40 +
                         (signal_data['rsi_maverick'] * 20) +
@@ -1983,7 +1940,9 @@ def get_bolivia_time():
     return jsonify({
         'time': current_time.strftime('%H:%M:%S'),
         'date': current_time.strftime('%Y-%m-%d'),
-        'timezone': 'America/La_Paz'
+        'timezone': 'America/La_Paz',
+        'is_trading_time': indicator.is_trading_time(),
+        'day_of_week': current_time.strftime('%A')
     })
 
 @app.errorhandler(404)
