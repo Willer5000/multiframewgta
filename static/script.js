@@ -240,9 +240,8 @@ function loadBasicCryptoSymbols() {
 }
 
 function loadMarketIndicators() {
-    // Actualizar información del mercado
+    // Actualizar información del mercado - CORREGIDO: eliminada referencia a función inexistente
     updateFearGreedIndex();
-    updateMarketRecommendations();
     updateScalpingAlerts();
     updateExitSignals();
     updateCalendarInfo();
@@ -312,7 +311,7 @@ function startAutoUpdate() {
         if (document.visibilityState === 'visible') {
             console.log('Actualización automática (cada 90 segundos)');
             updateCharts();
-            updateMarketIndicators();
+            loadMarketIndicators();
         }
     }, 90000);
 }
@@ -340,15 +339,6 @@ function updateCharts() {
     updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
     
     // Actualizar winrate
-    updateSystemWinrate();
-}
-
-function updateMarketIndicators() {
-    updateFearGreedIndex();
-    updateMarketRecommendations();
-    updateScalpingAlerts();
-    updateExitSignals();
-    updateCalendarInfo();
     updateSystemWinrate();
 }
 
@@ -1482,7 +1472,7 @@ function updateSignalAnalysis(data) {
     
     let analysisHTML = '';
     
-    if (data.signal === 'NEUTRAL' || data.signal_score < 70) {
+    if (data.signal === 'NEUTRAL' || data.signal_score < 65) {
         analysisHTML = `
             <div class="alert alert-secondary text-center py-2">
                 <i class="fas fa-pause-circle me-2"></i>
