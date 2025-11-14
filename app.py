@@ -971,7 +971,7 @@ class TradingIndicator:
         return conditions
 
     def calculate_signal_score(self, conditions, signal_type, ma200_condition):
-        """Calcular puntuación de señal basada en condiciones ponderadas"""
+        """Calcular puntuación de señal basada en condiciones ponderadas - NUEVA LÓGICA"""
         total_weight = 0
         achieved_weight = 0
         fulfilled_conditions = []
@@ -1001,11 +1001,17 @@ class TradingIndicator:
         
         base_score = (achieved_weight / total_weight * 100)
         
-        # Ajustar score mínimo según MA200
+        # NUEVA LÓGICA: Ajustar score mínimo según MA200 - IMPLEMENTACIÓN MEJORADA
         if signal_type == 'long':
-            min_score = 70 if ma200_condition == 'above' else 75
-        else:
-            min_score = 75 if ma200_condition == 'above' else 70
+            if ma200_condition == 'above':
+                min_score = 65  # Más fácil entrar en LONG cuando precio está sobre MA200
+            else:
+                min_score = 70  # Más difícil entrar en LONG cuando precio está bajo MA200
+        else:  # SHORT
+            if ma200_condition == 'above':
+                min_score = 75  # Más difícil entrar en SHORT cuando precio está sobre MA200
+            else:
+                min_score = 70  # Más fácil entrar en SHORT cuando precio está bajo MA200
 
         final_score = base_score if base_score >= min_score else 0
 
@@ -1213,11 +1219,12 @@ class TradingIndicator:
             signal_score = 0
             fulfilled_conditions = []
             
-            if long_score >= 70 and multi_timeframe_long:
+            # NUEVA LÓGICA: Score mínimo reducido según MA200
+            if long_score >= 65 and multi_timeframe_long:  # Reducido de 70 a 65
                 signal_type = 'LONG'
                 signal_score = long_score
                 fulfilled_conditions = long_conditions
-            elif short_score >= 70 and multi_timeframe_short:
+            elif short_score >= 70 and multi_timeframe_short:  # Mantenemos 70 para SHORT
                 signal_type = 'SHORT'
                 signal_score = short_score
                 fulfilled_conditions = short_conditions
@@ -1229,7 +1236,7 @@ class TradingIndicator:
             levels_data = self.calculate_optimal_entry_exit(df, signal_type, leverage)
             
             # Registrar señal activa si es válida
-            if signal_type in ['LONG', 'SHORT'] and signal_score >= 70:
+            if signal_type in ['LONG', 'SHORT'] and signal_score >= 65:  # Reducido el mínimo
                 signal_key = f"{symbol}_{interval}_{signal_type}"
                 self.active_signals[signal_key] = {
                     'symbol': symbol,
@@ -1356,10 +1363,53 @@ class TradingIndicator:
                 try:
                     signal_data = self.generate_signals_improved(symbol, interval)
                     
-                    if (signal_data['signal'] in ['LONG', 'SHORT'] and 
-                        signal_data['signal_score'] >= 70 and
-                        signal_data['multi_timeframe_ok']):
+                    # NUEVA LÓGICA: Score mínimo reducido para LONG
+                    if signal_data['signal'] == 'LONG' and signal_data['signal_score'] >= 65 and signal_data['multi_timeframe_ok']:
+                        risk_category = next(
+                            (cat for cat, symbols in CRYPTO_RISK_CLASSIFICATION.items() 
+                             if symbol in symbols), 'medio'
+                        )
                         
+                        volatility = signal_data['atr_percentage']
+                        if volatility > 0.05:
+                            optimal_leverage = 10
+                        elif volatility > 0.02:
+                            optimal_leverage = 15
+                        else:
+                            optimal_leverage = 20
+                        
+                        risk_factors = {'bajo': 1.0, 'medio': 0.8, 'alto': 0.6, 'memecoins': 0.5}
+                        risk_factor = risk_factors.get(risk_category, 0.7)
+                        optimal_leverage = int(optimal_leverage * risk_factor)
+                        
+                        alert = {
+                            'symbol': symbol,
+                            'interval': interval,
+                            'signal': signal_data['signal'],
+                            'score': signal_data['signal_score'],
+                            'winrate': signal_data['winrate'],
+                            'entry': signal_data['entry'],
+                            'stop_loss': signal_data['stop_loss'],
+                            'take_profit': signal_data['take_profit'][0],
+                            'leverage': optimal_leverage,
+                            'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S"),
+                            'fulfilled_conditions': signal_data.get('fulfilled_conditions', []),
+                            'risk_category': risk_category,
+                            'current_price': signal_data['current_price'],
+                            'support': signal_data['support'],
+                            'resistance': signal_data['resistance'],
+                            'ma200_condition': signal_data.get('ma200_condition', 'below')
+                        }
+                        
+                        alert_key = f"{symbol}_{interval}_{signal_data['signal']}"
+                        if (alert_key not in self.alert_cache or 
+                            (datetime.now() - self.alert_cache[alert_key]).seconds > 300):
+                            
+                            alerts.append(alert)
+                            self.alert_cache[alert_key] = datetime.now()
+                    
+                    # Mantenemos score 70 para SHORT
+                    elif signal_data['signal'] == 'SHORT' and signal_data['signal_score'] >= 70 and signal_data['multi_timeframe_ok']:
                         risk_category = next(
                             (cat for cat, symbols in CRYPTO_RISK_CLASSIFICATION.items() 
                              if symbol in symbols), 'medio'
@@ -1615,7 +1665,7 @@ def get_multiple_signals():
                     rsi_length, bb_multiplier, volume_filter, leverage
                 )
                 
-                if signal_data and signal_data['signal'] != 'NEUTRAL' and signal_data['signal_score'] >= 70:
+                if signal_data and signal_data['signal'] != 'NEUTRAL' and signal_data['signal_score'] >= 65:  # Reducido a 65
                     all_signals.append(signal_data)
                 
                 time.sleep(0.1)
