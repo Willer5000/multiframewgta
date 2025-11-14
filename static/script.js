@@ -240,7 +240,7 @@ function loadBasicCryptoSymbols() {
 }
 
 function loadMarketIndicators() {
-    // Actualizar información del mercado - CORREGIDO: eliminada referencia a función inexistente
+    // Actualizar información del mercado - CORREGIDO: eliminada función faltante
     updateFearGreedIndex();
     updateScalpingAlerts();
     updateExitSignals();
@@ -339,6 +339,14 @@ function updateCharts() {
     updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
     
     // Actualizar winrate
+    updateSystemWinrate();
+}
+
+function updateMarketIndicators() {
+    updateFearGreedIndex();
+    updateScalpingAlerts();
+    updateExitSignals();
+    updateCalendarInfo();
     updateSystemWinrate();
 }
 
@@ -761,6 +769,8 @@ function renderAdxChartImproved(data) {
     const adx = data.indicators.adx || [];
     const plusDi = data.indicators.plus_di || [];
     const minusDi = data.indicators.minus_di || [];
+    const diCrossBullish = data.indicators.di_cross_bullish || [];
+    const diCrossBearish = data.indicators.di_cross_bearish || [];
     
     const traces = [
         {
@@ -786,12 +796,28 @@ function renderAdxChartImproved(data) {
             mode: 'lines',
             name: '-DI',
             line: {color: '#FF1744', width: 1.5}
+        },
+        {
+            x: dates.filter((_, i) => diCrossBullish[i]),
+            y: plusDi.filter((_, i) => diCrossBullish[i]),
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Cruce Alcista',
+            marker: {color: '#00FF00', size: 8, symbol: 'star'}
+        },
+        {
+            x: dates.filter((_, i) => diCrossBearish[i]),
+            y: minusDi.filter((_, i) => diCrossBearish[i]),
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Cruce Bajista',
+            marker: {color: '#FF0000', size: 8, symbol: 'star'}
         }
     ];
     
     const layout = {
         title: {
-            text: 'ADX con Indicadores Direccionales (+DI / -DI)',
+            text: 'ADX con Indicadores Direccionales (+DI / -DI) y Cruces',
             font: {color: '#ffffff', size: 14}
         },
         xaxis: {
@@ -1537,7 +1563,12 @@ function updateScatterChartImproved(interval, diPeriod, adxThreshold, srPeriod, 
     const url = `/api/scatter_data_improved?interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&volume_filter=${volumeFilter}&leverage=${leverage}`;
     
     fetch(url)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(scatterData => {
             renderScatterChartImproved(scatterData);
         })
@@ -1546,11 +1577,11 @@ function updateScatterChartImproved(interval, diPeriod, adxThreshold, srPeriod, 
         });
 }
 
-function renderScatterChartImproved(data) {
-    const chartElement = document.getElementById('scatter-chart');
+function renderScatterChartImproved(scatterData) {
+    const scatterElement = document.getElementById('scatter-chart');
     
-    if (!data || data.length === 0) {
-        chartElement.innerHTML = `
+    if (!scatterData || scatterData.length === 0) {
+        scatterElement.innerHTML = `
             <div class="alert alert-warning text-center">
                 <p class="mb-0">No hay datos disponibles para el mapa de oportunidades</p>
             </div>
@@ -1558,101 +1589,117 @@ function renderScatterChartImproved(data) {
         return;
     }
     
-    const traces = {
-        'bajo': { x: [], y: [], text: [], marker: { size: [], color: [] }, name: 'Bajo Riesgo', mode: 'markers', type: 'scatter' },
-        'medio': { x: [], y: [], text: [], marker: { size: [], color: [] }, name: 'Medio Riesgo', mode: 'markers', type: 'scatter' },
-        'alto': { x: [], y: [], text: [], marker: { size: [], color: [] }, name: 'Alto Riesgo', mode: 'markers', type: 'scatter' },
-        'memecoins': { x: [], y: [], text: [], marker: { size: [], color: [] }, name: 'Memecoins', mode: 'markers', type: 'scatter' }
-    };
-    
-    data.forEach(item => {
-        const trace = traces[item.risk_category];
-        if (trace) {
-            trace.x.push(item.x);
-            trace.y.push(item.y);
-            trace.text.push(`${item.symbol}<br>Score: ${item.signal_score}%<br>Precio: $${item.current_price.toFixed(6)}`);
-            trace.marker.size.push(Math.max(10, item.signal_score / 2));
-            trace.marker.color.push(item.signal === 'LONG' ? '#00C853' : item.signal === 'SHORT' ? '#FF1744' : '#9E9E9E');
-        }
-    });
-    
-    const plotData = Object.values(traces).filter(trace => trace.x.length > 0);
+    // MEJORA: Calcular valores para colores basados en señal real
+    const traces = [{
+        x: scatterData.map(d => d.x),
+        y: scatterData.map(d => d.y),
+        text: scatterData.map(d => 
+            `${d.symbol}<br>Score: ${d.signal_score.toFixed(1)}%<br>Señal: ${d.signal}<br>Precio: $${formatPriceForDisplay(d.current_price)}<br>Riesgo: ${d.risk_category}`
+        ),
+        mode: 'markers',
+        marker: {
+            size: scatterData.map(d => 8 + (d.signal_score / 15)), // Tamaño basado en score
+            color: scatterData.map(d => {
+                // MEJORA: Color basado en señal real y categoría de riesgo
+                if (d.signal === 'LONG') {
+                    return d.risk_category === 'bajo' ? '#00C853' : 
+                           d.risk_category === 'medio' ? '#FFC107' : 
+                           d.risk_category === 'alto' ? '#FF9800' : '#9C27B0'; // Memecoins: púrpura
+                }
+                if (d.signal === 'SHORT') {
+                    return d.risk_category === 'bajo' ? '#FF1744' : 
+                           d.risk_category === 'medio' ? '#FF5252' : 
+                           d.risk_category === 'alto' ? '#F44336' : '#E91E63'; // Memecoins: rosa
+                }
+                return '#9E9E9E'; // Neutro - gris
+            }),
+            opacity: scatterData.map(d => 0.6 + (d.signal_score / 250)), // Opacidad basada en score
+            line: {
+                color: 'white',
+                width: 1
+            },
+            symbol: scatterData.map(d => {
+                // MEJORA: Símbolos diferentes por categoría de riesgo
+                if (d.risk_category === 'bajo') return 'circle';
+                if (d.risk_category === 'medio') return 'square';
+                if (d.risk_category === 'alto') return 'diamond';
+                return 'star'; // Memecoins: estrella
+            })
+        },
+        type: 'scatter',
+        hovertemplate: '%{text}<extra></extra>'
+    }];
     
     const layout = {
         title: {
-            text: 'Mapa de Oportunidades - Presión Compradora vs Vendedora',
-            font: { color: '#ffffff', size: 16 }
+            text: 'Mapa de Oportunidades - Análisis Multi-Indicador (40 Criptomonedas)',
+            font: {color: '#ffffff', size: 16}
         },
         xaxis: {
             title: 'Presión Compradora (%)',
             range: [0, 100],
             gridcolor: '#444',
-            zerolinecolor: '#444'
+            zerolinecolor: '#444',
+            showgrid: true
         },
         yaxis: {
             title: 'Presión Vendedora (%)',
             range: [0, 100],
             gridcolor: '#444',
-            zerolinecolor: '#444'
+            zerolinecolor: '#444',
+            showgrid: true
         },
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        font: { color: '#ffffff' },
-        showlegend: true,
-        legend: {
-            x: 0,
-            y: 1.1,
-            orientation: 'h',
-            font: { color: '#ffffff' },
-            bgcolor: 'rgba(0,0,0,0)'
-        },
-        margin: { t: 80, r: 50, b: 50, l: 50 },
         shapes: [
+            // Líneas divisorias para 3x3 grid
+            {type: 'line', x0: 33.3, x1: 33.3, y0: 0, y1: 100, line: {color: 'gray', width: 1, dash: 'dash'}},
+            {type: 'line', x0: 66.6, x1: 66.6, y0: 0, y1: 100, line: {color: 'gray', width: 1, dash: 'dash'}},
+            {type: 'line', x0: 0, x1: 100, y0: 33.3, y1: 33.3, line: {color: 'gray', width: 1, dash: 'dash'}},
+            {type: 'line', x0: 0, x1: 100, y0: 66.6, y1: 66.6, line: {color: 'gray', width: 1, dash: 'dash'}},
+            
+            // Zona de VENTA (Fila1Columna1) - fondo rojo transparente
             {
-                type: 'line',
-                x0: 50,
-                y0: 0,
-                x1: 50,
-                y1: 100,
-                line: { color: 'white', width: 1, dash: 'dot' }
+                type: 'rect', x0: 0, x1: 33.3, y0: 66.6, y1: 100,
+                fillcolor: 'rgba(255, 0, 0, 0.15)',
+                line: {width: 0}
             },
+            // Zona de COMPRA (Fila3Columna3) - fondo verde transparente
             {
-                type: 'line',
-                x0: 0,
-                y0: 50,
-                x1: 100,
-                y1: 50,
-                line: { color: 'white', width: 1, dash: 'dot' }
+                type: 'rect', x0: 66.6, x1: 100, y0: 0, y1: 33.3,
+                fillcolor: 'rgba(0, 255, 0, 0.15)',
+                line: {width: 0}
             }
         ],
         annotations: [
             {
-                x: 75,
-                y: 75,
-                xref: 'x',
-                yref: 'y',
-                text: 'Zona LONG<br>(Alta Compra, Baja Venta)',
+                x: 16.65, y: 83.3,
+                text: 'Zona VENTA',
                 showarrow: false,
-                font: { color: '#00C853', size: 12 },
-                bgcolor: 'rgba(0,0,0,0.7)',
-                bordercolor: '#00C853',
-                borderwidth: 1,
-                borderpad: 4
+                font: {color: 'red', size: 12, weight: 'bold'},
+                bgcolor: 'rgba(255, 0, 0, 0.3)',
+                bordercolor: 'red'
             },
             {
-                x: 25,
-                y: 25,
-                xref: 'x',
-                yref: 'y',
-                text: 'Zona SHORT<br>(Baja Compra, Alta Venta)',
+                x: 83.3, y: 16.65,
+                text: 'Zona COMPRA',
                 showarrow: false,
-                font: { color: '#FF1744', size: 12 },
+                font: {color: 'green', size: 12, weight: 'bold'},
+                bgcolor: 'rgba(0, 255, 0, 0.3)',
+                bordercolor: 'green'
+            },
+            {
+                x: 50, y: 95,
+                text: '● LONG (Bajo) ● LONG (Medio) ● LONG (Alto) ● LONG (Memecoin) ● SHORT (Bajo) ● SHORT (Medio) ● SHORT (Alto) ● SHORT (Memecoin)',
+                showarrow: false,
+                font: {color: 'white', size: 9},
                 bgcolor: 'rgba(0,0,0,0.7)',
-                bordercolor: '#FF1744',
-                borderwidth: 1,
-                borderpad: 4
+                bordercolor: 'white'
             }
-        ]
+        ],
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        font: {color: '#ffffff'},
+        showlegend: false,
+        margin: {t: 80, r: 50, b: 50, l: 50}
     };
     
     const config = {
@@ -1668,38 +1715,62 @@ function renderScatterChartImproved(data) {
         }
     };
     
+    // Destruir gráfico existente
     if (currentScatterChart) {
         Plotly.purge('scatter-chart');
     }
     
-    currentScatterChart = Plotly.newPlot('scatter-chart', plotData, layout, config);
+    currentScatterChart = Plotly.newPlot('scatter-chart', traces, layout, config);
+}
+
+function formatPriceForDisplay(price) {
+    if (price >= 1000) {
+        return price.toFixed(2);
+    } else if (price >= 1) {
+        return price.toFixed(4);
+    } else if (price >= 0.01) {
+        return price.toFixed(6);
+    } else {
+        return price.toFixed(8);
+    }
 }
 
 function updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage) {
     const url = `/api/multiple_signals?interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&volume_filter=${volumeFilter}&leverage=${leverage}`;
     
     fetch(url)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            updateSignalTables(data.long_signals, data.short_signals);
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            updateSignalsTables(data);
         })
         .catch(error => {
             console.error('Error cargando múltiples señales:', error);
         });
 }
 
-function updateSignalTables(longSignals, shortSignals) {
-    const longTable = document.getElementById('long-table');
-    const shortTable = document.getElementById('short-table');
-    
+function updateSignalsTables(data) {
     // Actualizar tabla LONG
-    if (longSignals && longSignals.length > 0) {
-        longTable.innerHTML = longSignals.slice(0, 5).map((signal, index) => `
-            <tr class="hover-row" onclick="showSignalDetails('${signal.symbol}', '${signal.signal}')">
-                <td>${index + 1}</td>
-                <td>${signal.symbol}</td>
-                <td><span class="badge bg-success">${signal.signal_score.toFixed(1)}%</span></td>
-                <td>$${signal.entry.toFixed(6)}</td>
+    const longTable = document.getElementById('long-table');
+    if (data.long_signals && data.long_signals.length > 0) {
+        longTable.innerHTML = data.long_signals.slice(0, 5).map((signal, index) => `
+            <tr onclick="showSignalDetails('${signal.symbol}')" style="cursor: pointer;" class="hover-row">
+                <td class="text-center">${index + 1}</td>
+                <td>
+                    <strong>${signal.symbol}</strong>
+                    <br><small class="text-success">Score: ${signal.signal_score.toFixed(1)}%</small>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-success">${signal.signal_score.toFixed(0)}%</span>
+                </td>
+                <td class="text-end">$${formatPriceForDisplay(signal.entry)}</td>
             </tr>
         `).join('');
     } else {
@@ -1713,13 +1784,19 @@ function updateSignalTables(longSignals, shortSignals) {
     }
     
     // Actualizar tabla SHORT
-    if (shortSignals && shortSignals.length > 0) {
-        shortTable.innerHTML = shortSignals.slice(0, 5).map((signal, index) => `
-            <tr class="hover-row" onclick="showSignalDetails('${signal.symbol}', '${signal.signal}')">
-                <td>${index + 1}</td>
-                <td>${signal.symbol}</td>
-                <td><span class="badge bg-danger">${signal.signal_score.toFixed(1)}%</span></td>
-                <td>$${signal.entry.toFixed(6)}</td>
+    const shortTable = document.getElementById('short-table');
+    if (data.short_signals && data.short_signals.length > 0) {
+        shortTable.innerHTML = data.short_signals.slice(0, 5).map((signal, index) => `
+            <tr onclick="showSignalDetails('${signal.symbol}')" style="cursor: pointer;" class="hover-row">
+                <td class="text-center">${index + 1}</td>
+                <td>
+                    <strong>${signal.symbol}</strong>
+                    <br><small class="text-danger">Score: ${signal.signal_score.toFixed(1)}%</small>
+                </td>
+                <td class="text-center">
+                    <span class="badge bg-danger">${signal.signal_score.toFixed(0)}%</span>
+                </td>
+                <td class="text-end">$${formatPriceForDisplay(signal.entry)}</td>
             </tr>
         `).join('');
     } else {
@@ -1778,7 +1855,12 @@ function updateFearGreedIndex() {
 
 function updateScalpingAlerts() {
     fetch('/api/scalping_alerts')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             const alertsElement = document.getElementById('scalping-alerts');
             if (data.alerts && data.alerts.length > 0) {
@@ -1791,7 +1873,7 @@ function updateScalpingAlerts() {
                                 <div class="small">Score: ${alert.score.toFixed(1)}%</div>
                             </div>
                             <span class="badge bg-${alert.signal === 'LONG' ? 'success' : 'danger'}">
-                                $${alert.entry.toFixed(6)}
+                                $${formatPriceForDisplay(alert.entry)}
                             </span>
                         </div>
                     </div>
@@ -1812,7 +1894,12 @@ function updateScalpingAlerts() {
 
 function updateExitSignals() {
     fetch('/api/exit_signals')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
             const exitElement = document.getElementById('exit-signals');
             if (data.exit_signals && data.exit_signals.length > 0) {
