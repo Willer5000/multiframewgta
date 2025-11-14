@@ -90,24 +90,24 @@ class TradingIndicator:
         """Obtener hora actual de Bolivia"""
         return datetime.now(self.bolivia_tz)
     
-    def is_trading_time(self):
-        """Verificar si es horario de trading (lunes a viernes de 4am a 4pm hora boliviana)"""
+    def is_scalping_time(self):
+        """Verificar si es horario de scalping"""
         now = self.get_bolivia_time()
-        if now.weekday() >= 5:  # Sábado o Domingo
+        if now.weekday() >= 5:
             return False
-        return 4 <= now.hour < 16  # De 4am a 4pm
+        return 4 <= now.hour < 16
 
     def calculate_remaining_time(self, interval, current_time):
-        """Calcular tiempo restante para el cierre de la vela"""
+        """Calcular tiempo restante para el cierre de la vela - CORREGIDO"""
         if interval == '15m':
             next_close = current_time.replace(minute=current_time.minute // 15 * 15, second=0, microsecond=0) + timedelta(minutes=15)
-            return (next_close - current_time).total_seconds() <= 450
+            return (next_close - current_time).total_seconds() <= 450  # 7.5 minutos (50%)
         elif interval == '30m':
             next_close = current_time.replace(minute=current_time.minute // 30 * 30, second=0, microsecond=0) + timedelta(minutes=30)
-            return (next_close - current_time).total_seconds() <= 900
+            return (next_close - current_time).total_seconds() <= 900  # 15 minutos (50%)
         elif interval == '1h':
             next_close = current_time.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
-            return (next_close - current_time).total_seconds() <= 1800
+            return (next_close - current_time).total_seconds() <= 1800  # 30 minutos (50%)
         elif interval == '2h':
             current_hour = current_time.hour
             next_2h_close = current_time.replace(minute=0, second=0, microsecond=0)
@@ -115,7 +115,7 @@ class TradingIndicator:
                 next_2h_close += timedelta(hours=2)
             else:
                 next_2h_close += timedelta(hours=1)
-            return (next_2h_close - current_time).total_seconds() <= 3600
+            return (next_2h_close - current_time).total_seconds() <= 1800  # 30 minutos (25%)
         elif interval == '4h':
             current_hour = current_time.hour
             next_4h_close = current_time.replace(minute=0, second=0, microsecond=0)
@@ -124,7 +124,7 @@ class TradingIndicator:
                 next_4h_close += timedelta(hours=4)
             else:
                 next_4h_close += timedelta(hours=4 - remainder)
-            return (next_4h_close - current_time).total_seconds() <= 7200
+            return (next_4h_close - current_time).total_seconds() <= 3600  # 1 hora (25%)
         elif interval == '8h':
             current_hour = current_time.hour
             next_8h_close = current_time.replace(minute=0, second=0, microsecond=0)
@@ -133,7 +133,7 @@ class TradingIndicator:
                 next_8h_close += timedelta(hours=8)
             else:
                 next_8h_close += timedelta(hours=8 - remainder)
-            return (next_8h_close - current_time).total_seconds() <= 14400
+            return (next_8h_close - current_time).total_seconds() <= 7200  # 2 horas (25%)
         elif interval == '12h':
             current_hour = current_time.hour
             next_12h_close = current_time.replace(minute=0, second=0, microsecond=0)
@@ -141,16 +141,18 @@ class TradingIndicator:
                 next_12h_close = next_12h_close.replace(hour=20)
             else:
                 next_12h_close = next_12h_close.replace(hour=8) + timedelta(days=1)
-            return (next_12h_close - current_time).total_seconds() <= 21600
+            return (next_12h_close - current_time).total_seconds() <= 10800  # 3 horas (25%)
         elif interval == '1D':
             tomorrow_8pm = current_time.replace(hour=20, minute=0, second=0, microsecond=0)
             if current_time.hour >= 20:
                 tomorrow_8pm += timedelta(days=1)
-            return (tomorrow_8pm - current_time).total_seconds() <= 43200
+            return (tomorrow_8pm - current_time).total_seconds() <= 21600  # 6 horas (25%)
         elif interval == '3D':
-            return True  # Para 3D, siempre enviar
+            # Para 3D, enviar en los últimos 7.2 horas (10%)
+            return (current_time.hour >= 12 and current_time.hour < 20)
         elif interval == '1W':
-            return True  # Para 1W, siempre enviar
+            # Para 1W, enviar en los últimos 16.8 horas (10%)
+            return (current_time.hour >= 8 and current_time.hour < 24)
         
         return False
 
@@ -701,7 +703,7 @@ class TradingIndicator:
         return breakout_up.tolist(), breakout_down.tolist()
 
     def check_di_crossover(self, plus_di, minus_di, lookback=3):
-        """Detectar cruces de +DI y -DI con confirmación"""
+        """Detectar cruces de +DI y -DI con confirmación - CORREGIDO"""
         n = len(plus_di)
         di_cross_bullish = np.zeros(n, dtype=bool)
         di_cross_bearish = np.zeros(n, dtype=bool)
@@ -709,24 +711,28 @@ class TradingIndicator:
         di_trend_bearish = np.zeros(n, dtype=bool)
         
         for i in range(lookback, n):
+            # Cruce alcista: +DI cruza por encima de -DI
             if (plus_di[i] > minus_di[i] and 
                 plus_di[i-1] <= minus_di[i-1]):
                 di_cross_bullish[i] = True
             
+            # Cruce bajista: -DI cruza por encima de +DI
             if (minus_di[i] > plus_di[i] and 
                 minus_di[i-1] <= plus_di[i-1]):
                 di_cross_bearish[i] = True
             
+            # Tendencia alcista: +DI en aumento
             if plus_di[i] > np.mean(plus_di[i-lookback:i]):
                 di_trend_bullish[i] = True
             
+            # Tendencia bajista: -DI en aumento
             if minus_di[i] > np.mean(minus_di[i-lookback:i]):
                 di_trend_bearish[i] = True
         
         return di_cross_bullish.tolist(), di_cross_bearish.tolist(), di_trend_bullish.tolist(), di_trend_bearish.tolist()
 
     def calculate_adx(self, high, low, close, period=14):
-        """Calcular ADX, +DI, -DI manualmente"""
+        """Calcular ADX, +DI, -DI manualmente - CORREGIDO"""
         n = len(high)
         if n < period:
             return np.zeros(n), np.zeros(n), np.zeros(n)
@@ -1001,19 +1007,12 @@ class TradingIndicator:
         
         base_score = (achieved_weight / total_weight * 100)
         
-        # IMPLEMENTACIÓN CORREGIDA DE LOS SCORES MÍNIMOS SEGÚN MA200
+        # AJUSTE DE SCORE SEGÚN EMA200 - IMPLEMENTADO SEGÚN TU PROPUESTA
         if signal_type == 'long':
-            if ma200_condition == 'above':
-                min_score = 65  # LONG con precio sobre MA200 - Score más bajo
-            else:
-                min_score = 70  # LONG con precio bajo MA200 - Score más alto
-        else:  # short
-            if ma200_condition == 'above':
-                min_score = 75  # SHORT con precio sobre MA200 - Score más alto
-            else:
-                min_score = 70  # SHORT con precio bajo MA200 - Score más bajo
+            min_score = 65 if ma200_condition == 'above' else 70
+        else:
+            min_score = 75 if ma200_condition == 'above' else 70
 
-        # Solo retornar score si supera el mínimo
         final_score = base_score if base_score >= min_score else 0
 
         return min(final_score, 100), fulfilled_conditions
@@ -1054,7 +1053,7 @@ class TradingIndicator:
             return 65.0
 
     def generate_exit_signals(self):
-        """Generar señales de salida para operaciones activas"""
+        """Generar señales de salida para operaciones activas - CORREGIDO"""
         exit_alerts = []
         current_time = self.get_bolivia_time()
         
@@ -1067,8 +1066,16 @@ class TradingIndicator:
                 entry_time = signal_data['timestamp']
                 
                 # Obtener datos actuales
-                df = self.get_kucoin_data(symbol, interval, 20)
-                if df is None or len(df) < 10:
+                df = self.get_kucoin_data(symbol, interval, 50)  # Más datos para análisis
+                if df is None or len(df) < 20:
+                    continue
+                
+                # Verificar que no sea la misma vela de entrada
+                entry_timestamp = datetime.strptime(entry_time, "%Y-%m-%d %H:%M:%S")
+                current_timestamp = current_time
+                
+                # Si es la misma vela, no generar señal de salida
+                if (current_timestamp - entry_timestamp).total_seconds() < 300:  # 5 minutos
                     continue
                 
                 current_price = float(df['close'].iloc[-1])
@@ -1220,7 +1227,7 @@ class TradingIndicator:
             signal_score = 0
             fulfilled_conditions = []
             
-            if long_score >= 65 and multi_timeframe_long:  # Score mínimo reducido a 65
+            if long_score >= 65 and multi_timeframe_long:  # Score mínimo ajustado
                 signal_type = 'LONG'
                 signal_score = long_score
                 fulfilled_conditions = long_conditions
@@ -1236,8 +1243,8 @@ class TradingIndicator:
             levels_data = self.calculate_optimal_entry_exit(df, signal_type, leverage)
             
             # Registrar señal activa si es válida
-            if signal_type in ['LONG', 'SHORT'] and signal_score >= 65:  # Umbral reducido
-                signal_key = f"{symbol}_{interval}_{signal_type}"
+            if signal_type in ['LONG', 'SHORT'] and signal_score >= 65:
+                signal_key = f"{symbol}_{interval}_{signal_type}_{int(time.time())}"
                 self.active_signals[signal_key] = {
                     'symbol': symbol,
                     'interval': interval,
@@ -1278,9 +1285,15 @@ class TradingIndicator:
                 'indicators': {
                     'whale_pump': whale_data['whale_pump'][-50:],
                     'whale_dump': whale_data['whale_dump'][-50:],
+                    'confirmed_buy': whale_data['confirmed_buy'][-50:],
+                    'confirmed_sell': whale_data['confirmed_sell'][-50:],
                     'adx': adx[-50:].tolist(),
                     'plus_di': plus_di[-50:].tolist(),
                     'minus_di': minus_di[-50:].tolist(),
+                    'di_cross_bullish': di_cross_bullish[-50:],
+                    'di_cross_bearish': di_cross_bearish[-50:],
+                    'di_trend_bullish': di_trend_bullish[-50:],
+                    'di_trend_bearish': di_trend_bearish[-50:],
                     'rsi_maverick': rsi_maverick[-50:],
                     'rsi_traditional': rsi_traditional[-50:],
                     'rsi_maverick_bullish_divergence': rsi_maverick_bullish[-50:],
@@ -1310,6 +1323,8 @@ class TradingIndicator:
             
         except Exception as e:
             print(f"Error en generate_signals_improved para {symbol}: {e}")
+            import traceback
+            traceback.print_exc()
             return self._create_empty_signal(symbol)
 
     def _create_empty_signal(self, symbol):
@@ -1351,7 +1366,7 @@ class TradingIndicator:
         current_time = self.get_bolivia_time()
         
         for interval in telegram_intervals:
-            if interval in ['15m', '30m'] and not self.is_trading_time():
+            if interval in ['15m', '30m'] and not self.is_scalping_time():
                 continue
                 
             should_send_alert = self.calculate_remaining_time(interval, current_time)
@@ -1364,7 +1379,7 @@ class TradingIndicator:
                     signal_data = self.generate_signals_improved(symbol, interval)
                     
                     if (signal_data['signal'] in ['LONG', 'SHORT'] and 
-                        signal_data['signal_score'] >= 65 and  # Umbral reducido
+                        signal_data['signal_score'] >= 65 and  # Score mínimo ajustado
                         signal_data['multi_timeframe_ok']):
                         
                         risk_category = next(
@@ -1622,7 +1637,7 @@ def get_multiple_signals():
                     rsi_length, bb_multiplier, volume_filter, leverage
                 )
                 
-                if signal_data and signal_data['signal'] != 'NEUTRAL' and signal_data['signal_score'] >= 65:  # Umbral reducido
+                if signal_data and signal_data['signal'] != 'NEUTRAL' and signal_data['signal_score'] >= 65:
                     all_signals.append(signal_data)
                 
                 time.sleep(0.1)
@@ -1659,27 +1674,37 @@ def get_scatter_data_improved():
         
         symbols_to_analyze = []
         for category in ['bajo', 'medio', 'alto', 'memecoins']:
-            symbols_to_analyze.extend(CRYPTO_RISK_CLASSIFICATION[category][:3])
+            symbols_to_analyze.extend(CRYPTO_RISK_CLASSIFICATION[category][:5])
         
         for symbol in symbols_to_analyze:
             try:
                 signal_data = indicator.generate_signals_improved(symbol, interval, di_period, adx_threshold)
                 if signal_data and signal_data['current_price'] > 0:
                     
-                    # Calcular presiones basadas en nuevos indicadores - CORREGIDO
+                    # Calcular presiones basadas en indicadores reales
                     buy_pressure = min(100, max(0,
-                        (1 if signal_data['multi_timeframe_ok'] and signal_data['signal'] == 'LONG' else 0) * 40 +
-                        (signal_data['rsi_maverick'] * 20) +
+                        (signal_data['whale_pump'] / 100 * 25) +
                         (1 if signal_data['plus_di'] > signal_data['minus_di'] else 0) * 20 +
-                        (min(1, signal_data['volume'] / signal_data['volume_ma']) * 20)
+                        (signal_data['rsi_maverick'] * 20) +
+                        (1 if signal_data['adx'] > adx_threshold else 0) * 15 +
+                        (min(1, signal_data['volume'] / max(1, signal_data['volume_ma'])) * 20)
                     ))
                     
                     sell_pressure = min(100, max(0,
-                        (1 if signal_data['multi_timeframe_ok'] and signal_data['signal'] == 'SHORT' else 0) * 40 +
-                        ((1 - signal_data['rsi_maverick']) * 20) +
+                        (signal_data['whale_dump'] / 100 * 25) +
                         (1 if signal_data['minus_di'] > signal_data['plus_di'] else 0) * 20 +
-                        (min(1, signal_data['volume'] / signal_data['volume_ma']) * 20)
+                        ((1 - signal_data['rsi_maverick']) * 20) +
+                        (1 if signal_data['adx'] > adx_threshold else 0) * 15 +
+                        (min(1, signal_data['volume'] / max(1, signal_data['volume_ma'])) * 20)
                     ))
+                    
+                    # Ajustar según señal
+                    if signal_data['signal'] == 'LONG':
+                        buy_pressure = min(100, buy_pressure * 1.3)
+                        sell_pressure = max(0, sell_pressure * 0.7)
+                    elif signal_data['signal'] == 'SHORT':
+                        sell_pressure = min(100, sell_pressure * 1.3)
+                        buy_pressure = max(0, buy_pressure * 0.7)
                     
                     scatter_data.append({
                         'symbol': symbol,
@@ -1940,9 +1965,7 @@ def get_bolivia_time():
     return jsonify({
         'time': current_time.strftime('%H:%M:%S'),
         'date': current_time.strftime('%Y-%m-%d'),
-        'timezone': 'America/La_Paz',
-        'is_trading_time': indicator.is_trading_time(),
-        'day_of_week': current_time.strftime('%A')
+        'timezone': 'America/La_Paz'
     })
 
 @app.errorhandler(404)
