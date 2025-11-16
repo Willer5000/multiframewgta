@@ -240,7 +240,7 @@ function loadBasicCryptoSymbols() {
 }
 
 function loadMarketIndicators() {
-    // Actualizar información del mercado - CORREGIDO: eliminada función faltante
+    // Actualizar información del mercado
     updateFearGreedIndex();
     updateScalpingAlerts();
     updateExitSignals();
@@ -366,12 +366,12 @@ function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsi
             }
             currentData = data;
             renderCandleChart(data);
-            renderWhaleChartImproved(data);
             renderAdxChartImproved(data);
-            renderRsiTraditionalChart(data);
-            renderRsiMaverickChart(data);
-            renderMacdChart(data);
             renderTrendStrengthChart(data);
+            renderWhaleChartImproved(data);
+            renderRsiMaverickChart(data);
+            renderRsiTraditionalChart(data);
+            renderMacdChart(data);
             updateMarketSummary(data);
             updateSignalAnalysis(data);
         })
@@ -543,7 +543,7 @@ function renderCandleChart(data, indicatorOptions = {}) {
                 x: dates,
                 y: data.indicators.ma_200,
                 mode: 'lines',
-                line: {color: '#795548', width: 1},
+                line: {color: '#795548', width: 3}, // Línea más gruesa para MA200
                 name: 'MA 200'
             });
         }
@@ -602,9 +602,10 @@ function renderCandleChart(data, indicatorOptions = {}) {
     const priceRange = maxPrice - minPrice;
     const padding = priceRange * 0.05;
     
+    const interval = document.getElementById('interval-select').value;
     const layout = {
         title: {
-            text: `${data.symbol} - Gráfico de Velas con Indicadores Multi-Temporalidad`,
+            text: `${data.symbol} - ${interval}`,
             font: {color: '#ffffff', size: 16}
         },
         xaxis: {
@@ -655,102 +656,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
     }
     
     currentChart = Plotly.newPlot('candle-chart', traces, layout, config);
-}
-
-function renderWhaleChartImproved(data) {
-    const chartElement = document.getElementById('whale-chart');
-    
-    if (!data.indicators || !data.data) {
-        chartElement.innerHTML = `
-            <div class="alert alert-warning text-center">
-                <p class="mb-0">No hay datos de ballenas disponibles</p>
-            </div>
-        `;
-        return;
-    }
-
-    const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
-    const whalePump = data.indicators.whale_pump || [];
-    const whaleDump = data.indicators.whale_dump || [];
-    const confirmedBuy = data.indicators.confirmed_buy || [];
-    const confirmedSell = data.indicators.confirmed_sell || [];
-    
-    const traces = [
-        {
-            x: dates,
-            y: whalePump,
-            type: 'bar',
-            name: 'Ballenas Compradoras',
-            marker: {color: '#00C853'}
-        },
-        {
-            x: dates,
-            y: whaleDump,
-            type: 'bar',
-            name: 'Ballenas Vendedoras',
-            marker: {color: '#FF1744'}
-        },
-        {
-            x: dates.filter((_, i) => confirmedBuy[i]),
-            y: whalePump.filter((_, i) => confirmedBuy[i]),
-            type: 'scatter',
-            mode: 'markers',
-            name: 'Compra Confirmada',
-            marker: {color: '#00FF00', size: 10, symbol: 'diamond'}
-        },
-        {
-            x: dates.filter((_, i) => confirmedSell[i]),
-            y: whaleDump.filter((_, i) => confirmedSell[i]),
-            type: 'scatter',
-            mode: 'markers',
-            name: 'Venta Confirmada',
-            marker: {color: '#FF0000', size: 10, symbol: 'diamond'}
-        }
-    ];
-    
-    const layout = {
-        title: {
-            text: 'Actividad de Ballenas - Compradoras vs Vendedoras',
-            font: {color: '#ffffff', size: 14}
-        },
-        xaxis: {
-            title: 'Fecha/Hora',
-            type: 'date',
-            gridcolor: '#444',
-            zerolinecolor: '#444'
-        },
-        yaxis: {
-            title: 'Fuerza de Señal',
-            gridcolor: '#444',
-            zerolinecolor: '#444'
-        },
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        font: {color: '#ffffff'},
-        showlegend: true,
-        legend: {
-            x: 0,
-            y: 1.1,
-            orientation: 'h',
-            font: {color: '#ffffff'},
-            bgcolor: 'rgba(0,0,0,0)'
-        },
-        barmode: 'overlay',
-        bargap: 0,
-        margin: {t: 60, r: 50, b: 50, l: 50}
-    };
-    
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
-    
-    if (currentWhaleChart) {
-        Plotly.purge('whale-chart');
-    }
-    
-    currentWhaleChart = Plotly.newPlot('whale-chart', traces, layout, config);
 }
 
 function renderAdxChartImproved(data) {
@@ -858,80 +763,100 @@ function renderAdxChartImproved(data) {
     currentAdxChart = Plotly.newPlot('adx-chart', traces, layout, config);
 }
 
-function renderRsiTraditionalChart(data) {
-    const chartElement = document.getElementById('rsi-traditional-chart');
+function renderTrendStrengthChart(data) {
+    const chartElement = document.getElementById('trend-strength-chart');
     
-    if (!data.indicators || !data.data) {
+    if (!data.indicators || !data.data || !data.indicators.trend_strength) {
         chartElement.innerHTML = `
             <div class="alert alert-warning text-center">
-                <p class="mb-0">No hay datos de RSI Tradicional disponibles</p>
+                <p class="mb-0">No hay datos de Fuerza de Tendencia disponibles</p>
             </div>
         `;
         return;
     }
 
     const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
-    const rsiTraditional = data.indicators.rsi_traditional || [];
-    const bullishDivergence = data.indicators.rsi_bullish_divergence || [];
-    const bearishDivergence = data.indicators.rsi_bearish_divergence || [];
+    const trendStrength = data.indicators.trend_strength || [];
+    const colors = data.indicators.colors || [];
+    const noTradeZones = data.indicators.no_trade_zones || [];
+    const highZoneThreshold = data.indicators.high_zone_threshold || 5;
     
-    // Preparar datos para divergencias
-    const bullishDates = [];
-    const bullishValues = [];
-    const bearishDates = [];
-    const bearishValues = [];
+    // Crear barras con colores individuales
+    const traces = [{
+        x: dates,
+        y: trendStrength,
+        type: 'bar',
+        name: 'Fuerza de Tendencia',
+        marker: {
+            color: colors,
+            line: {
+                color: 'rgba(255,255,255,0.3)',
+                width: 0.5
+            }
+        }
+    }];
     
-    for (let i = 7; i < bullishDivergence.length; i++) {
-        if (bullishDivergence[i] && !bullishDivergence[i-1] && !bullishDivergence[i-2]) {
-            bullishDates.push(dates[i]);
-            bullishValues.push(rsiTraditional[i]);
+    // Añadir líneas de referencia
+    traces.push({
+        x: [dates[0], dates[dates.length - 1]],
+        y: [highZoneThreshold, highZoneThreshold],
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Umbral Alto',
+        line: {
+            color: 'orange',
+            width: 2,
+            dash: 'dash'
         }
-        if (bearishDivergence[i] && !bearishDivergence[i-1] && !bearishDivergence[i-2]) {
-            bearishDates.push(dates[i]);
-            bearishValues.push(rsiTraditional[i]);
+    });
+    
+    traces.push({
+        x: [dates[0], dates[dates.length - 1]],
+        y: [-highZoneThreshold, -highZoneThreshold],
+        type: 'scatter',
+        mode: 'lines',
+        name: 'Umbral Bajo',
+        line: {
+            color: 'orange',
+            width: 2,
+            dash: 'dash'
+        },
+        showlegend: false
+    });
+    
+    // Añadir marcadores para zonas de no operar
+    const noTradeDates = [];
+    const noTradeValues = [];
+    
+    dates.forEach((date, i) => {
+        if (noTradeZones[i]) {
+            noTradeDates.push(date);
+            noTradeValues.push(trendStrength[i] || 0);
         }
+    });
+    
+    if (noTradeDates.length > 0) {
+        traces.push({
+            x: noTradeDates,
+            y: noTradeValues,
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Zona NO OPERAR',
+            marker: {
+                color: 'red',
+                size: 12,
+                symbol: 'x',
+                line: {
+                    color: 'white',
+                    width: 2
+                }
+            }
+        });
     }
-    
-    const traces = [
-        {
-            x: dates,
-            y: rsiTraditional,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'RSI Tradicional',
-            line: {color: '#2196F3', width: 2}
-        },
-        {
-            x: bullishDates,
-            y: bullishValues,
-            type: 'scatter',
-            mode: 'markers',
-            name: 'Divergencia Alcista',
-            marker: {
-                color: '#00FF00',
-                size: 12,
-                symbol: 'triangle-up',
-                line: {color: 'white', width: 1}
-            }
-        },
-        {
-            x: bearishDates,
-            y: bearishValues,
-            type: 'scatter',
-            mode: 'markers',
-            name: 'Divergencia Bajista',
-            marker: {
-                color: '#FF0000',
-                size: 12,
-                symbol: 'triangle-down',
-                line: {color: 'white', width: 1}
-            }
-        }
-    ];
     
     const layout = {
         title: {
-            text: 'RSI Tradicional con Divergencias (14 Periodos)',
+            text: 'Fuerza de Tendencia Maverick - Ancho Bandas Bollinger %',
             font: {color: '#ffffff', size: 14}
         },
         xaxis: {
@@ -941,79 +866,37 @@ function renderRsiTraditionalChart(data) {
             zerolinecolor: '#444'
         },
         yaxis: {
-            title: 'RSI Value',
-            range: [0, 100],
+            title: 'Fuerza de Tendencia %',
             gridcolor: '#444',
             zerolinecolor: '#444'
         },
-        shapes: [
-            {
-                type: 'line',
-                x0: dates[0],
-                x1: dates[dates.length - 1],
-                y0: 80,
-                y1: 80,
-                line: {
-                    color: 'red',
-                    width: 1,
-                    dash: 'dash'
-                }
-            },
-            {
-                type: 'line',
-                x0: dates[0],
-                x1: dates[dates.length - 1],
-                y0: 20,
-                y1: 20,
-                line: {
-                    color: 'green',
-                    width: 1,
-                    dash: 'dash'
-                }
-            },
-            {
-                type: 'line',
-                x0: dates[0],
-                x1: dates[dates.length - 1],
-                y0: 50,
-                y1: 50,
-                line: {
-                    color: 'white',
-                    width: 1,
-                    dash: 'solid'
-                }
-            }
-        ],
-        annotations: [
-            {
-                x: dates[dates.length - 1],
-                y: 80,
-                xanchor: 'left',
-                text: 'Sobrecompra',
-                showarrow: false,
-                font: {color: 'red', size: 10}
-            },
-            {
-                x: dates[dates.length - 1],
-                y: 20,
-                xanchor: 'left',
-                text: 'Sobreventa',
-                showarrow: false,
-                font: {color: 'green', size: 10}
-            }
-        ],
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'rgba(0,0,0,0)',
         font: {color: '#ffffff'},
         showlegend: true,
         legend: {
             x: 0,
-            y: -0.2,
+            y: 1.1,
             orientation: 'h',
             font: {color: '#ffffff'},
             bgcolor: 'rgba(0,0,0,0)'
         },
-        margin: {t: 60, r: 50, b: 80, l: 50}
+        margin: {t: 60, r: 50, b: 50, l: 50},
+        annotations: [
+            {
+                x: 0.02,
+                y: 0.98,
+                xref: 'paper',
+                yref: 'paper',
+                text: '🟢 Verde: Fuerza creciente | 🔴 Rojo: Fuerza decreciente',
+                showarrow: false,
+                font: {color: 'white', size: 10},
+                bgcolor: 'rgba(0,0,0,0.7)',
+                bordercolor: 'rgba(255,255,255,0.5)',
+                borderwidth: 1,
+                borderpad: 4
+            }
+        ]
     };
     
     const config = {
@@ -1022,11 +905,107 @@ function renderRsiTraditionalChart(data) {
         displaylogo: false
     };
     
-    if (currentRsiTraditionalChart) {
-        Plotly.purge('rsi-traditional-chart');
+    if (currentTrendStrengthChart) {
+        Plotly.purge('trend-strength-chart');
     }
     
-    currentRsiTraditionalChart = Plotly.newPlot('rsi-traditional-chart', traces, layout, config);
+    currentTrendStrengthChart = Plotly.newPlot('trend-strength-chart', traces, layout, config);
+}
+
+function renderWhaleChartImproved(data) {
+    const chartElement = document.getElementById('whale-chart');
+    
+    if (!data.indicators || !data.data) {
+        chartElement.innerHTML = `
+            <div class="alert alert-warning text-center">
+                <p class="mb-0">No hay datos de ballenas disponibles</p>
+            </div>
+        `;
+        return;
+    }
+
+    const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
+    const whalePump = data.indicators.whale_pump || [];
+    const whaleDump = data.indicators.whale_dump || [];
+    const confirmedBuy = data.indicators.confirmed_buy || [];
+    const confirmedSell = data.indicators.confirmed_sell || [];
+    
+    const traces = [
+        {
+            x: dates,
+            y: whalePump,
+            type: 'bar',
+            name: 'Ballenas Compradoras',
+            marker: {color: '#00C853'}
+        },
+        {
+            x: dates,
+            y: whaleDump,
+            type: 'bar',
+            name: 'Ballenas Vendedoras',
+            marker: {color: '#FF1744'}
+        },
+        {
+            x: dates.filter((_, i) => confirmedBuy[i]),
+            y: whalePump.filter((_, i) => confirmedBuy[i]),
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Compra Confirmada',
+            marker: {color: '#00FF00', size: 10, symbol: 'diamond'}
+        },
+        {
+            x: dates.filter((_, i) => confirmedSell[i]),
+            y: whaleDump.filter((_, i) => confirmedSell[i]),
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Venta Confirmada',
+            marker: {color: '#FF0000', size: 10, symbol: 'diamond'}
+        }
+    ];
+    
+    const layout = {
+        title: {
+            text: 'Actividad de Ballenas - Compradoras vs Vendedoras',
+            font: {color: '#ffffff', size: 14}
+        },
+        xaxis: {
+            title: 'Fecha/Hora',
+            type: 'date',
+            gridcolor: '#444',
+            zerolinecolor: '#444'
+        },
+        yaxis: {
+            title: 'Fuerza de Señal',
+            gridcolor: '#444',
+            zerolinecolor: '#444'
+        },
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        font: {color: '#ffffff'},
+        showlegend: true,
+        legend: {
+            x: 0,
+            y: 1.1,
+            orientation: 'h',
+            font: {color: '#ffffff'},
+            bgcolor: 'rgba(0,0,0,0)'
+        },
+        barmode: 'overlay',
+        bargap: 0,
+        margin: {t: 60, r: 50, b: 50, l: 50}
+    };
+    
+    const config = {
+        responsive: true,
+        displayModeBar: true,
+        displaylogo: false
+    };
+    
+    if (currentWhaleChart) {
+        Plotly.purge('whale-chart');
+    }
+    
+    currentWhaleChart = Plotly.newPlot('whale-chart', traces, layout, config);
 }
 
 function renderRsiMaverickChart(data) {
@@ -1200,6 +1179,177 @@ function renderRsiMaverickChart(data) {
     currentRsiMaverickChart = Plotly.newPlot('rsi-maverick-chart', traces, layout, config);
 }
 
+function renderRsiTraditionalChart(data) {
+    const chartElement = document.getElementById('rsi-traditional-chart');
+    
+    if (!data.indicators || !data.data) {
+        chartElement.innerHTML = `
+            <div class="alert alert-warning text-center">
+                <p class="mb-0">No hay datos de RSI Tradicional disponibles</p>
+            </div>
+        `;
+        return;
+    }
+
+    const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
+    const rsiTraditional = data.indicators.rsi_traditional || [];
+    const bullishDivergence = data.indicators.rsi_bullish_divergence || [];
+    const bearishDivergence = data.indicators.rsi_bearish_divergence || [];
+    
+    // Preparar datos para divergencias
+    const bullishDates = [];
+    const bullishValues = [];
+    const bearishDates = [];
+    const bearishValues = [];
+    
+    for (let i = 7; i < bullishDivergence.length; i++) {
+        if (bullishDivergence[i] && !bullishDivergence[i-1] && !bullishDivergence[i-2]) {
+            bullishDates.push(dates[i]);
+            bullishValues.push(rsiTraditional[i]);
+        }
+        if (bearishDivergence[i] && !bearishDivergence[i-1] && !bearishDivergence[i-2]) {
+            bearishDates.push(dates[i]);
+            bearishValues.push(rsiTraditional[i]);
+        }
+    }
+    
+    const traces = [
+        {
+            x: dates,
+            y: rsiTraditional,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'RSI Tradicional',
+            line: {color: '#2196F3', width: 2}
+        },
+        {
+            x: bullishDates,
+            y: bullishValues,
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Divergencia Alcista',
+            marker: {
+                color: '#00FF00',
+                size: 12,
+                symbol: 'triangle-up',
+                line: {color: 'white', width: 1}
+            }
+        },
+        {
+            x: bearishDates,
+            y: bearishValues,
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Divergencia Bajista',
+            marker: {
+                color: '#FF0000',
+                size: 12,
+                symbol: 'triangle-down',
+                line: {color: 'white', width: 1}
+            }
+        }
+    ];
+    
+    const layout = {
+        title: {
+            text: 'RSI Tradicional con Divergencias (14 Periodos)',
+            font: {color: '#ffffff', size: 14}
+        },
+        xaxis: {
+            title: 'Fecha/Hora',
+            type: 'date',
+            gridcolor: '#444',
+            zerolinecolor: '#444'
+        },
+        yaxis: {
+            title: 'RSI Value',
+            range: [0, 100],
+            gridcolor: '#444',
+            zerolinecolor: '#444'
+        },
+        shapes: [
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 80,
+                y1: 80,
+                line: {
+                    color: 'red',
+                    width: 1,
+                    dash: 'dash'
+                }
+            },
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 20,
+                y1: 20,
+                line: {
+                    color: 'green',
+                    width: 1,
+                    dash: 'dash'
+                }
+            },
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 50,
+                y1: 50,
+                line: {
+                    color: 'white',
+                    width: 1,
+                    dash: 'solid'
+                }
+            }
+        ],
+        annotations: [
+            {
+                x: dates[dates.length - 1],
+                y: 80,
+                xanchor: 'left',
+                text: 'Sobrecompra',
+                showarrow: false,
+                font: {color: 'red', size: 10}
+            },
+            {
+                x: dates[dates.length - 1],
+                y: 20,
+                xanchor: 'left',
+                text: 'Sobreventa',
+                showarrow: false,
+                font: {color: 'green', size: 10}
+            }
+        ],
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        font: {color: '#ffffff'},
+        showlegend: true,
+        legend: {
+            x: 0,
+            y: -0.2,
+            orientation: 'h',
+            font: {color: '#ffffff'},
+            bgcolor: 'rgba(0,0,0,0)'
+        },
+        margin: {t: 60, r: 50, b: 80, l: 50}
+    };
+    
+    const config = {
+        responsive: true,
+        displayModeBar: true,
+        displaylogo: false
+    };
+    
+    if (currentRsiTraditionalChart) {
+        Plotly.purge('rsi-traditional-chart');
+    }
+    
+    currentRsiTraditionalChart = Plotly.newPlot('rsi-traditional-chart', traces, layout, config);
+}
+
 function renderMacdChart(data) {
     const chartElement = document.getElementById('macd-chart');
     
@@ -1289,155 +1439,6 @@ function renderMacdChart(data) {
     }
     
     currentMacdChart = Plotly.newPlot('macd-chart', traces, layout, config);
-}
-
-function renderTrendStrengthChart(data) {
-    const chartElement = document.getElementById('trend-strength-chart');
-    
-    if (!data.indicators || !data.data || !data.indicators.trend_strength) {
-        chartElement.innerHTML = `
-            <div class="alert alert-warning text-center">
-                <p class="mb-0">No hay datos de Fuerza de Tendencia disponibles</p>
-            </div>
-        `;
-        return;
-    }
-
-    const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
-    const trendStrength = data.indicators.trend_strength || [];
-    const colors = data.indicators.colors || [];
-    const noTradeZones = data.indicators.no_trade_zones || [];
-    const highZoneThreshold = data.indicators.high_zone_threshold || 5;
-    
-    // Crear barras con colores individuales
-    const traces = [{
-        x: dates,
-        y: trendStrength,
-        type: 'bar',
-        name: 'Fuerza de Tendencia',
-        marker: {
-            color: colors,
-            line: {
-                color: 'rgba(255,255,255,0.3)',
-                width: 0.5
-            }
-        }
-    }];
-    
-    // Añadir líneas de referencia
-    traces.push({
-        x: [dates[0], dates[dates.length - 1]],
-        y: [highZoneThreshold, highZoneThreshold],
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Umbral Alto',
-        line: {
-            color: 'orange',
-            width: 2,
-            dash: 'dash'
-        }
-    });
-    
-    traces.push({
-        x: [dates[0], dates[dates.length - 1]],
-        y: [-highZoneThreshold, -highZoneThreshold],
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Umbral Bajo',
-        line: {
-            color: 'orange',
-            width: 2,
-            dash: 'dash'
-        },
-        showlegend: false
-    });
-    
-    // Añadir marcadores para zonas de no operar
-    const noTradeDates = [];
-    const noTradeValues = [];
-    
-    dates.forEach((date, i) => {
-        if (noTradeZones[i]) {
-            noTradeDates.push(date);
-            noTradeValues.push(trendStrength[i] || 0);
-        }
-    });
-    
-    if (noTradeDates.length > 0) {
-        traces.push({
-            x: noTradeDates,
-            y: noTradeValues,
-            type: 'scatter',
-            mode: 'markers',
-            name: 'Zona NO OPERAR',
-            marker: {
-                color: 'red',
-                size: 12,
-                symbol: 'x',
-                line: {
-                    color: 'white',
-                    width: 2
-                }
-            }
-        });
-    }
-    
-    const layout = {
-        title: {
-            text: 'Fuerza de Tendencia Maverick - Ancho Bandas Bollinger %',
-            font: {color: '#ffffff', size: 14}
-        },
-        xaxis: {
-            title: 'Fecha/Hora',
-            type: 'date',
-            gridcolor: '#444',
-            zerolinecolor: '#444'
-        },
-        yaxis: {
-            title: 'Fuerza de Tendencia %',
-            gridcolor: '#444',
-            zerolinecolor: '#444'
-        },
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        font: {color: '#ffffff'},
-        showlegend: true,
-        legend: {
-            x: 0,
-            y: 1.1,
-            orientation: 'h',
-            font: {color: '#ffffff'},
-            bgcolor: 'rgba(0,0,0,0)'
-        },
-        margin: {t: 60, r: 50, b: 50, l: 50},
-        annotations: [
-            {
-                x: 0.02,
-                y: 0.98,
-                xref: 'paper',
-                yref: 'paper',
-                text: '🟢 Verde: Fuerza creciente | 🔴 Rojo: Fuerza decreciente',
-                showarrow: false,
-                font: {color: 'white', size: 10},
-                bgcolor: 'rgba(0,0,0,0.7)',
-                bordercolor: 'rgba(255,255,255,0.5)',
-                borderwidth: 1,
-                borderpad: 4
-            }
-        ]
-    };
-    
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false
-    };
-    
-    if (currentTrendStrengthChart) {
-        Plotly.purge('trend-strength-chart');
-    }
-    
-    currentTrendStrengthChart = Plotly.newPlot('trend-strength-chart', traces, layout, config);
 }
 
 function updateMarketSummary(data) {
@@ -1589,7 +1590,7 @@ function renderScatterChartImproved(scatterData) {
         return;
     }
     
-    // MEJORA: Calcular valores para colores basados en señal real
+    // Calcular valores para colores basados en señal real
     const traces = [{
         x: scatterData.map(d => d.x),
         y: scatterData.map(d => d.y),
@@ -1600,7 +1601,7 @@ function renderScatterChartImproved(scatterData) {
         marker: {
             size: scatterData.map(d => 8 + (d.signal_score / 15)), // Tamaño basado en score
             color: scatterData.map(d => {
-                // MEJORA: Color basado en señal real y categoría de riesgo
+                // Color basado en señal real y categoría de riesgo
                 if (d.signal === 'LONG') {
                     return d.risk_category === 'bajo' ? '#00C853' : 
                            d.risk_category === 'medio' ? '#FFC107' : 
@@ -1619,7 +1620,7 @@ function renderScatterChartImproved(scatterData) {
                 width: 1
             },
             symbol: scatterData.map(d => {
-                // MEJORA: Símbolos diferentes por categoría de riesgo
+                // Símbolos diferentes por categoría de riesgo
                 if (d.risk_category === 'bajo') return 'circle';
                 if (d.risk_category === 'medio') return 'square';
                 if (d.risk_category === 'alto') return 'diamond';
