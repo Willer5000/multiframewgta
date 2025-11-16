@@ -88,7 +88,6 @@
                                 <option value="8h">8 Horas</option>
                                 <option value="12h">12 Horas</option>
                                 <option value="1D">1 Día</option>
-                                <option value="3D">3 Días</option>
                                 <option value="1W">1 Semana</option>
                             </select>
                         </div>
@@ -227,16 +226,6 @@
                     </div>
                 </div>
 
-                <!-- Gráfico de Ballenas -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="whale-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
                 <!-- Gráfico ADX + DMI -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
@@ -244,36 +233,6 @@
                     </div>
                     <div class="card-body">
                         <div id="adx-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Gráfico RSI Tradicional -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">RSI Tradicional con Divergencias</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="rsi-traditional-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Gráfico RSI Maverick -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">RSI Modificado Maverick (%B)</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="rsi-maverick-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Gráfico MACD -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">MACD con Histograma</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="macd-chart" style="height: 300px;"></div>
                     </div>
                 </div>
 
@@ -295,6 +254,46 @@
                                 <strong>❌ X ROJO:</strong> Zona de NO OPERAR
                             </small>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico RSI Maverick -->
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">RSI Modificado Maverick (%B)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="rsi-maverick-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- Gráfico RSI Tradicional -->
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">RSI Tradicional con Divergencias</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="rsi-traditional-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- Gráfico MACD -->
+                <div class="card bg-dark border-secondary mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">MACD con Histograma</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="macd-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Ballenas (oculto por defecto) -->
+                <div class="card bg-dark border-secondary mb-4 d-none">
+                    <div class="card-header">
+                        <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="whale-chart" style="height: 300px;"></div>
                     </div>
                 </div>
             </div>
