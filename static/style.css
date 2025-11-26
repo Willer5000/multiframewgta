@@ -758,3 +758,245 @@ body {
     background: linear-gradient(135deg, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.05));
     border: 1px solid rgba(108, 117, 125, 0.3);
 }
+
+/* Estilos específicos para el nuevo indicador de volumen */
+.volume-anomaly-indicator {
+    background: linear-gradient(135deg, rgba(13, 202, 240, 0.1), rgba(13, 202, 240, 0.05));
+    border: 1px solid rgba(13, 202, 240, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+}
+
+.volume-cluster-indicator {
+    background: linear-gradient(135deg, rgba(111, 66, 193, 0.1), rgba(111, 66, 193, 0.05));
+    border: 1px solid rgba(111, 66, 193, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+}
+
+/* Efectos de hover para filas de tabla */
+.hover-row:hover {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.05)) !important;
+    cursor: pointer;
+    transform: translateX(2px);
+    transition: all 0.2s ease;
+}
+
+/* Gradientes para tarjetas de categoría */
+.card-border-success {
+    border-left: 4px solid var(--bs-success) !important;
+}
+
+.card-border-warning {
+    border-left: 4px solid var(--bs-warning) !important;
+}
+
+.card-border-danger {
+    border-left: 4px solid var(--bs-danger) !important;
+}
+
+.card-border-info {
+    border-left: 4px solid var(--bs-info) !important;
+}
+
+/* Animaciones para alertas importantes */
+@keyframes highlight {
+    0% { background-color: rgba(255, 193, 7, 0.1); }
+    50% { background-color: rgba(255, 193, 7, 0.3); }
+    100% { background-color: rgba(255, 193, 7, 0.1); }
+}
+
+.highlight-alert {
+    animation: highlight 2s infinite;
+}
+
+/* Mejoras para tooltips personalizados */
+.custom-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.custom-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: var(--bs-dark);
+    color: var(--bs-body-color);
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border: 1px solid var(--bs-border-color);
+    font-size: 0.8rem;
+}
+
+.custom-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Estilos para el modal de detalles de señal */
+.signal-details-modal .modal-content {
+    background: linear-gradient(135deg, var(--bs-dark), var(--bs-darker));
+}
+
+.signal-details-modal .modal-header {
+    border-bottom: 2px solid var(--bs-primary);
+}
+
+/* Efectos de transición para carga suave */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mejoras para botones de acción */
+.btn-action {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-action:hover::before {
+    left: 100%;
+}
+
+/* Estilos para gráficos responsivos */
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .chart-container {
+        height: 300px;
+    }
+}
+
+@media (max-width: 576px) {
+    .chart-container {
+        height: 250px;
+    }
+}
+
+/* Efectos de sombra mejorados */
+.shadow-custom {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+.shadow-custom-lg {
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Gradientes de fondo para secciones importantes */
+.gradient-bg {
+    background: linear-gradient(135deg, var(--bs-darker), var(--bs-dark)) !important;
+}
+
+.gradient-bg-primary {
+    background: linear-gradient(135deg, var(--bs-primary), #0a58ca) !important;
+}
+
+.gradient-bg-success {
+    background: linear-gradient(135deg, var(--bs-success), #146c43) !important;
+}
+
+.gradient-bg-danger {
+    background: linear-gradient(135deg, var(--bs-danger), #b02a37) !important;
+}
+
+/* Estilos para el footer personalizado */
+.footer-custom {
+    background: linear-gradient(135deg, var(--bs-darker), #000000);
+    border-top: 1px solid var(--bs-border-color);
+    padding: 2rem 0;
+    margin-top: 3rem;
+}
+
+/* Efectos de brillo para elementos interactivos */
+.glow-on-hover {
+    transition: all 0.3s ease;
+}
+
+.glow-on-hover:hover {
+    box-shadow: 0 0 15px rgba(13, 110, 253, 0.5);
+}
+
+/* Estilos para el sistema de notificaciones */
+.notification-system {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1060;
+    max-width: 350px;
+}
+
+.notification {
+    background: var(--bs-dark);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Estilos para el modo de impresión mejorado */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-full-width {
+        width: 100% !important;
+    }
+    
+    .card {
+        break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #000 !important;
+    }
+    
+    .table {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .table-dark {
+        --bs-table-bg: white !important;
+        --bs-table-color: black !important;
+    }
+}
