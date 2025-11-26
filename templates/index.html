@@ -164,6 +164,10 @@
                                 <input class="form-check-input indicator-control" type="checkbox" id="show-bollinger">
                                 <label class="form-check-label" for="show-bollinger">Bandas Bollinger</label>
                             </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input indicator-control" type="checkbox" id="show-volume">
+                                <label class="form-check-label" for="show-volume">Indicador Volumen</label>
+                            </div>
                         </div>
 
                         <button class="btn btn-primary w-100" onclick="updateCharts()">
@@ -294,6 +298,28 @@
                     </div>
                     <div class="card-body">
                         <div id="macd-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- NUEVO: Gráfico de Volumen y Anomalías -->
+                <div class="card bg-dark border-info mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Indicador de Volumen con Anomalías y Clusters
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="volume-chart" style="height: 300px;"></div>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                <strong>📊 Volumen:</strong> Barras grises | 
+                                <strong>📈 EMA Volumen:</strong> Línea amarilla |
+                                <strong>🔴 Anomalías:</strong> Puntos rojos (Volumen > 2σ) |
+                                <strong>🟣 Clusters:</strong> Múltiples anomalías consecutivas
+                            </small>
+                        </div>
                     </div>
                 </div>
             </div>
