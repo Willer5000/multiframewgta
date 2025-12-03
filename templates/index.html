@@ -40,7 +40,6 @@
                 <i class="fas fa-chart-network me-2"></i>
                 MULTI-TIMEFRAME CRYPTO WGTA PRO
             </a>
-            <!-- BOTÓN MANUAL AÑADIDO AQUÍ -->
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="/manual">
                     <i class="fas fa-book me-1"></i>Manual
@@ -165,10 +164,6 @@
                                 <input class="form-check-input indicator-control" type="checkbox" id="show-bollinger">
                                 <label class="form-check-label" for="show-bollinger">Bandas Bollinger</label>
                             </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input indicator-control" type="checkbox" id="show-volume">
-                                <label class="form-check-label" for="show-volume">Indicador Volumen</label>
-                            </div>
                         </div>
 
                         <button class="btn btn-primary w-100" onclick="updateCharts()">
@@ -190,6 +185,15 @@
                             <h6>Willer Gianni Torrico Arispe</h6>
                             <p class="small text-muted">Especialista en Análisis Multi-Temporalidad</p>
                             <p class="small text-muted">© 2025 MULTI-TIMEFRAME WGTA PRO</p>
+                            <a href="https://github.com/Willer5000" target="_blank" class="btn btn-outline-light btn-sm">
+                                <i class="fab fa-github me-1"></i>GitHub
+                            </a>
+                        </div>
+                        <div class="mt-3">
+                            <p class="small">
+                                <strong>Experiencia:</strong> 10+ años en análisis de datos y trading algorítmico.
+                                Certificado IBM Data Scientist con especialización en análisis multi-temporalidad.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -222,7 +226,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico ADX + DMI -->
+                <!-- ADX con DMI (+DI y -DI) -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">ADX con DMI (+DI y -DI)</h5>
@@ -232,7 +236,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico de Volumen con Anomalías -->
+                <!-- Indicador de Volumen con Anomalías y Clusters -->
                 <div class="card bg-dark border-info mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -245,15 +249,16 @@
                         <div class="mt-2">
                             <small class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Volumen Anómalo de COMPRA | 
-                                <strong>🔴 ROJO:</strong> Volumen Anómalo de VENTA |
-                                <strong>🟣 CLUSTERS:</strong> Múltiples anomalías consecutivas
+                                <strong>🟢 VERDE:</strong> Volumen Compra | 
+                                <strong>🔴 ROJO:</strong> Volumen Venta |
+                                <strong>🔴 PUNTOS ROJOS:</strong> Anomalías |
+                                <strong>🟣 CUADRADOS PÚRPURA:</strong> Clusters
                             </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Gráfico Fuerza de Tendencia Maverick -->
+                <!-- Fuerza de Tendencia Maverick -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -274,7 +279,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico de Ballenas -->
+                <!-- Indicador Ballenas Compradoras/Vendedoras -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
@@ -284,7 +289,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico RSI Maverick -->
+                <!-- RSI Modificado Maverick (%B) -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">RSI Modificado Maverick (%B)</h5>
@@ -294,7 +299,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico RSI Tradicional -->
+                <!-- RSI Tradicional con Divergencias -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">RSI Tradicional con Divergencias</h5>
@@ -304,7 +309,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico MACD -->
+                <!-- MACD con Histograma -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">MACD con Histograma</h5>
@@ -365,13 +370,13 @@
                     </div>
                 </div>
 
-                <!-- Alertas Volumen Anómalo -->
+                <!-- Alertas de Volumen Anómalo -->
                 <div class="card bg-dark border-success mb-4">
                     <div class="card-header bg-success bg-opacity-25">
                         <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Alertas Volumen Anómalo</h5>
                     </div>
                     <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                        <div id="volume-anomaly-alerts">
+                        <div id="volume-alerts">
                             <div class="text-center py-2">
                                 <div class="spinner-border spinner-border-sm text-success" role="status">
                                     <span class="visually-hidden">Cargando...</span>
@@ -460,6 +465,7 @@
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     
     <script>
+        // Función para actualizar el reloj de Bolivia
         function updateBoliviaClock() {
             fetch('/api/bolivia_time')
                 .then(response => response.json())
@@ -475,7 +481,8 @@
                 });
         }
 
-        function downloadReport() {
+        // Función para descargar reporte estratégico
+        function downloadStrategicReport() {
             const symbol = document.getElementById('selected-crypto').textContent;
             const interval = document.getElementById('interval-select').value;
             const leverage = document.getElementById('leverage').value;
@@ -484,8 +491,10 @@
             window.open(url, '_blank');
         }
 
+        // Actualizar el reloj cada segundo
         setInterval(updateBoliviaClock, 1000);
         
+        // Inicializar el reloj al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             updateBoliviaClock();
         });
