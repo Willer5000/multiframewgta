@@ -2324,6 +2324,12 @@ def get_bolivia_time():
         'timezone': 'America/La_Paz'
     })
 
+
+# Añadir esta ruta si no existe (actual)
+@app.route('/manual')
+def manual():
+    return render_template('manual.html')
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({'error': 'Endpoint no encontrado'}), 404
