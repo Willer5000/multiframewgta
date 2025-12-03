@@ -1665,7 +1665,8 @@ class TradingIndicator:
                             'support': signal_data['support'],
                             'resistance': signal_data['resistance'],
                             'ma200_condition': signal_data.get('ma200_condition', 'below'),
-                            'multi_timeframe_ok': signal_data.get('multi_timeframe_ok', False)
+                            'multi_timeframe_ok': signal_data.get('multi_timeframe_ok', False),
+                            'signal_data': signal_data  # Agregar datos completos para gráficos
                         }
                         
                         alert_key = f"{symbol}_{interval}_{signal_data['signal']}"
@@ -1847,18 +1848,183 @@ def generate_telegram_image(alert_data, alert_type='entry'):
         return None
 
 def generate_entry_telegram_image(alert_data):
-    """Generar imagen para alertas principales"""
+    """Generar imagen para alertas principales con 8 gráficos de indicadores"""
     try:
-        fig = plt.figure(figsize=(10, 12))
+        # Obtener datos completos de la señal
+        if 'signal_data' in alert_data:
+            signal_data = alert_data['signal_data']
+        else:
+            signal_data = indicator.generate_signals_improved(
+                alert_data['symbol'], 
+                alert_data['interval']
+            )
         
-        # Título
-        plt.suptitle(f"{alert_data['symbol']} - {alert_data['interval']}", fontsize=14, fontweight='bold')
+        if not signal_data or 'data' not in signal_data or not signal_data['data']:
+            return None
         
-        # Información de la señal
+        # Crear figura con 9 subgráficos (8 indicadores + 1 info)
+        fig = plt.figure(figsize=(14, 18))
+        fig.patch.set_facecolor('white')
+        
+        # Obtener datos para gráficos
+        df_data = signal_data['data']
+        dates = [pd.to_datetime(d['timestamp']) for d in df_data]
+        close_prices = [d['close'] for d in df_data]
+        open_prices = [d['open'] for d in df_data]
+        high_prices = [d['high'] for d in df_data]
+        low_prices = [d['low'] for d in df_data]
+        volumes = [d['volume'] for d in df_data]
+        
+        # 1. Gráfico de Velas Japonesas con Bandas de Bollinger
+        ax1 = plt.subplot(9, 1, 1)
+        
+        # Dibujar velas
+        for i in range(len(dates)):
+            color = 'green' if close_prices[i] >= open_prices[i] else 'red'
+            ax1.plot([dates[i], dates[i]], [low_prices[i], high_prices[i]], 
+                    color='black', linewidth=0.5)
+            ax1.plot([dates[i], dates[i]], [open_prices[i], close_prices[i]], 
+                    color=color, linewidth=2)
+        
+        # Bandas de Bollinger (transparentes)
+        if 'indicators' in signal_data and 'bb_upper' in signal_data['indicators']:
+            bb_upper = signal_data['indicators']['bb_upper']
+            bb_lower = signal_data['indicators']['bb_lower']
+            ax1.plot(dates[-len(bb_upper):], bb_upper, 'blue', alpha=0.3, linewidth=1)
+            ax1.plot(dates[-len(bb_lower):], bb_lower, 'blue', alpha=0.3, linewidth=1)
+            ax1.fill_between(dates[-len(bb_upper):], bb_upper, bb_lower, alpha=0.1, color='blue')
+        
+        ax1.set_title(f'{alert_data["symbol"]} - {alert_data["interval"]} - Señal {alert_data["signal"]}', 
+                     fontsize=12, fontweight='bold')
+        ax1.set_ylabel('Precio')
+        ax1.grid(True, alpha=0.3)
+        
+        # 2. ADX con DMI
+        ax2 = plt.subplot(9, 1, 2, sharex=ax1)
+        if 'indicators' in signal_data:
+            adx_data = signal_data['indicators']['adx']
+            plus_di_data = signal_data['indicators']['plus_di']
+            minus_di_data = signal_data['indicators']['minus_di']
+            
+            ax2.plot(dates[-len(adx_data):], adx_data, 'black', linewidth=1.5, label='ADX')
+            ax2.plot(dates[-len(plus_di_data):], plus_di_data, 'green', linewidth=1, label='+DI')
+            ax2.plot(dates[-len(minus_di_data):], minus_di_data, 'red', linewidth=1, label='-DI')
+            ax2.axhline(y=25, color='orange', linestyle='--', alpha=0.7)
+        
+        ax2.set_ylabel('ADX/DMI')
+        ax2.legend(loc='upper right', fontsize=8)
+        ax2.grid(True, alpha=0.3)
+        
+        # 3. Volumen con Anomalías y Clusters
+        ax3 = plt.subplot(9, 1, 3, sharex=ax1)
+        
+        # Barras de volumen
+        for i in range(len(dates)):
+            color = 'green' if close_prices[i] >= open_prices[i] else 'red'
+            ax3.bar(dates[i], volumes[i], color=color, alpha=0.7, width=0.8)
+        
+        # Anomalías de volumen
+        if 'indicators' in signal_data and 'volume_anomaly_buy' in signal_data['indicators']:
+            volume_buy = signal_data['indicators']['volume_anomaly_buy']
+            volume_sell = signal_data['indicators']['volume_anomaly_sell']
+            
+            for i, date in enumerate(dates[-len(volume_buy):]):
+                if volume_buy[i]:
+                    ax3.axvspan(date, date, alpha=0.3, color='green', ymin=0.8, ymax=1.0)
+                if volume_sell[i]:
+                    ax3.axvspan(date, date, alpha=0.3, color='red', ymin=0.8, ymax=1.0)
+        
+        ax3.set_ylabel('Volumen')
+        ax3.grid(True, alpha=0.3)
+        
+        # 4. Fuerza de Tendencia Maverick
+        ax4 = plt.subplot(9, 1, 4, sharex=ax1)
+        if 'indicators' in signal_data and 'trend_strength' in signal_data['indicators']:
+            trend_data = signal_data['indicators']['trend_strength']
+            colors = signal_data['indicators']['colors']
+            
+            for i, date in enumerate(dates[-len(trend_data):]):
+                color = colors[i] if i < len(colors) else 'gray'
+                ax4.bar(date, trend_data[i], color=color, alpha=0.7, width=0.8)
+        
+        ax4.set_ylabel('Fuerza Tendencia')
+        ax4.grid(True, alpha=0.3)
+        
+        # 5. Indicador de Ballenas (solo para 12h y 1D)
+        ax5 = plt.subplot(9, 1, 5, sharex=ax1)
+        if alert_data['interval'] in ['12h', '1D'] and 'indicators' in signal_data:
+            whale_pump = signal_data['indicators']['whale_pump']
+            whale_dump = signal_data['indicators']['whale_dump']
+            
+            ax5.bar(dates[-len(whale_pump):], whale_pump, color='green', alpha=0.7, 
+                   label='Ballenas Compra', width=0.8)
+            ax5.bar(dates[-len(whale_dump):], whale_dump, color='red', alpha=0.7, 
+                   label='Ballenas Venta', width=0.8)
+        else:
+            ax5.text(0.5, 0.5, 'Indicador Ballenas solo para 12H/1D', 
+                    ha='center', va='center', transform=ax5.transAxes)
+        
+        ax5.set_ylabel('Ballenas')
+        ax5.legend(loc='upper right', fontsize=8)
+        ax5.grid(True, alpha=0.3)
+        
+        # 6. RSI Maverick Modificado
+        ax6 = plt.subplot(9, 1, 6, sharex=ax1)
+        if 'indicators' in signal_data and 'rsi_maverick' in signal_data['indicators']:
+            rsi_mav = signal_data['indicators']['rsi_maverick']
+            ax6.plot(dates[-len(rsi_mav):], rsi_mav, 'purple', linewidth=1.5)
+            ax6.axhline(y=0.8, color='red', linestyle='--', alpha=0.5)
+            ax6.axhline(y=0.2, color='green', linestyle='--', alpha=0.5)
+            ax6.axhline(y=0.5, color='gray', linestyle='-', alpha=0.3)
+        
+        ax6.set_ylabel('RSI Maverick')
+        ax6.set_ylim(0, 1)
+        ax6.grid(True, alpha=0.3)
+        
+        # 7. RSI Tradicional con Divergencias
+        ax7 = plt.subplot(9, 1, 7, sharex=ax1)
+        if 'indicators' in signal_data and 'rsi_traditional' in signal_data['indicators']:
+            rsi_trad = signal_data['indicators']['rsi_traditional']
+            ax7.plot(dates[-len(rsi_trad):], rsi_trad, 'cyan', linewidth=1.5)
+            ax7.axhline(y=70, color='red', linestyle='--', alpha=0.5)
+            ax7.axhline(y=30, color='green', linestyle='--', alpha=0.5)
+            ax7.axhline(y=50, color='gray', linestyle='-', alpha=0.3)
+        
+        ax7.set_ylabel('RSI Tradicional')
+        ax7.set_ylim(0, 100)
+        ax7.grid(True, alpha=0.3)
+        
+        # 8. MACD con Histograma
+        ax8 = plt.subplot(9, 1, 8, sharex=ax1)
+        if 'indicators' in signal_data and 'macd' in signal_data['indicators']:
+            macd_line = signal_data['indicators']['macd']
+            macd_signal = signal_data['indicators']['macd_signal']
+            macd_hist = signal_data['indicators']['macd_histogram']
+            
+            ax8.plot(dates[-len(macd_line):], macd_line, 'blue', linewidth=1, label='MACD')
+            ax8.plot(dates[-len(macd_signal):], macd_signal, 'red', linewidth=1, label='Señal')
+            
+            # Histograma con colores
+            for i, date in enumerate(dates[-len(macd_hist):]):
+                color = 'green' if macd_hist[i] >= 0 else 'red'
+                ax8.bar(date, macd_hist[i], color=color, alpha=0.6, width=0.8)
+            
+            ax8.axhline(y=0, color='black', linestyle='-', alpha=0.5)
+        
+        ax8.set_ylabel('MACD')
+        ax8.legend(loc='upper right', fontsize=8)
+        ax8.grid(True, alpha=0.3)
+        
+        # 9. Información de la Señal
+        ax9 = plt.subplot(9, 1, 9)
+        ax9.axis('off')
+        
         info_text = f"""
 SEÑAL: {alert_data['signal']}
 SCORE: {alert_data['score']:.1f}%
+CRYPTO: {alert_data['symbol']}
 RIESGO: {alert_data['risk_category']}
+TEMPORALIDAD: {alert_data['interval']}
 
 PRECIO: ${alert_data['current_price']:.6f}
 ENTRADA: ${alert_data['entry']:.6f}
@@ -1870,16 +2036,15 @@ MA200: {'ENCIMA' if alert_data.get('ma200_condition') == 'above' else 'DEBAJO'}
 
 CONDICIONES:
 {chr(10).join(['• ' + cond for cond in alert_data.get('fulfilled_conditions', [])][:5])}
-        """
+"""
         
-        plt.figtext(0.5, 0.95, info_text, ha='center', va='top', fontsize=10,
-                   bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+        ax9.text(0.05, 0.95, info_text, transform=ax9.transAxes, fontsize=9,
+                verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
         
-        plt.axis('off')
         plt.tight_layout()
         
         img_buffer = BytesIO()
-        plt.savefig(img_buffer, format='png', dpi=100, bbox_inches='tight')
+        plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight', facecolor='white')
         img_buffer.seek(0)
         plt.close()
         
@@ -1887,25 +2052,135 @@ CONDICIONES:
         
     except Exception as e:
         print(f"Error generando imagen de entrada: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 def generate_volume_telegram_image(alert_data):
-    """Generar imagen para alertas de volumen"""
+    """Generar imagen para alertas de volumen anómalo con 4 gráficos"""
     try:
-        fig = plt.figure(figsize=(10, 8))
+        # Obtener datos para la temporalidad actual
+        df_current = indicator.get_kucoin_data(alert_data['symbol'], alert_data['interval'], 50)
         
-        # Título
-        plt.suptitle(f"{alert_data['symbol']} - Volumen Anómalo", fontsize=14, fontweight='bold')
+        # Obtener datos para la temporalidad menor
+        df_menor = indicator.get_kucoin_data(alert_data['symbol'], alert_data['menor_interval'], 50)
         
-        # Información de la señal
+        if df_current is None or df_menor is None:
+            return None
+        
+        # Crear figura con 5 subgráficos (4 indicadores + 1 info)
+        fig = plt.figure(figsize=(14, 12))
+        fig.patch.set_facecolor('white')
+        
+        # Datos para gráficos principales
+        dates_current = df_current['timestamp'].tail(30).tolist()
+        close_current = df_current['close'].tail(30).values
+        open_current = df_current['open'].tail(30).values
+        high_current = df_current['high'].tail(30).values
+        low_current = df_current['low'].tail(30).values
+        
+        dates_menor = df_menor['timestamp'].tail(50).tolist()
+        close_menor = df_menor['close'].tail(50).values
+        volume_menor = df_menor['volume'].tail(50).values
+        
+        # 1. Gráfico de Velas Japonesas con Bandas de Bollinger (Temporalidad Actual)
+        ax1 = plt.subplot(5, 1, 1)
+        
+        # Dibujar velas
+        for i in range(len(dates_current)):
+            color = 'green' if close_current[i] >= open_current[i] else 'red'
+            ax1.plot([dates_current[i], dates_current[i]], [low_current[i], high_current[i]], 
+                    color='black', linewidth=0.5)
+            ax1.plot([dates_current[i], dates_current[i]], [open_current[i], close_current[i]], 
+                    color=color, linewidth=2)
+        
+        # Bandas de Bollinger
+        bb_upper, bb_middle, bb_lower = indicator.calculate_bollinger_bands(close_current, 20, 2)
+        if len(bb_upper) > 0:
+            ax1.plot(dates_current[-len(bb_upper):], bb_upper, 'blue', alpha=0.3, linewidth=1)
+            ax1.plot(dates_current[-len(bb_lower):], bb_lower, 'blue', alpha=0.3, linewidth=1)
+            ax1.fill_between(dates_current[-len(bb_upper):], bb_upper, bb_lower, alpha=0.1, color='blue')
+        
+        ax1.set_title(f'{alert_data["symbol"]} - {alert_data["interval"]} - Volumen Anómalo {alert_data["signal"]}', 
+                     fontsize=12, fontweight='bold')
+        ax1.set_ylabel('Precio')
+        ax1.grid(True, alpha=0.3)
+        
+        # 2. ADX con DMI (Temporalidad Actual)
+        ax2 = plt.subplot(5, 1, 2, sharex=ax1)
+        
+        # Calcular ADX y DMI
+        if len(close_current) >= 14:
+            adx, plus_di, minus_di = indicator.calculate_adx(high_current, low_current, close_current, 14)
+            if len(adx) > 0:
+                ax2.plot(dates_current[-len(adx):], adx, 'black', linewidth=1.5, label='ADX')
+                ax2.plot(dates_current[-len(plus_di):], plus_di, 'green', linewidth=1, label='+DI')
+                ax2.plot(dates_current[-len(minus_di):], minus_di, 'red', linewidth=1, label='-DI')
+                ax2.axhline(y=25, color='orange', linestyle='--', alpha=0.7)
+        
+        ax2.set_ylabel('ADX/DMI')
+        ax2.legend(loc='upper right', fontsize=8)
+        ax2.grid(True, alpha=0.3)
+        
+        # 3. Volumen con Anomalías y Clusters (Temporalidad Menor)
+        ax3 = plt.subplot(5, 1, 3)
+        
+        # Calcular anomalías de volumen
+        volume_data = indicator.calculate_volume_anomaly_improved(close_menor, volume_menor)
+        
+        # Barras de volumen
+        bar_colors = []
+        for i in range(len(dates_menor)):
+            if i > 0:
+                color = 'green' if close_menor[i] >= close_menor[i-1] else 'red'
+            else:
+                color = 'gray'
+            bar_colors.append(color)
+            ax3.bar(dates_menor[i], volume_menor[i], color=color, alpha=0.7, width=0.8)
+        
+        # Marcar anomalías
+        if 'volume_anomaly_buy' in volume_data and 'volume_anomaly_sell' in volume_data:
+            anomaly_buy = volume_data['volume_anomaly_buy']
+            anomaly_sell = volume_data['volume_anomaly_sell']
+            
+            for i, date in enumerate(dates_menor[-len(anomaly_buy):]):
+                if anomaly_buy[i]:
+                    ax3.axvspan(date, date, alpha=0.3, color='green', ymin=0.8, ymax=1.0)
+                if anomaly_sell[i]:
+                    ax3.axvspan(date, date, alpha=0.3, color='red', ymin=0.8, ymax=1.0)
+        
+        ax3.set_title(f'Volumen - Temporalidad Menor ({alert_data["menor_interval"]})', fontsize=10)
+        ax3.set_ylabel('Volumen')
+        ax3.grid(True, alpha=0.3)
+        
+        # 4. Fuerza de Tendencia Maverick (Temporalidad Actual)
+        ax4 = plt.subplot(5, 1, 4, sharex=ax1)
+        
+        trend_data = indicator.calculate_trend_strength_maverick(close_current)
+        if 'trend_strength' in trend_data:
+            trend_strength = trend_data['trend_strength']
+            colors = trend_data['colors']
+            
+            for i, date in enumerate(dates_current[-len(trend_strength):]):
+                color = colors[i] if i < len(colors) else 'gray'
+                ax4.bar(date, trend_strength[i], color=color, alpha=0.7, width=0.8)
+        
+        ax4.set_ylabel('Fuerza Tendencia')
+        ax4.grid(True, alpha=0.3)
+        
+        # 5. Información de la Señal de Volumen
+        ax5 = plt.subplot(5, 1, 5)
+        ax5.axis('off')
+        
         anomaly_type = alert_data.get('anomaly_type', 'compra')
         cluster_text = " (CLUSTER)" if alert_data.get('cluster') else ""
         
         info_text = f"""
 SEÑAL: {alert_data['signal']}
-CRYPTO: {alert_data['symbol']} ({alert_data['risk_category']})
+CRYPTO: {alert_data['symbol']}
+RIESGO: {alert_data['risk_category']}
 
-VOLUMEN: Anomalías de {anomaly_type}{cluster_text}
+ALERTA: Volumen Anómalo de {anomaly_type}{cluster_text}
 TEMPORALIDAD: {alert_data['interval']}
 TEMPORALIDAD MENOR: {alert_data['menor_interval']}
 
@@ -1915,14 +2190,13 @@ CONDICIONES FTMaverick y MF:
 RECOMENDACIÓN: Revisar {alert_data['signal']}
         """
         
-        plt.figtext(0.5, 0.95, info_text, ha='center', va='top', fontsize=10,
-                   bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
+        ax5.text(0.05, 0.95, info_text, transform=ax5.transAxes, fontsize=9,
+                verticalalignment='top', bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.8))
         
-        plt.axis('off')
         plt.tight_layout()
         
         img_buffer = BytesIO()
-        plt.savefig(img_buffer, format='png', dpi=100, bbox_inches='tight')
+        plt.savefig(img_buffer, format='png', dpi=150, bbox_inches='tight', facecolor='white')
         img_buffer.seek(0)
         plt.close()
         
@@ -1930,6 +2204,8 @@ RECOMENDACIÓN: Revisar {alert_data['signal']}
         
     except Exception as e:
         print(f"Error generando imagen de volumen: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 # Iniciar verificador de alertas en segundo plano
