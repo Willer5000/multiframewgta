@@ -8,6 +8,7 @@ let currentRsiMaverickChart = null;
 let currentMacdChart = null;
 let currentTrendStrengthChart = null;
 let currentVolumeChart = null;
+let currentVolumeAnomalyChart = null;
 let currentSymbol = 'BTC-USDT';
 let currentData = null;
 let allCryptos = [];
@@ -113,7 +114,8 @@ function updateChartIndicators() {
             showMA21: showMA21,
             showMA50: showMA50,
             showMA200: showMA200,
-            showBB: showBB
+            showBB: showBB,
+            showVolume: false // El volumen tiene su propio gráfico
         });
     }
 }
@@ -305,11 +307,11 @@ function updateCharts() {
     // Actualizar gráfico de dispersión
     updateScatterChartImproved(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
     
+    // Actualizar gráfico de volumen anómalo
+    updateVolumeAnomalyChart();
+    
     // Actualizar señales múltiples
     updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
-    
-    // Actualizar alertas de volumen
-    updateVolumeAnomalySignals(interval);
 }
 
 function updateMarketIndicators() {
@@ -339,7 +341,7 @@ function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsi
             renderRsiMaverickChart(data);
             renderRsiTraditionalChart(data);
             renderMacdChart(data);
-            renderVolumeChartImproved(data);
+            renderVolumeChart(data);
             updateMarketSummary(data);
             updateSignalAnalysis(data);
         })
@@ -357,6 +359,7 @@ function showSampleData(symbol) {
         current_price: 50000,
         signal: 'NEUTRAL',
         signal_score: 0,
+        winrate: 65.0,
         entry: 50000,
         stop_loss: 48000,
         take_profit: [52000],
@@ -399,7 +402,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
     const highs = data.data.map(d => parseFloat(d.high));
     const lows = data.data.map(d => parseFloat(d.low));
     const closes = data.data.map(d => parseFloat(d.close));
-    const volumes = data.data.map(d => parseFloat(d.volume));
     
     // Traza de velas japonesas
     const candlestickTrace = {
@@ -416,33 +418,33 @@ function renderCandleChart(data, indicatorOptions = {}) {
     
     const traces = [candlestickTrace];
     
-    // Añadir líneas de soporte y resistencia (4 cada una)
-    if (data.supports && data.resistances) {
-        // Soportes
-        data.supports.slice(0, 4).forEach((support, index) => {
+    // Añadir líneas de soporte y resistencia (4 niveles)
+    if (data.supports && data.supports.length >= 4) {
+        for (let i = 0; i < 4; i++) {
             traces.push({
                 type: 'scatter',
                 x: [dates[0], dates[dates.length - 1]],
-                y: [support, support],
+                y: [data.supports[i], data.supports[i]],
                 mode: 'lines',
-                line: {color: 'rgba(0, 0, 255, 0.5)', dash: 'dash', width: 1},
-                name: `Soporte ${index + 1}`,
-                showlegend: index === 0
+                line: {color: 'blue', dash: 'dash', width: 1},
+                name: `S${i+1}`,
+                showlegend: i === 0
             });
-        });
-        
-        // Resistencias
-        data.resistances.slice(0, 4).forEach((resistance, index) => {
+        }
+    }
+    
+    if (data.resistances && data.resistances.length >= 4) {
+        for (let i = 0; i < 4; i++) {
             traces.push({
                 type: 'scatter',
                 x: [dates[0], dates[dates.length - 1]],
-                y: [resistance, resistance],
+                y: [data.resistances[i], data.resistances[i]],
                 mode: 'lines',
-                line: {color: 'rgba(255, 0, 0, 0.5)', dash: 'dash', width: 1},
-                name: `Resistencia ${index + 1}`,
-                showlegend: index === 0
+                line: {color: 'red', dash: 'dash', width: 1},
+                name: `R${i+1}`,
+                showlegend: i === 0
             });
-        });
+        }
     }
 
     // Añadir niveles de entrada y take profits
@@ -464,11 +466,12 @@ function renderCandleChart(data, indicatorOptions = {}) {
                 y: [tp, tp],
                 mode: 'lines',
                 line: {color: '#00FF00', dash: 'dash', width: 1.5},
-                name: `TP${index + 1}`
+                name: `TP${index + 1}`,
+                showlegend: index === 0
             });
         });
         
-        // Stop loss
+        // Añadir stop loss
         traces.push({
             type: 'scatter',
             x: [dates[0], dates[dates.length - 1]],
@@ -486,7 +489,8 @@ function renderCandleChart(data, indicatorOptions = {}) {
             showMA21: false,
             showMA50: false,
             showMA200: false,
-            showBB: false
+            showBB: false,
+            showVolume: false
         };
         
         // Medias móviles
@@ -668,7 +672,7 @@ function renderAdxChartImproved(data) {
     const traces = [
         {
             x: dates,
-            y: adx.slice(-50),
+            y: adx,
             type: 'scatter',
             mode: 'lines',
             name: 'ADX',
@@ -676,7 +680,7 @@ function renderAdxChartImproved(data) {
         },
         {
             x: dates,
-            y: plusDi.slice(-50),
+            y: plusDi,
             type: 'scatter',
             mode: 'lines',
             name: '+DI',
@@ -684,23 +688,23 @@ function renderAdxChartImproved(data) {
         },
         {
             x: dates,
-            y: minusDi.slice(-50),
+            y: minusDi,
             type: 'scatter',
             mode: 'lines',
             name: '-DI',
             line: {color: '#FF1744', width: 1.5}
         },
         {
-            x: dates.filter((_, i) => diCrossBullish.slice(-50)[i]),
-            y: plusDi.slice(-50).filter((_, i) => diCrossBullish.slice(-50)[i]),
+            x: dates.filter((_, i) => diCrossBullish[i]),
+            y: plusDi.filter((_, i) => diCrossBullish[i]),
             type: 'scatter',
             mode: 'markers',
             name: 'Cruce Alcista',
             marker: {color: '#00FF00', size: 8, symbol: 'star'}
         },
         {
-            x: dates.filter((_, i) => diCrossBearish.slice(-50)[i]),
-            y: minusDi.slice(-50).filter((_, i) => diCrossBearish.slice(-50)[i]),
+            x: dates.filter((_, i) => diCrossBearish[i]),
+            y: minusDi.filter((_, i) => diCrossBearish[i]),
             type: 'scatter',
             mode: 'markers',
             name: 'Cruce Bajista',
@@ -764,9 +768,9 @@ function renderTrendStrengthChart(data) {
     }
 
     const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
-    const trendStrength = data.indicators.trend_strength.slice(-50) || [];
-    const colors = data.indicators.colors.slice(-50) || [];
-    const noTradeZones = data.indicators.no_trade_zones.slice(-50) || [];
+    const trendStrength = data.indicators.trend_strength || [];
+    const colors = data.indicators.colors || [];
+    const noTradeZones = data.indicators.no_trade_zones || [];
     const highZoneThreshold = data.indicators.high_zone_threshold || 5;
     
     // Crear barras con colores individuales
@@ -913,10 +917,10 @@ function renderWhaleChartImproved(data) {
     }
 
     const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
-    const whalePump = data.indicators.whale_pump.slice(-50) || [];
-    const whaleDump = data.indicators.whale_dump.slice(-50) || [];
-    const confirmedBuy = data.indicators.confirmed_buy.slice(-50) || [];
-    const confirmedSell = data.indicators.confirmed_sell.slice(-50) || [];
+    const whalePump = data.indicators.whale_pump || [];
+    const whaleDump = data.indicators.whale_dump || [];
+    const confirmedBuy = data.indicators.confirmed_buy || [];
+    const confirmedSell = data.indicators.confirmed_sell || [];
     
     const traces = [
         {
@@ -1009,9 +1013,9 @@ function renderRsiMaverickChart(data) {
     }
 
     const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
-    const rsiMaverick = data.indicators.rsi_maverick.slice(-50) || [];
-    const bullishDivergence = data.indicators.rsi_maverick_bullish_divergence.slice(-50) || [];
-    const bearishDivergence = data.indicators.rsi_maverick_bearish_divergence.slice(-50) || [];
+    const rsiMaverick = data.indicators.rsi_maverick || [];
+    const bullishDivergence = data.indicators.rsi_maverick_bullish_divergence || [];
+    const bearishDivergence = data.indicators.rsi_maverick_bearish_divergence || [];
     
     // Preparar datos para divergencias
     const bullishDates = [];
@@ -1180,9 +1184,9 @@ function renderRsiTraditionalChart(data) {
     }
 
     const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
-    const rsiTraditional = data.indicators.rsi_traditional.slice(-50) || [];
-    const bullishDivergence = data.indicators.rsi_bullish_divergence.slice(-50) || [];
-    const bearishDivergence = data.indicators.rsi_bearish_divergence.slice(-50) || [];
+    const rsiTraditional = data.indicators.rsi_traditional || [];
+    const bullishDivergence = data.indicators.rsi_bullish_divergence || [];
+    const bearishDivergence = data.indicators.rsi_bearish_divergence || [];
     
     // Preparar datos para divergencias
     const bullishDates = [];
@@ -1351,9 +1355,9 @@ function renderMacdChart(data) {
     }
 
     const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
-    const macd = data.indicators.macd.slice(-50) || [];
-    const macdSignal = data.indicators.macd_signal.slice(-50) || [];
-    const macdHistogram = data.indicators.macd_histogram.slice(-50) || [];
+    const macd = data.indicators.macd || [];
+    const macdSignal = data.indicators.macd_signal || [];
+    const macdHistogram = data.indicators.macd_histogram || [];
     
     // Colores para el histograma
     const histogramColors = macdHistogram.map(value => 
@@ -1429,7 +1433,7 @@ function renderMacdChart(data) {
     currentMacdChart = Plotly.newPlot('macd-chart', traces, layout, config);
 }
 
-function renderVolumeChartImproved(data) {
+function renderVolumeChart(data) {
     const chartElement = document.getElementById('volume-chart');
     
     if (!data.indicators || !data.data) {
@@ -1443,40 +1447,40 @@ function renderVolumeChartImproved(data) {
 
     const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
     const volumes = data.data.slice(-50).map(d => parseFloat(d.volume));
-    const volumeAnomaly = data.indicators.volume_anomaly.slice(-50) || [];
-    const volumeClusters = data.indicators.volume_clusters.slice(-50) || [];
-    const volumeRatio = data.indicators.volume_ratio.slice(-50) || [];
-    const volumeEma = data.indicators.volume_ema.slice(-50) || [];
-    const volumeColors = data.indicators.volume_colors.slice(-50) || [];
+    const volumeAnomaly = data.indicators.volume_anomaly || [];
+    const volumeClusters = data.indicators.volume_clusters || [];
+    const volumeRatio = data.indicators.volume_ratio || [];
+    const volumeEma = data.indicators.volume_ema || [];
     
-    // Crear barras de volumen con colores según compra/venta
-    const volumeBars = {
-        x: dates,
-        y: volumes,
-        type: 'bar',
-        name: 'Volumen',
-        marker: {
-            color: volumeColors,
-            line: {
-                color: 'rgba(255,255,255,0.3)',
-                width: 0.5
-            }
+    // Colores según compra/venta
+    const volumeColors = [];
+    for (let i = 0; i < dates.length; i++) {
+        if (i > 0) {
+            const close = data.data[data.data.length - 50 + i].close;
+            const open = data.data[data.data.length - 50 + i].open;
+            volumeColors.push(close >= open ? 'rgba(0, 200, 83, 0.7)' : 'rgba(255, 23, 68, 0.7)');
+        } else {
+            volumeColors.push('rgba(128, 128, 128, 0.7)');
         }
-    };
+    }
     
-    const traces = [volumeBars];
-    
-    // Añadir EMA de volumen
-    if (volumeEma.length > 0) {
-        traces.push({
+    const traces = [
+        {
+            x: dates,
+            y: volumes,
+            type: 'bar',
+            name: 'Volumen',
+            marker: {color: volumeColors}
+        },
+        {
             x: dates,
             y: volumeEma,
             type: 'scatter',
             mode: 'lines',
             name: 'EMA Volumen',
             line: {color: '#FFD700', width: 2}
-        });
-    }
+        }
+    ];
     
     // Añadir anomalías de volumen
     const anomalyDates = [];
@@ -1497,7 +1501,7 @@ function renderVolumeChartImproved(data) {
             mode: 'markers',
             name: 'Anomalías Volumen',
             marker: {
-                color: '#000000',
+                color: '#FF0000',
                 size: 10,
                 symbol: 'circle',
                 line: {color: 'white', width: 2}
@@ -1566,7 +1570,7 @@ function renderVolumeChartImproved(data) {
                 y: 0.98,
                 xref: 'paper',
                 yref: 'paper',
-                text: '🟢 Compra | 🔴 Venta | ⚫ Anomalías | 🟣 Clusters',
+                text: '🟢 Verde: Compra | 🔴 Rojo: Venta',
                 showarrow: false,
                 font: {color: 'white', size: 10},
                 bgcolor: 'rgba(0,0,0,0.7)',
@@ -1588,6 +1592,101 @@ function renderVolumeChartImproved(data) {
     }
     
     currentVolumeChart = Plotly.newPlot('volume-chart', traces, layout, config);
+}
+
+function renderVolumeAnomalyChart(data) {
+    const chartElement = document.getElementById('volume-anomaly-chart');
+    
+    if (!data || !data.alerts || data.alerts.length === 0) {
+        chartElement.innerHTML = `
+            <div class="alert alert-warning text-center">
+                <p class="mb-0">No hay alertas de volumen anómalo</p>
+                <small class="text-muted">Las alertas se actualizan cada 5 minutos</small>
+            </div>
+        `;
+        return;
+    }
+    
+    // Preparar datos para el gráfico
+    const symbols = data.alerts.map(d => d.symbol);
+    const volumes = data.alerts.map(d => d.volume_millions);
+    const directions = data.alerts.map(d => d.direction);
+    const percentChanges = data.alerts.map(d => d.percent_change);
+    
+    // Colores según dirección
+    const colors = directions.map((dir, i) => {
+        if (dir === 'COMPRA') {
+            return percentChanges[i] > 5 ? '#00C853' : '#4CAF50'; // Verde más intenso para cambios mayores
+        } else {
+            return percentChanges[i] < -5 ? '#FF1744' : '#F44336'; // Rojo más intenso para cambios mayores
+        }
+    });
+    
+    const traces = [{
+        x: symbols,
+        y: volumes,
+        type: 'bar',
+        marker: {
+            color: colors,
+            line: {
+                color: 'white',
+                width: 1
+            }
+        },
+        text: directions.map((dir, i) => 
+            `${dir}<br>Volumen: ${volumes[i].toFixed(1)}M<br>Cambio: ${percentChanges[i].toFixed(2)}%`
+        ),
+        hovertemplate: '%{text}<extra></extra>'
+    }];
+    
+    const layout = {
+        title: {
+            text: 'Volumen Anómalo de Compra/Venta (CoinMarketCap)',
+            font: {color: '#ffffff', size: 14}
+        },
+        xaxis: {
+            title: 'Criptomoneda',
+            gridcolor: '#444',
+            zerolinecolor: '#444'
+        },
+        yaxis: {
+            title: 'Volumen (Millones USDT)',
+            gridcolor: '#444',
+            zerolinecolor: '#444'
+        },
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        font: {color: '#ffffff'},
+        showlegend: false,
+        margin: {t: 60, r: 50, b: 100, l: 50},
+        annotations: [
+            {
+                x: 0.02,
+                y: 0.98,
+                xref: 'paper',
+                yref: 'paper',
+                text: '🟢 COMPRA: Volumen >3x promedio + precio sube<br>🔴 VENTA: Volumen >3x promedio + precio baja',
+                showarrow: false,
+                font: {color: 'white', size: 10},
+                bgcolor: 'rgba(0,0,0,0.7)',
+                bordercolor: 'rgba(255,255,255,0.5)',
+                borderwidth: 1,
+                borderpad: 4
+            }
+        ]
+    };
+    
+    const config = {
+        responsive: true,
+        displayModeBar: true,
+        displaylogo: false
+    };
+    
+    if (currentVolumeAnomalyChart) {
+        Plotly.purge('volume-anomaly-chart');
+    }
+    
+    currentVolumeAnomalyChart = Plotly.newPlot('volume-anomaly-chart', traces, layout, config);
 }
 
 function updateMarketSummary(data) {
@@ -1613,7 +1712,7 @@ function updateMarketSummary(data) {
                 </div>
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small">Precio:</span>
-                    <span class="fw-bold">$${formatPriceForDisplay(data.current_price)}</span>
+                    <span class="fw-bold">$${data.current_price.toFixed(6)}</span>
                 </div>
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <span class="text-muted small">Volumen:</span>
@@ -1666,20 +1765,21 @@ function updateSignalAnalysis(data) {
                 <i class="fas fa-${signalIcon} me-2"></i>
                 <strong>SEÑAL ${data.signal} CONFIRMADA</strong>
                 <div class="small mt-1">Score: ${data.signal_score.toFixed(1)}% | Condiciones: ${conditionsCount}</div>
+                <div class="small">Winrate: ${data.winrate.toFixed(1)}%</div>
             </div>
             
             <div class="mt-2">
                 <div class="d-flex justify-content-between small mb-1">
                     <span>Entrada:</span>
-                    <span class="fw-bold">$${formatPriceForDisplay(data.entry)}</span>
+                    <span class="fw-bold">$${data.entry.toFixed(6)}</span>
                 </div>
                 <div class="d-flex justify-content-between small mb-1">
                     <span>Stop Loss:</span>
-                    <span class="fw-bold text-danger">$${formatPriceForDisplay(data.stop_loss)}</span>
+                    <span class="fw-bold text-danger">$${data.stop_loss.toFixed(6)}</span>
                 </div>
                 <div class="d-flex justify-content-between small">
-                    <span>Take Profit:</span>
-                    <span class="fw-bold text-success">$${formatPriceForDisplay(data.take_profit[0])}</span>
+                    <span>Take Profit 1:</span>
+                    <span class="fw-bold text-success">$${data.take_profit[0].toFixed(6)}</span>
                 </div>
             </div>
             
@@ -1687,12 +1787,9 @@ function updateSignalAnalysis(data) {
                 <div class="mt-2">
                     <small class="text-muted d-block mb-1">Condiciones cumplidas:</small>
                     <div style="max-height: 100px; overflow-y: auto;">
-                        ${data.fulfilled_conditions.slice(0, 5).map(cond => `
+                        ${data.fulfilled_conditions.map(cond => `
                             <div class="small text-success mb-1">✓ ${cond}</div>
                         `).join('')}
-                        ${data.fulfilled_conditions.length > 5 ? `
-                            <div class="small text-muted">... y ${data.fulfilled_conditions.length - 5} más</div>
-                        ` : ''}
                     </div>
                 </div>
             ` : ''}
@@ -1875,6 +1972,24 @@ function renderScatterChartImproved(scatterData) {
     currentScatterChart = Plotly.newPlot('scatter-chart', traces, layout, config);
 }
 
+function updateVolumeAnomalyChart() {
+    const url = '/api/volume_anomaly_signals';
+    
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            renderVolumeAnomalyChart(data);
+        })
+        .catch(error => {
+            console.error('Error cargando alertas de volumen:', error);
+        });
+}
+
 function formatPriceForDisplay(price) {
     if (price >= 1000) {
         return price.toFixed(2);
@@ -1973,27 +2088,20 @@ function updateScalpingAlerts() {
         .then(data => {
             const alertsElement = document.getElementById('scalping-alerts');
             if (data.alerts && data.alerts.length > 0) {
-                alertsElement.innerHTML = data.alerts.slice(0, 3).map(alert => {
-                    const signalClass = alert.signal === 'LONG' ? 'success' : 'danger';
-                    const strategyIcon = alert.strategy === 'volume_anomaly' ? '📊' : '📈';
-                    const strategyText = alert.strategy === 'volume_anomaly' ? 'Volumen' : 'Principal';
-                    
-                    return `
-                        <div class="alert alert-${signalClass} scalping-alert mb-2 p-2">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <strong>${alert.symbol}</strong>
-                                    <div class="small">${alert.interval} - ${alert.signal} (${strategyIcon} ${strategyText})</div>
-                                    <div class="small">Score: ${alert.score ? alert.score.toFixed(1) : 'N/A'}%</div>
-                                    ${alert.risk_category ? `<div class="small">${alert.risk_category}</div>` : ''}
-                                </div>
-                                <span class="badge bg-${signalClass}">
-                                    $${formatPriceForDisplay(alert.entry || alert.current_price)}
-                                </span>
+                alertsElement.innerHTML = data.alerts.slice(0, 3).map(alert => `
+                    <div class="alert alert-warning scalping-alert mb-2 p-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>${alert.symbol}</strong>
+                                <div class="small">${alert.interval} - ${alert.signal}</div>
+                                <div class="small">Score: ${alert.score.toFixed(1)}%</div>
                             </div>
+                            <span class="badge bg-${alert.signal === 'LONG' ? 'success' : 'danger'}">
+                                $${formatPriceForDisplay(alert.entry)}
+                            </span>
                         </div>
-                    `;
-                }).join('');
+                    </div>
+                `).join('');
             } else {
                 alertsElement.innerHTML = `
                     <div class="text-center text-muted py-3">
@@ -2005,23 +2113,6 @@ function updateScalpingAlerts() {
         })
         .catch(error => {
             console.error('Error cargando alertas:', error);
-        });
-}
-
-function updateVolumeAnomalySignals(interval) {
-    fetch(`/api/volume_anomaly_signals?interval=${interval}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Las señales de volumen anómalo ya se muestran en las alertas
-            console.log('Señales de volumen anómalo cargadas:', data.volume_signals ? data.volume_signals.length : 0);
-        })
-        .catch(error => {
-            console.error('Error cargando alertas de volumen:', error);
         });
 }
 
@@ -2060,7 +2151,7 @@ function showSignalDetails(symbol, signalType) {
                 <div class="alert alert-${signalClass} text-center py-2 mb-3">
                     <i class="fas fa-${signalIcon} me-2"></i>
                     <strong>SEÑAL ${signalType} CONFIRMADA</strong>
-                    <div class="small mt-1">Score: ${signalData.signal_score.toFixed(1)}%</div>
+                    <div class="small mt-1">Score: ${signalData.signal_score.toFixed(1)}% | Winrate: ${signalData.winrate.toFixed(1)}%</div>
                 </div>
                 
                 <div class="row">
@@ -2068,27 +2159,27 @@ function showSignalDetails(symbol, signalType) {
                         <h6>Niveles de Trading</h6>
                         <div class="d-flex justify-content-between small mb-1">
                             <span>Precio Actual:</span>
-                            <span class="fw-bold">$${formatPriceForDisplay(signalData.current_price)}</span>
+                            <span class="fw-bold">$${signalData.current_price.toFixed(6)}</span>
                         </div>
                         <div class="d-flex justify-content-between small mb-1">
                             <span>Entrada:</span>
-                            <span class="fw-bold text-warning">$${formatPriceForDisplay(signalData.entry)}</span>
+                            <span class="fw-bold text-warning">$${signalData.entry.toFixed(6)}</span>
                         </div>
                         <div class="d-flex justify-content-between small mb-1">
                             <span>Stop Loss:</span>
-                            <span class="fw-bold text-danger">$${formatPriceForDisplay(signalData.stop_loss)}</span>
+                            <span class="fw-bold text-danger">$${signalData.stop_loss.toFixed(6)}</span>
                         </div>
                         <div class="d-flex justify-content-between small mb-1">
-                            <span>Take Profit:</span>
-                            <span class="fw-bold text-success">$${formatPriceForDisplay(signalData.take_profit[0])}</span>
+                            <span>Take Profit 1:</span>
+                            <span class="fw-bold text-success">$${signalData.take_profit[0].toFixed(6)}</span>
                         </div>
                         <div class="d-flex justify-content-between small">
-                            <span>Soportes:</span>
-                            <span class="fw-bold text-info">${signalData.supports.slice(0, 2).map(s => `$${formatPriceForDisplay(s)}`).join(', ')}</span>
+                            <span>Take Profit 2:</span>
+                            <span class="fw-bold text-success">$${signalData.take_profit[1]?.toFixed(6) || 'N/A'}</span>
                         </div>
                         <div class="d-flex justify-content-between small">
-                            <span>Resistencias:</span>
-                            <span class="fw-bold text-info">${signalData.resistances.slice(0, 2).map(r => `$${formatPriceForDisplay(r)}`).join(', ')}</span>
+                            <span>Take Profit 3:</span>
+                            <span class="fw-bold text-success">$${signalData.take_profit[2]?.toFixed(6) || 'N/A'}</span>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -2124,16 +2215,34 @@ function showSignalDetails(symbol, signalType) {
                     </div>
                 </div>
                 
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6>Soportes</h6>
+                        ${signalData.supports ? signalData.supports.slice(0, 4).map((support, i) => `
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span>S${i+1}:</span>
+                                <span class="fw-bold text-info">$${support.toFixed(6)}</span>
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Resistencias</h6>
+                        ${signalData.resistances ? signalData.resistances.slice(0, 4).map((resistance, i) => `
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span>R${i+1}:</span>
+                                <span class="fw-bold text-info">$${resistance.toFixed(6)}</span>
+                            </div>
+                        `).join('') : ''}
+                    </div>
+                </div>
+                
                 ${signalData.fulfilled_conditions && signalData.fulfilled_conditions.length > 0 ? `
                     <hr>
                     <h6>Condiciones Cumplidas</h6>
                     <div style="max-height: 150px; overflow-y: auto;">
-                        ${signalData.fulfilled_conditions.slice(0, 8).map(cond => `
+                        ${signalData.fulfilled_conditions.map(cond => `
                             <div class="small text-success mb-1">✓ ${cond}</div>
                         `).join('')}
-                        ${signalData.fulfilled_conditions.length > 8 ? `
-                            <div class="small text-muted">... y ${signalData.fulfilled_conditions.length - 8} más</div>
-                        ` : ''}
                     </div>
                 ` : ''}
                 
