@@ -236,7 +236,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico Indicador de Volumen -->
+                <!-- Indicador de Volumen con Anomalías y Clusters -->
                 <div class="card bg-dark border-info mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -246,18 +246,10 @@
                     </div>
                     <div class="card-body">
                         <div id="volume-chart" style="height: 300px;"></div>
-                        <div class="mt-2">
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Volumen de Compra | 
-                                <strong>🔴 ROJO:</strong> Volumen de Venta |
-                                <strong>⚫ NEGRO:</strong> Anomalías de Volumen
-                            </small>
-                        </div>
                     </div>
                 </div>
 
-                <!-- Gráfico Fuerza de Tendencia Maverick -->
+                <!-- Fuerza de Tendencia Maverick -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -267,18 +259,10 @@
                     </div>
                     <div class="card-body">
                         <div id="trend-strength-chart" style="height: 300px;"></div>
-                        <div class="mt-2">
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Fuerza creciente (Operar) | 
-                                <strong>🔴 ROJO:</strong> Fuerza decreciente (Evitar) |
-                                <strong>❌ ZONA ROJA:</strong> Zona de NO OPERAR
-                            </small>
-                        </div>
                     </div>
                 </div>
 
-                <!-- Gráfico de Ballenas -->
+                <!-- Indicador de Ballenas -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
@@ -288,7 +272,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico RSI Maverick -->
+                <!-- RSI Maverick -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">RSI Modificado Maverick (%B)</h5>
@@ -298,7 +282,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico RSI Tradicional -->
+                <!-- RSI Tradicional -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">RSI Tradicional con Divergencias</h5>
@@ -308,13 +292,26 @@
                     </div>
                 </div>
 
-                <!-- Gráfico MACD -->
+                <!-- MACD -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">MACD con Histograma</h5>
                     </div>
                     <div class="card-body">
                         <div id="macd-chart" style="height: 300px;"></div>
+                    </div>
+                </div>
+
+                <!-- Volumen Anómalo CoinMarketCap -->
+                <div class="card bg-dark border-danger mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Volumen Anómalo de Compra/Venta (CoinMarketCap)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="volume-anomaly-chart" style="height: 300px;"></div>
                     </div>
                 </div>
             </div>
@@ -464,7 +461,7 @@
         }
 
         // Función para descargar reporte estratégico
-        function downloadReport() {
+        function downloadStrategicReport() {
             const symbol = document.getElementById('selected-crypto').textContent;
             const interval = document.getElementById('interval-select').value;
             const leverage = document.getElementById('leverage').value;
