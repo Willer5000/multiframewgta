@@ -193,13 +193,6 @@ body {
     color: #ccc;
 }
 
-/* Información del Calendario */
-.calendar-info {
-    font-size: 0.8rem;
-    padding: 0.25rem 0;
-    text-align: center;
-}
-
 /* Dropdown Menus */
 .dropdown-menu {
     background-color: var(--bs-dark);
@@ -286,7 +279,7 @@ body {
     color: #a8b1b8;
 }
 
-/* Gráficos - Leyendas en parte superior */
+/* Gráficos */
 .js-plotly-plot .plotly .main-svg {
     border-radius: 8px;
 }
@@ -347,11 +340,6 @@ body {
     0% { background-color: rgba(255, 193, 7, 0.1); }
     50% { background-color: rgba(255, 193, 7, 0.2); }
     100% { background-color: rgba(255, 193, 7, 0.1); }
-}
-
-/* Tablas de Señales */
-.table-responsive {
-    border-radius: 8px;
 }
 
 /* Modal */
@@ -456,12 +444,6 @@ body {
     .navbar-brand {
         font-size: 1.1rem;
     }
-    
-    /* Ajustes para gráficos en móviles */
-    .js-plotly-plot .plotly .legend {
-        transform: scale(0.8) !important;
-        transform-origin: top center !important;
-    }
 }
 
 @media (max-width: 576px) {
@@ -491,14 +473,8 @@ body {
         padding: 0.25rem 0.5rem;
     }
     
-    /* Ocultar algunas columnas en tablas en móviles */
     .table-responsive table {
         font-size: 0.8rem;
-    }
-    
-    .table-responsive th:nth-child(3),
-    .table-responsive td:nth-child(3) {
-        display: none;
     }
 }
 
@@ -589,157 +565,6 @@ body {
     border: 1px solid rgba(232, 62, 140, 0.3);
 }
 
-/* Mejoras de Accesibilidad */
-@media (prefers-reduced-motion: reduce) {
-    * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-    
-    .card:hover {
-        transform: none;
-    }
-    
-    .btn:hover {
-        transform: none;
-    }
-}
-
-/* Modo Alto Contraste */
-@media (prefers-contrast: high) {
-    :root {
-        --bs-border-color: #ffffff;
-        --bs-body-color: #ffffff;
-        --bs-body-bg: #000000;
-    }
-    
-    .card {
-        border-width: 2px;
-    }
-    
-    .form-control, .form-select {
-        border-width: 2px;
-    }
-}
-
-/* Impresión */
-@media print {
-    .navbar, .btn, .dropdown, .toast-container {
-        display: none !important;
-    }
-    
-    .card {
-        border: 1px solid #000 !important;
-        box-shadow: none !important;
-        break-inside: avoid;
-    }
-    
-    body {
-        background: white !important;
-        color: black !important;
-    }
-}
-
-/* Optimizaciones de Rendimiento para Gráficos */
-.plot-container {
-    will-change: transform;
-}
-
-/* Estilos específicos para el indicador de Fuerza de Tendencia Maverick */
-.trend-strength-legend {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 0.75rem;
-    margin-top: 0.5rem;
-    font-size: 0.8rem;
-}
-
-.trend-strength-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.25rem;
-}
-
-.trend-strength-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-    margin-right: 0.5rem;
-}
-
-.trend-strength-strong-up {
-    background-color: #00C853;
-}
-
-.trend-strength-weak-up {
-    background-color: #FFC107;
-}
-
-.trend-strength-strong-down {
-    background-color: #FF1744;
-}
-
-.trend-strength-weak-down {
-    background-color: #FF9800;
-}
-
-.trend-strength-neutral {
-    background-color: #9E9E9E;
-}
-
-.trend-strength-no-trade {
-    background-color: #F44336;
-    animation: pulse-red 2s infinite;
-}
-
-@keyframes pulse-red {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
-}
-
-.no-trade-alert {
-    background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.05));
-    border: 1px solid rgba(244, 67, 54, 0.3);
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 0.5rem 0;
-}
-
-/* Mejoras para el Mapa de Oportunidades */
-.scatter-opportunity-high {
-    background: linear-gradient(135deg, rgba(0, 200, 83, 0.1), rgba(0, 200, 83, 0.05));
-    border: 1px solid rgba(0, 200, 83, 0.3);
-}
-
-.scatter-opportunity-medium {
-    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05));
-    border: 1px solid rgba(255, 193, 7, 0.3);
-}
-
-.scatter-opportunity-low {
-    background: linear-gradient(135deg, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.05));
-    border: 1px solid rgba(108, 117, 125, 0.3);
-}
-
-/* Estilos específicos para el nuevo indicador de volumen */
-.volume-anomaly-indicator {
-    background: linear-gradient(135deg, rgba(13, 202, 240, 0.1), rgba(13, 202, 240, 0.05));
-    border: 1px solid rgba(13, 202, 240, 0.3);
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 0.5rem 0;
-}
-
-.volume-cluster-indicator {
-    background: linear-gradient(135deg, rgba(111, 66, 193, 0.1), rgba(111, 66, 193, 0.05));
-    border: 1px solid rgba(111, 66, 193, 0.3);
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 0.5rem 0;
-}
-
 /* Efectos de hover para filas de tabla */
 .hover-row:hover {
     background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.05)) !important;
@@ -763,66 +588,6 @@ body {
 
 .card-border-info {
     border-left: 4px solid var(--bs-info) !important;
-}
-
-/* Animaciones para alertas importantes */
-@keyframes highlight {
-    0% { background-color: rgba(255, 193, 7, 0.1); }
-    50% { background-color: rgba(255, 193, 7, 0.3); }
-    100% { background-color: rgba(255, 193, 7, 0.1); }
-}
-
-.highlight-alert {
-    animation: highlight 2s infinite;
-}
-
-/* Mejoras para tooltips personalizados */
-.custom-tooltip {
-    position: relative;
-    display: inline-block;
-}
-
-.custom-tooltip .tooltip-text {
-    visibility: hidden;
-    width: 200px;
-    background-color: var(--bs-dark);
-    color: var(--bs-body-color);
-    text-align: center;
-    border-radius: 6px;
-    padding: 8px;
-    position: absolute;
-    z-index: 1;
-    bottom: 125%;
-    left: 50%;
-    margin-left: -100px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    border: 1px solid var(--bs-border-color);
-    font-size: 0.8rem;
-}
-
-.custom-tooltip:hover .tooltip-text {
-    visibility: visible;
-    opacity: 1;
-}
-
-/* Estilos para el modal de detalles de señal */
-.signal-details-modal .modal-content {
-    background: linear-gradient(135deg, var(--bs-dark), var(--bs-darker));
-}
-
-.signal-details-modal .modal-header {
-    border-bottom: 2px solid var(--bs-primary);
-}
-
-/* Efectos de transición para carga suave */
-.fade-in {
-    animation: fadeIn 0.5s ease-in;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Mejoras para botones de acción */
@@ -965,109 +730,191 @@ body {
     }
 }
 
-/* Estilos específicos para indicadores de volumen anómalo */
-.volume-anomaly-buy {
+/* Animaciones para alertas importantes */
+@keyframes highlight {
+    0% { background-color: rgba(255, 193, 7, 0.1); }
+    50% { background-color: rgba(255, 193, 7, 0.3); }
+    100% { background-color: rgba(255, 193, 7, 0.1); }
+}
+
+.highlight-alert {
+    animation: highlight 2s infinite;
+}
+
+/* Efectos de transición para carga suave */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mejoras para tooltips personalizados */
+.custom-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.custom-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: var(--bs-dark);
+    color: var(--bs-body-color);
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border: 1px solid var(--bs-border-color);
+    font-size: 0.8rem;
+}
+
+.custom-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Estilos para el modal de detalles de señal */
+.signal-details-modal .modal-content {
+    background: linear-gradient(135deg, var(--bs-dark), var(--bs-darker));
+}
+
+.signal-details-modal .modal-header {
+    border-bottom: 2px solid var(--bs-primary);
+}
+
+/* Estilos específicos para el indicador de Fuerza de Tendencia Maverick */
+.trend-strength-legend {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.trend-strength-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.trend-strength-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 0.5rem;
+}
+
+.trend-strength-strong-up {
+    background-color: #00C853;
+}
+
+.trend-strength-weak-up {
+    background-color: #FFC107;
+}
+
+.trend-strength-strong-down {
+    background-color: #FF1744;
+}
+
+.trend-strength-weak-down {
+    background-color: #FF9800;
+}
+
+.trend-strength-neutral {
+    background-color: #9E9E9E;
+}
+
+.trend-strength-no-trade {
+    background-color: #F44336;
+    animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.no-trade-alert {
+    background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.05));
+    border: 1px solid rgba(244, 67, 54, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+}
+
+/* Mejoras para el Mapa de Oportunidades */
+.scatter-opportunity-high {
     background: linear-gradient(135deg, rgba(0, 200, 83, 0.1), rgba(0, 200, 83, 0.05));
     border: 1px solid rgba(0, 200, 83, 0.3);
 }
 
-.volume-anomaly-sell {
-    background: linear-gradient(135deg, rgba(255, 23, 68, 0.1), rgba(255, 23, 68, 0.05));
-    border: 1px solid rgba(255, 23, 68, 0.3);
+.scatter-opportunity-medium {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05));
+    border: 1px solid rgba(255, 193, 7, 0.3);
 }
 
-/* Indicador de riesgo para volumen */
-.volume-risk-indicator {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    margin-right: 5px;
+.scatter-opportunity-low {
+    background: linear-gradient(135deg, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.05));
+    border: 1px solid rgba(108, 117, 125, 0.3);
 }
 
-.volume-risk-low { background-color: #00C853; }
-.volume-risk-medium { background-color: #FFC107; }
-.volume-risk-high { background-color: #FF1744; }
-.volume-risk-extreme { 
-    background-color: #F44336;
-    animation: pulse 1s infinite;
-}
-
-/* Líneas de soporte y resistencia destacadas */
-.support-line {
-    border-color: #2196F3 !important;
-    border-width: 2px !important;
-}
-
-.resistance-line {
-    border-color: #F44336 !important;
-    border-width: 2px !important;
-}
-
-/* Indicador de cruce de medias */
-.ma-crossover-indicator {
-    background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.05));
-    border: 1px solid rgba(33, 150, 243, 0.3);
-    border-radius: 8px;
-    padding: 0.5rem;
-    margin: 0.25rem 0;
-}
-
-/* Indicador de divergencia */
-.divergence-indicator {
-    background: linear-gradient(135deg, rgba(156, 39, 176, 0.1), rgba(156, 39, 176, 0.05));
-    border: 1px solid rgba(156, 39, 176, 0.3);
-    border-radius: 8px;
-    padding: 0.5rem;
-    margin: 0.25rem 0;
-}
-
-/* Estilos para alertas de Telegram en el sistema */
-.telegram-alert {
-    background: linear-gradient(135deg, rgba(0, 136, 204, 0.1), rgba(0, 136, 204, 0.05));
-    border: 1px solid rgba(0, 136, 204, 0.3);
+/* Estilos específicos para el indicador de volumen */
+.volume-anomaly-indicator {
+    background: linear-gradient(135deg, rgba(13, 202, 240, 0.1), rgba(13, 202, 240, 0.05));
+    border: 1px solid rgba(13, 202, 240, 0.3);
     border-radius: 8px;
     padding: 1rem;
     margin: 0.5rem 0;
-    border-left: 4px solid #0088cc;
 }
 
-.telegram-alert h6 {
-    color: #0088cc;
-    margin-bottom: 0.5rem;
-}
-
-/* Estilos para el gráfico de volumen anómalo */
-.volume-anomaly-chart-container {
-    position: relative;
-    height: 300px;
-    width: 100%;
-    background: rgba(0, 0, 0, 0.2);
+.volume-cluster-indicator {
+    background: linear-gradient(135deg, rgba(111, 66, 193, 0.1), rgba(111, 66, 193, 0.05));
+    border: 1px solid rgba(111, 66, 193, 0.3);
     border-radius: 8px;
     padding: 1rem;
+    margin: 0.5rem 0;
 }
 
-/* Estilos para el indicador de tiempo restante */
-.time-remaining-indicator {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 600;
+/* Estilos para CMC Volume Chart */
+.cmc-volume-chart {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05));
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
 }
 
-.time-remaining-critical {
-    background-color: rgba(244, 67, 54, 0.2);
-    color: #F44336;
-    animation: pulse 1s infinite;
+/* Efectos de transición suave para todos los elementos */
+* {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
-.time-remaining-warning {
-    background-color: rgba(255, 193, 7, 0.2);
-    color: #FFC107;
-}
-
-.time-remaining-normal {
-    background-color: rgba(76, 175, 80, 0.2);
-    color: #4CAF50;
+/* Ajustes para dispositivos muy pequeños */
+@media (max-width: 375px) {
+    .container-fluid {
+        padding-left: 2px;
+        padding-right: 2px;
+    }
+    
+    .card-body {
+        padding: 0.5rem;
+    }
+    
+    .btn {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    .form-control, .form-select {
+        font-size: 0.7rem;
+    }
 }
