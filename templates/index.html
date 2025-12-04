@@ -226,7 +226,7 @@
                     </div>
                 </div>
 
-                <!-- ADX con DMI (+DI y -DI) -->
+                <!-- Gráfico ADX + DMI -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">ADX con DMI (+DI y -DI)</h5>
@@ -236,7 +236,7 @@
                     </div>
                 </div>
 
-                <!-- Indicador de Volumen con Anomalías y Clusters -->
+                <!-- Gráfico Indicador de Volumen -->
                 <div class="card bg-dark border-info mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -249,16 +249,15 @@
                         <div class="mt-2">
                             <small class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Volumen Compra | 
-                                <strong>🔴 ROJO:</strong> Volumen Venta |
-                                <strong>🔴 PUNTOS ROJOS:</strong> Anomalías |
-                                <strong>🟣 CUADRADOS PÚRPURA:</strong> Clusters
+                                <strong>🟢 VERDE:</strong> Volumen de Compra | 
+                                <strong>🔴 ROJO:</strong> Volumen de Venta |
+                                <strong>⚫ NEGRO:</strong> Anomalías de Volumen
                             </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Fuerza de Tendencia Maverick -->
+                <!-- Gráfico Fuerza de Tendencia Maverick -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -273,13 +272,13 @@
                                 <i class="fas fa-info-circle me-1"></i>
                                 <strong>🟢 VERDE:</strong> Fuerza creciente (Operar) | 
                                 <strong>🔴 ROJO:</strong> Fuerza decreciente (Evitar) |
-                                <strong>❌ X ROJO:</strong> Zona de NO OPERAR
+                                <strong>❌ ZONA ROJA:</strong> Zona de NO OPERAR
                             </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Indicador Ballenas Compradoras/Vendedoras -->
+                <!-- Gráfico de Ballenas -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
@@ -289,7 +288,7 @@
                     </div>
                 </div>
 
-                <!-- RSI Modificado Maverick (%B) -->
+                <!-- Gráfico RSI Maverick -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">RSI Modificado Maverick (%B)</h5>
@@ -299,7 +298,7 @@
                     </div>
                 </div>
 
-                <!-- RSI Tradicional con Divergencias -->
+                <!-- Gráfico RSI Tradicional -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">RSI Tradicional con Divergencias</h5>
@@ -309,7 +308,7 @@
                     </div>
                 </div>
 
-                <!-- MACD con Histograma -->
+                <!-- Gráfico MACD -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">MACD con Histograma</h5>
@@ -365,23 +364,6 @@
                                     <span class="visually-hidden">Cargando...</span>
                                 </div>
                                 <p class="mt-2 mb-0 small">Buscando oportunidades...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Alertas de Volumen Anómalo -->
-                <div class="card bg-dark border-success mb-4">
-                    <div class="card-header bg-success bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Alertas Volumen Anómalo</h5>
-                    </div>
-                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                        <div id="volume-alerts">
-                            <div class="text-center py-2">
-                                <div class="spinner-border spinner-border-sm text-success" role="status">
-                                    <span class="visually-hidden">Cargando...</span>
-                                </div>
-                                <p class="mt-2 mb-0 small">Monitoreando volumen...</p>
                             </div>
                         </div>
                     </div>
@@ -482,7 +464,7 @@
         }
 
         // Función para descargar reporte estratégico
-        function downloadStrategicReport() {
+        function downloadReport() {
             const symbol = document.getElementById('selected-crypto').textContent;
             const interval = document.getElementById('interval-select').value;
             const leverage = document.getElementById('leverage').value;
