@@ -226,7 +226,7 @@
                     </div>
                 </div>
 
-                <!-- ADX con DMI -->
+                <!-- Gráfico ADX + DMI -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">ADX con DMI (+DI y -DI)</h5>
@@ -236,12 +236,12 @@
                     </div>
                 </div>
 
-                <!-- Indicador de Volumen con Anomalías -->
+                <!-- Gráfico de Volumen con Anomalías -->
                 <div class="card bg-dark border-info mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
                             <i class="fas fa-chart-bar me-2"></i>
-                            Indicador de Volumen con Anomalías
+                            Indicador de Volumen con Anomalías y Clusters
                         </h5>
                     </div>
                     <div class="card-body">
@@ -249,15 +249,15 @@
                         <div class="mt-2">
                             <small class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Volumen compra | 
-                                <strong>🔴 ROJO:</strong> Volumen venta |
-                                <strong>🔵 AZUL:</strong> Anomalía de volumen
+                                <strong>🟢 VERDE:</strong> Volumen de Compra Atípico | 
+                                <strong>🔴 ROJO:</strong> Volumen de Venta Atípico |
+                                <strong>📊 GRIS:</strong> Volumen Normal
                             </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Fuerza de Tendencia Maverick -->
+                <!-- Gráfico Fuerza de Tendencia Maverick -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -270,8 +270,8 @@
                         <div class="mt-2">
                             <small class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Fuerza creciente | 
-                                <strong>🔴 ROJO:</strong> Fuerza decreciente |
+                                <strong>🟢 VERDE:</strong> Fuerza creciente (Operar) | 
+                                <strong>🔴 ROJO:</strong> Fuerza decreciente (Evitar) |
                                 <strong>❌ X ROJO:</strong> Zona de NO OPERAR
                             </small>
                         </div>
@@ -288,7 +288,7 @@
                     </div>
                 </div>
 
-                <!-- RSI Maverick -->
+                <!-- Gráfico RSI Maverick -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">RSI Modificado Maverick (%B)</h5>
@@ -298,7 +298,7 @@
                     </div>
                 </div>
 
-                <!-- RSI Tradicional -->
+                <!-- Gráfico RSI Tradicional -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">RSI Tradicional con Divergencias</h5>
@@ -308,7 +308,7 @@
                     </div>
                 </div>
 
-                <!-- MACD -->
+                <!-- Gráfico MACD -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">MACD con Histograma</h5>
@@ -317,28 +317,9 @@
                         <div id="macd-chart" style="height: 300px;"></div>
                     </div>
                 </div>
-
-                <!-- Gráfico de Anomalías CMC -->
-                <div class="card bg-dark border-danger mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-bolt me-2"></i>
-                            Volúmenes Atípicos CoinMarketCap
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="cmc-chart" style="height: 300px;"></div>
-                        <div class="mt-2">
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Detección de volúmenes atípicos de compra/venta en tiempo real
-                            </small>
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            <!-- Panel Derecho -->
+            <!-- Panel Derecho - Resumen del Mercado -->
             <div class="col-lg-2">
                 <!-- Resumen del Mercado -->
                 <div class="card bg-dark border-secondary mb-4">
@@ -391,10 +372,10 @@
                 <!-- Alertas de Volumen Atípico -->
                 <div class="card bg-dark border-danger mb-4">
                     <div class="card-header bg-danger bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Alertas Volumen Atípico</h5>
+                        <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Alertas Volumen Atípico</h5>
                     </div>
                     <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                        <div id="volume-alerts">
+                        <div id="volume-anomaly-alerts">
                             <div class="text-center py-2">
                                 <div class="spinner-border spinner-border-sm text-danger" role="status">
                                     <span class="visually-hidden">Cargando...</span>
