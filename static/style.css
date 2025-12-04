@@ -193,6 +193,13 @@ body {
     color: #ccc;
 }
 
+/* Información del Calendario */
+.calendar-info {
+    font-size: 0.8rem;
+    padding: 0.25rem 0;
+    text-align: center;
+}
+
 /* Dropdown Menus */
 .dropdown-menu {
     background-color: var(--bs-dark);
@@ -279,7 +286,7 @@ body {
     color: #a8b1b8;
 }
 
-/* Gráficos */
+/* Gráficos - Leyendas en parte superior */
 .js-plotly-plot .plotly .main-svg {
     border-radius: 8px;
 }
@@ -450,6 +457,7 @@ body {
         font-size: 1.1rem;
     }
     
+    /* Ajustes para gráficos en móviles */
     .js-plotly-plot .plotly .legend {
         transform: scale(0.8) !important;
         transform-origin: top center !important;
@@ -483,6 +491,7 @@ body {
         padding: 0.25rem 0.5rem;
     }
     
+    /* Ocultar algunas columnas en tablas en móviles */
     .table-responsive table {
         font-size: 0.8rem;
     }
@@ -597,6 +606,23 @@ body {
     }
 }
 
+/* Modo Alto Contraste */
+@media (prefers-contrast: high) {
+    :root {
+        --bs-border-color: #ffffff;
+        --bs-body-color: #ffffff;
+        --bs-body-bg: #000000;
+    }
+    
+    .card {
+        border-width: 2px;
+    }
+    
+    .form-control, .form-select {
+        border-width: 2px;
+    }
+}
+
 /* Impresión */
 @media print {
     .navbar, .btn, .dropdown, .toast-container {
@@ -697,7 +723,7 @@ body {
     border: 1px solid rgba(108, 117, 125, 0.3);
 }
 
-/* Estilos específicos para el indicador de volumen mejorado */
+/* Estilos específicos para el nuevo indicador de volumen */
 .volume-anomaly-indicator {
     background: linear-gradient(135deg, rgba(13, 202, 240, 0.1), rgba(13, 202, 240, 0.05));
     border: 1px solid rgba(13, 202, 240, 0.3);
@@ -778,6 +804,15 @@ body {
 .custom-tooltip:hover .tooltip-text {
     visibility: visible;
     opacity: 1;
+}
+
+/* Estilos para el modal de detalles de señal */
+.signal-details-modal .modal-content {
+    background: linear-gradient(135deg, var(--bs-dark), var(--bs-darker));
+}
+
+.signal-details-modal .modal-header {
+    border-bottom: 2px solid var(--bs-primary);
 }
 
 /* Efectos de transición para carga suave */
@@ -930,28 +965,109 @@ body {
     }
 }
 
-/* Estilos específicos para alertas de volumen anómalo */
-.volume-anomaly-alert {
-    border-left: 4px solid var(--bs-danger);
-    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05));
-    animation: volume-pulse 1.5s infinite;
+/* Estilos específicos para indicadores de volumen anómalo */
+.volume-anomaly-buy {
+    background: linear-gradient(135deg, rgba(0, 200, 83, 0.1), rgba(0, 200, 83, 0.05));
+    border: 1px solid rgba(0, 200, 83, 0.3);
 }
 
-@keyframes volume-pulse {
-    0% { background-color: rgba(220, 53, 69, 0.1); }
-    50% { background-color: rgba(220, 53, 69, 0.2); }
-    100% { background-color: rgba(220, 53, 69, 0.1); }
+.volume-anomaly-sell {
+    background: linear-gradient(135deg, rgba(255, 23, 68, 0.1), rgba(255, 23, 68, 0.05));
+    border: 1px solid rgba(255, 23, 68, 0.3);
 }
 
-/* Indicador de volumen en gráfico principal */
-.volume-bar-up {
-    background-color: rgba(0, 200, 83, 0.7) !important;
+/* Indicador de riesgo para volumen */
+.volume-risk-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 5px;
 }
 
-.volume-bar-down {
-    background-color: rgba(255, 23, 68, 0.7) !important;
+.volume-risk-low { background-color: #00C853; }
+.volume-risk-medium { background-color: #FFC107; }
+.volume-risk-high { background-color: #FF1744; }
+.volume-risk-extreme { 
+    background-color: #F44336;
+    animation: pulse 1s infinite;
 }
 
-.volume-bar-neutral {
-    background-color: rgba(128, 128, 128, 0.7) !important;
+/* Líneas de soporte y resistencia destacadas */
+.support-line {
+    border-color: #2196F3 !important;
+    border-width: 2px !important;
+}
+
+.resistance-line {
+    border-color: #F44336 !important;
+    border-width: 2px !important;
+}
+
+/* Indicador de cruce de medias */
+.ma-crossover-indicator {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.1), rgba(33, 150, 243, 0.05));
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+}
+
+/* Indicador de divergencia */
+.divergence-indicator {
+    background: linear-gradient(135deg, rgba(156, 39, 176, 0.1), rgba(156, 39, 176, 0.05));
+    border: 1px solid rgba(156, 39, 176, 0.3);
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+}
+
+/* Estilos para alertas de Telegram en el sistema */
+.telegram-alert {
+    background: linear-gradient(135deg, rgba(0, 136, 204, 0.1), rgba(0, 136, 204, 0.05));
+    border: 1px solid rgba(0, 136, 204, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border-left: 4px solid #0088cc;
+}
+
+.telegram-alert h6 {
+    color: #0088cc;
+    margin-bottom: 0.5rem;
+}
+
+/* Estilos para el gráfico de volumen anómalo */
+.volume-anomaly-chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* Estilos para el indicador de tiempo restante */
+.time-remaining-indicator {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.time-remaining-critical {
+    background-color: rgba(244, 67, 54, 0.2);
+    color: #F44336;
+    animation: pulse 1s infinite;
+}
+
+.time-remaining-warning {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #FFC107;
+}
+
+.time-remaining-normal {
+    background-color: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
 }
