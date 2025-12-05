@@ -23,7 +23,7 @@ app = Flask(__name__)
 TELEGRAM_BOT_TOKEN = "8007748376:AAHIW8n9b-BtA378g4gF-0-D2mOhn495Q0g"
 TELEGRAM_CHAT_ID = "-1003229814161"
 
-# Configuración optimizada - 40 criptomonedas top
+# Configuración optimizada - 40 criptomonedas top (actualizadas)
 CRYPTO_SYMBOLS = [
     # Bajo Riesgo (20) - Top market cap
     "BTC-USDT", "ETH-USDT", "BNB-USDT", "SOL-USDT", "XRP-USDT",
@@ -31,15 +31,15 @@ CRYPTO_SYMBOLS = [
     "LTC-USDT", "BCH-USDT", "ATOM-USDT", "XLM-USDT", "ETC-USDT",
     "FIL-USDT", "ALGO-USDT", "ICP-USDT", "VET-USDT", "EOS-USDT",
     
-    # Medio Riesgo (10)
+    # Medio Riesgo (10) - Proyectos consolidados
     "NEAR-USDT", "AXS-USDT", "EGLD-USDT", "HBAR-USDT", "GRT-USDT",
     "ENJ-USDT", "CHZ-USDT", "BAT-USDT", "ONE-USDT", "WAVES-USDT",
     
-    # Alto Riesgo (7)
+    # Alto Riesgo (7) - Proyectos emergentes
     "APE-USDT", "GMT-USDT", "SAND-USDT", "OP-USDT", "ARB-USDT",
     "MAGIC-USDT", "RNDR-USDT",
     
-    # Memecoins (3)
+    # Memecoins (3) - Top memes
     "SHIB-USDT", "PEPE-USDT", "FLOKI-USDT"
 ]
 
@@ -84,100 +84,75 @@ class TradingIndicator:
         self.active_operations = {}
         self.winrate_data = {}
         self.bolivia_tz = pytz.timezone('America/La_Paz')
-        self.sent_volume_ema_signals = set()
-        self.sent_multi_signals = set()
-        
-        # Cache para indicadores complementarios (7 velas)
-        self.complementary_cache = {
-            'ma_cross': {},
-            'dmi_cross': {},
-            'macd_cross': {},
-            'rsi_maverick_div': {},
-            'rsi_trad_div': {},
-            'chart_pattern': {},
-            'breakout': {}
-        }
+        self.sent_exit_signals = set()
+        self.sent_volume_ema_alerts = set()
+        self.divergence_cache = {}  # Cache para divergencias (hasta 7 velas)
+        self.chart_pattern_cache = {}  # Cache para patrones chartistas
+        self.volume_cluster_cache = {}  # Cache para clusters de volumen
+        self.ma_cross_cache = {}  # Cache para cruce de medias (1 vela)
+        self.dmi_cross_cache = {}  # Cache para cruce DMI (1 vela)
+        self.breakout_cache = {}  # Cache para rupturas (1 vela)
+        self.macd_cross_cache = {}  # Cache para cruce MACD (1 vela)
     
     def get_bolivia_time(self):
-        """Obtener hora actual de Bolivia"""
         return datetime.now(self.bolivia_tz)
     
     def is_scalping_time(self):
-        """Verificar si es horario de scalping"""
         now = self.get_bolivia_time()
         if now.weekday() >= 5:
             return False
         return 4 <= now.hour < 16
 
-    def calculate_remaining_time(self, interval, current_time):
+    def calculate_remaining_time(self, interval, current_time, threshold_ratio=0.5):
         """Calcular tiempo restante para el cierre de la vela"""
         if interval == '15m':
-            next_close = current_time.replace(minute=current_time.minute // 15 * 15, second=0, microsecond=0) + timedelta(minutes=15)
-            remaining_seconds = (next_close - current_time).total_seconds()
-            return remaining_seconds <= (15 * 60 * 0.75)
+            minutes = current_time.minute
+            remainder = 15 - (minutes % 15)
+            total_minutes = 15
         elif interval == '30m':
-            next_close = current_time.replace(minute=current_time.minute // 30 * 30, second=0, microsecond=0) + timedelta(minutes=30)
-            remaining_seconds = (next_close - current_time).total_seconds()
-            return remaining_seconds <= (30 * 60 * 0.75)
+            minutes = current_time.minute
+            remainder = 30 - (minutes % 30)
+            total_minutes = 30
         elif interval == '1h':
-            next_close = current_time.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
-            remaining_seconds = (next_close - current_time).total_seconds()
-            return remaining_seconds <= (60 * 60 * 0.5)
+            remainder = 60 - current_time.minute
+            total_minutes = 60
         elif interval == '2h':
-            current_hour = current_time.hour
-            next_2h_close = current_time.replace(minute=0, second=0, microsecond=0)
-            if current_hour % 2 == 0:
-                next_2h_close += timedelta(hours=2)
-            else:
-                next_2h_close += timedelta(hours=1)
-            remaining_seconds = (next_2h_close - current_time).total_seconds()
-            return remaining_seconds <= (120 * 60 * 0.5)
+            hour = current_time.hour
+            remainder_hours = 2 - (hour % 2)
+            remainder = remainder_hours * 60 - current_time.minute
+            total_minutes = 120
         elif interval == '4h':
-            current_hour = current_time.hour
-            next_4h_close = current_time.replace(minute=0, second=0, microsecond=0)
-            remainder = current_hour % 4
-            if remainder == 0:
-                next_4h_close += timedelta(hours=4)
-            else:
-                next_4h_close += timedelta(hours=4 - remainder)
-            remaining_seconds = (next_4h_close - current_time).total_seconds()
-            return remaining_seconds <= (240 * 60 * 0.25)
+            hour = current_time.hour
+            remainder_hours = 4 - (hour % 4)
+            remainder = remainder_hours * 60 - current_time.minute
+            total_minutes = 240
         elif interval == '8h':
-            current_hour = current_time.hour
-            next_8h_close = current_time.replace(minute=0, second=0, microsecond=0)
-            remainder = current_hour % 8
-            if remainder == 0:
-                next_8h_close += timedelta(hours=8)
-            else:
-                next_8h_close += timedelta(hours=8 - remainder)
-            remaining_seconds = (next_8h_close - current_time).total_seconds()
-            return remaining_seconds <= (480 * 60 * 0.25)
+            hour = current_time.hour
+            remainder_hours = 8 - (hour % 8)
+            remainder = remainder_hours * 60 - current_time.minute
+            total_minutes = 480
         elif interval == '12h':
-            current_hour = current_time.hour
-            next_12h_close = current_time.replace(minute=0, second=0, microsecond=0)
-            if current_hour < 8:
-                next_12h_close = next_12h_close.replace(hour=20)
+            hour = current_time.hour
+            if hour < 12:
+                remainder = (12 - hour) * 60 - current_time.minute
             else:
-                next_12h_close = next_12h_close.replace(hour=8) + timedelta(days=1)
-            remaining_seconds = (next_12h_close - current_time).total_seconds()
-            return remaining_seconds <= (720 * 60 * 0.25)
+                remainder = (24 - hour) * 60 - current_time.minute
+            total_minutes = 720
         elif interval == '1D':
-            tomorrow_8pm = current_time.replace(hour=20, minute=0, second=0, microsecond=0)
-            if current_time.hour >= 20:
-                tomorrow_8pm += timedelta(days=1)
-            remaining_seconds = (tomorrow_8pm - current_time).total_seconds()
-            return remaining_seconds <= (1440 * 60 * 0.25)
+            hours_left = 24 - current_time.hour
+            remainder = hours_left * 60 - current_time.minute
+            total_minutes = 1440
         elif interval == '1W':
-            days_passed = current_time.weekday()
-            next_monday = current_time + timedelta(days=(7 - days_passed))
-            next_monday = next_monday.replace(hour=0, minute=0, second=0, microsecond=0)
-            remaining_seconds = (next_monday - current_time).total_seconds()
-            return remaining_seconds <= (10080 * 60 * 0.1)
+            days_left = 6 - current_time.weekday()  # Asumiendo semana de trading L-V
+            remainder = days_left * 24 * 60
+            total_minutes = 7 * 24 * 60
+        else:
+            return False
         
-        return False
+        elapsed_ratio = 1 - (remainder / total_minutes)
+        return elapsed_ratio >= threshold_ratio
 
     def get_kucoin_data(self, symbol, interval, limit=100):
-        """Obtener datos de KuCoin con manejo robusto de errores"""
         try:
             cache_key = f"{symbol}_{interval}_{limit}"
             if cache_key in self.cache:
@@ -227,7 +202,6 @@ class TradingIndicator:
         return df
 
     def generate_sample_data(self, limit, interval, symbol):
-        """Generar datos de ejemplo más realistas"""
         np.random.seed(42)
         base_price = 50000 if 'BTC' in symbol else 3000 if 'ETH' in symbol else 100
         dates = pd.date_range(end=datetime.now(), periods=limit, freq=interval)
@@ -251,7 +225,6 @@ class TradingIndicator:
         return df
 
     def calculate_atr(self, high, low, close, period=14):
-        """Calcular Average True Range"""
         n = len(high)
         tr = np.zeros(n)
         tr[0] = high[0] - low[0]
@@ -265,98 +238,7 @@ class TradingIndicator:
         atr = self.calculate_sma(tr, period)
         return atr
 
-    def calculate_support_resistance(self, high, low, close, period=50):
-        """Calcular soportes y resistencias dinámicos"""
-        try:
-            n = len(close)
-            pivot_points = []
-            
-            # Encontrar pivots (máximos y mínimos locales)
-            for i in range(period, n - period):
-                if high[i] == np.max(high[i-period:i+period+1]):
-                    pivot_points.append(('resistance', i, high[i]))
-                if low[i] == np.min(low[i-period:i+period+1]):
-                    pivot_points.append(('support', i, low[i]))
-            
-            # Agrupar pivots cercanos
-            support_levels = []
-            resistance_levels = []
-            
-            for pivot_type, idx, value in pivot_points:
-                if pivot_type == 'support':
-                    found = False
-                    for level in support_levels:
-                        if abs(value - level['value']) / level['value'] < 0.02:  # 2% de tolerancia
-                            level['values'].append(value)
-                            level['indices'].append(idx)
-                            found = True
-                            break
-                    if not found:
-                        support_levels.append({
-                            'value': value,
-                            'values': [value],
-                            'indices': [idx],
-                            'strength': 1
-                        })
-                else:
-                    found = False
-                    for level in resistance_levels:
-                        if abs(value - level['value']) / level['value'] < 0.02:
-                            level['values'].append(value)
-                            level['indices'].append(idx)
-                            found = True
-                            break
-                    if not found:
-                        resistance_levels.append({
-                            'value': value,
-                            'values': [value],
-                            'indices': [idx],
-                            'strength': 1
-                        })
-            
-            # Calcular fortaleza basada en toques
-            for level in support_levels:
-                level['strength'] = len(level['values'])
-                level['value'] = np.mean(level['values'])
-            
-            for level in resistance_levels:
-                level['strength'] = len(level['values'])
-                level['value'] = np.mean(level['values'])
-            
-            # Ordenar por fortaleza y tomar los más fuertes (4-6 niveles)
-            support_levels.sort(key=lambda x: (-x['strength'], -x['indices'][-1]))
-            resistance_levels.sort(key=lambda x: (-x['strength'], -x['indices'][-1]))
-            
-            # Seleccionar 4-6 niveles más relevantes
-            supports = [s['value'] for s in support_levels[:min(4, len(support_levels))]]
-            resistances = [r['value'] for r in resistance_levels[:min(4, len(resistance_levels))]]
-            
-            # Asegurar al menos 4 niveles
-            if len(supports) < 4:
-                current_low = np.min(low[-period:])
-                for i in range(4 - len(supports)):
-                    supports.append(current_low * (1 - 0.01 * (i + 1)))
-            
-            if len(resistances) < 4:
-                current_high = np.max(high[-period:])
-                for i in range(4 - len(resistances)):
-                    resistances.append(current_high * (1 + 0.01 * (i + 1)))
-            
-            # Ordenar
-            supports.sort()
-            resistances.sort()
-            
-            return supports, resistances
-            
-        except Exception as e:
-            print(f"Error calculando soportes/resistencias: {e}")
-            current_price = close[-1] if len(close) > 0 else 100
-            supports = [current_price * 0.95, current_price * 0.90, current_price * 0.85, current_price * 0.80]
-            resistances = [current_price * 1.05, current_price * 1.10, current_price * 1.15, current_price * 1.20]
-            return supports, resistances
-
-    def calculate_optimal_entry_exit(self, df, signal_type, leverage=15, supports=None, resistances=None):
-        """Calcular entradas y salidas óptimas con soportes/resistencias"""
+    def calculate_optimal_entry_exit(self, df, signal_type, leverage=15):
         try:
             close = df['close'].values
             high = df['high'].values
@@ -366,72 +248,47 @@ class TradingIndicator:
             atr = self.calculate_atr(high, low, close)
             current_atr = atr[-1] if len(atr) > 0 else current_price * 0.02
             
-            # Calcular soportes y resistencias si no se proporcionan
-            if supports is None or resistances is None:
-                supports, resistances = self.calculate_support_resistance(high, low, close)
+            # Calcular múltiples soportes y resistencias
+            supports, resistances = self.calculate_support_resistance_levels(high, low, close)
+            
+            if not supports:
+                support_1 = np.min(low[-50:])
+                supports = [support_1]
+            
+            if not resistances:
+                resistance_1 = np.max(high[-50:])
+                resistances = [resistance_1]
             
             atr_percentage = current_atr / current_price
 
             if signal_type == 'LONG':
-                # Entrada en el soporte más cercano por debajo del precio actual
+                # Para LONG: entrada en el soporte más cercano por debajo del precio
                 valid_supports = [s for s in supports if s < current_price]
                 if valid_supports:
-                    entry = max(valid_supports)  # Soporte más fuerte más cercano
+                    entry = max(valid_supports)
                 else:
-                    entry = min(supports)  # Si no hay soportes por debajo, tomar el más bajo
+                    entry = current_price * 0.995
                 
-                # Stop loss debajo del siguiente soporte
-                sorted_supports = sorted(supports)
-                entry_idx = np.searchsorted(sorted_supports, entry)
-                if entry_idx > 0:
-                    stop_loss = sorted_supports[entry_idx - 1] * 0.99
-                else:
-                    stop_loss = entry * 0.97
-                
-                # Take profit en resistencias superiores
-                take_profits = []
-                for res in sorted(resistances):
-                    if res > entry:
-                        take_profits.append(res)
-                        if len(take_profits) >= 2:  # Máximo 2 TPs
-                            break
-                
-                if not take_profits:
-                    take_profits = [entry * 1.03]
+                stop_loss = entry - (current_atr * 1.5)
+                tp1 = resistances[0] if resistances else entry * 1.02
                 
             else:  # SHORT
-                # Entrada en la resistencia más cercana por encima del precio actual
+                # Para SHORT: entrada en la resistencia más cercana por encima del precio
                 valid_resistances = [r for r in resistances if r > current_price]
                 if valid_resistances:
-                    entry = min(valid_resistances)  # Resistencia más cercana
+                    entry = min(valid_resistances)
                 else:
-                    entry = max(resistances)  # Si no hay resistencias por encima, tomar la más alta
+                    entry = current_price * 1.005
                 
-                # Stop loss encima de la siguiente resistencia
-                sorted_resistances = sorted(resistances)
-                entry_idx = np.searchsorted(sorted_resistances, entry)
-                if entry_idx < len(sorted_resistances) - 1:
-                    stop_loss = sorted_resistances[entry_idx + 1] * 1.01
-                else:
-                    stop_loss = entry * 1.03
-                
-                # Take profit en soportes inferiores
-                take_profits = []
-                for sup in sorted(supports, reverse=True):
-                    if sup < entry:
-                        take_profits.append(sup)
-                        if len(take_profits) >= 2:  # Máximo 2 TPs
-                            break
-                
-                if not take_profits:
-                    take_profits = [entry * 0.97]
+                stop_loss = entry + (current_atr * 1.5)
+                tp1 = supports[0] if supports else entry * 0.98
             
             return {
                 'entry': float(entry),
                 'stop_loss': float(stop_loss),
-                'take_profit': [float(tp) for tp in take_profits],
-                'supports': [float(s) for s in supports],
-                'resistances': [float(r) for r in resistances],
+                'take_profit': [float(tp1)],
+                'supports': [float(s) for s in supports[-4:]],  # Últimos 4 soportes
+                'resistances': [float(r) for r in resistances[-4:]],  # Últimas 4 resistencias
                 'atr': float(current_atr),
                 'atr_percentage': float(atr_percentage)
             }
@@ -443,14 +300,61 @@ class TradingIndicator:
                 'entry': current_price,
                 'stop_loss': current_price * 0.95,
                 'take_profit': [current_price * 1.02],
-                'supports': [current_price * 0.95, current_price * 0.90, current_price * 0.85, current_price * 0.80],
-                'resistances': [current_price * 1.05, current_price * 1.10, current_price * 1.15, current_price * 1.20],
+                'supports': [current_price * 0.95],
+                'resistances': [current_price * 1.05],
                 'atr': 0.0,
                 'atr_percentage': 0.0
             }
 
+    def calculate_support_resistance_levels(self, high, low, close, window=50):
+        """Calcular múltiples niveles de soporte y resistencia"""
+        n = len(close)
+        supports = []
+        resistances = []
+        
+        # Usar ventanas deslizantes para encontrar máximos y mínimos locales
+        for i in range(window, n, window//2):  # Superposición del 50%
+            start = max(0, i - window)
+            end = i
+            
+            window_high = high[start:end]
+            window_low = low[start:end]
+            
+            # Encontrar máximos y mínimos locales
+            for j in range(1, len(window_high)-1):
+                # Pico de resistencia
+                if (window_high[j] > window_high[j-1] and 
+                    window_high[j] > window_high[j+1] and
+                    window_high[j] > np.mean(window_high)):
+                    resistances.append(window_high[j])
+                
+                # Valle de soporte
+                if (window_low[j] < window_low[j-1] and 
+                    window_low[j] < window_low[j+1] and
+                    window_low[j] < np.mean(window_low)):
+                    supports.append(window_low[j])
+        
+        # Eliminar duplicados cercanos y ordenar
+        supports = self._clean_levels(supports)
+        resistances = self._clean_levels(resistances)
+        
+        return supports[-6:], resistances[-6:]  # Máximo 6 niveles cada uno
+
+    def _clean_levels(self, levels, threshold=0.005):
+        """Limpiar niveles cercanos"""
+        if not levels:
+            return []
+        
+        levels.sort()
+        cleaned = [levels[0]]
+        
+        for level in levels[1:]:
+            if abs(level - cleaned[-1]) / cleaned[-1] > threshold:
+                cleaned.append(level)
+        
+        return cleaned
+
     def calculate_ema(self, prices, period):
-        """Calcular EMA manualmente con validación"""
         if len(prices) == 0 or period <= 0:
             return np.zeros_like(prices)
             
@@ -467,7 +371,6 @@ class TradingIndicator:
         return ema
 
     def calculate_sma(self, prices, period):
-        """Calcular SMA manualmente con validación"""
         if len(prices) == 0 or period <= 0:
             return np.zeros_like(prices)
             
@@ -481,7 +384,6 @@ class TradingIndicator:
         return sma
 
     def calculate_bollinger_bands(self, prices, period=20, multiplier=2):
-        """Calcular Bandas de Bollinger manualmente"""
         if len(prices) < period:
             return np.zeros_like(prices), np.zeros_like(prices), np.zeros_like(prices)
         
@@ -501,7 +403,6 @@ class TradingIndicator:
         return upper, sma, lower
 
     def calculate_rsi(self, prices, period=14):
-        """Calcular RSI tradicional manualmente"""
         if len(prices) < period + 1:
             return np.zeros_like(prices)
         
@@ -530,7 +431,6 @@ class TradingIndicator:
         return rsi
 
     def calculate_macd(self, prices, fast=12, slow=26, signal=9):
-        """Calcular MACD manualmente"""
         if len(prices) < slow:
             return np.zeros_like(prices), np.zeros_like(prices), np.zeros_like(prices)
         
@@ -544,7 +444,6 @@ class TradingIndicator:
         return macd_line, signal_line, histogram
 
     def calculate_trend_strength_maverick(self, close, length=20, mult=2.0):
-        """Calcular Fuerza de Tendencia Maverick"""
         try:
             n = len(close)
             
@@ -625,13 +524,11 @@ class TradingIndicator:
                 'colors': ['gray'] * n
             }
 
-    def check_bollinger_conditions(self, df, interval, signal_type):
-        """Verificar condiciones de Bandas de Bollinger"""
+    def check_bollinger_conditions_corrected(self, df, interval, signal_type):
         try:
             close = df['close'].values
             volume = df['volume'].values
             
-            # Calcular Bandas de Bollinger
             bb_upper, bb_middle, bb_lower = self.calculate_bollinger_bands(close)
             
             current_idx = -1
@@ -639,24 +536,19 @@ class TradingIndicator:
             current_volume = volume[current_idx]
             avg_volume = np.mean(volume[-20:])
             
-            # Condiciones para LONG
             if signal_type == 'LONG':
-                # Precio toca o está cerca de la banda inferior
                 touch_lower = current_price <= bb_lower[current_idx] * 1.02
-                # Precio rompe la banda media hacia arriba
-                break_middle = current_price > bb_middle[current_idx]
-                # Precio rebota desde la banda inferior
+                break_middle = (current_price > bb_middle[current_idx] and 
+                              current_volume > avg_volume * 1.1)
                 bounce_lower = (current_price > bb_lower[current_idx] and 
                                close[current_idx-1] <= bb_lower[current_idx-1] * 1.01)
                 
                 return touch_lower or break_middle or bounce_lower
                 
-            else:  # SHORT
-                # Precio toca o está cerca de la banda superior
+            else:
                 touch_upper = current_price >= bb_upper[current_idx] * 0.98
-                # Precio rompe la banda media hacia abajo
-                break_middle = current_price < bb_middle[current_idx]
-                # Precio rechaza la banda superior
+                break_middle = (current_price < bb_middle[current_idx] and 
+                              current_volume > avg_volume * 1.1)
                 rejection_upper = (current_price < bb_upper[current_idx] and 
                                  close[current_idx-1] >= bb_upper[current_idx-1] * 0.99)
                 
@@ -667,9 +559,7 @@ class TradingIndicator:
             return False
 
     def check_multi_timeframe_trend(self, symbol, timeframe):
-        """Verificar tendencia en múltiples temporalidades"""
         try:
-            # Para temporalidades 12h, 1D, 1W no aplica Multi-Timeframe
             if timeframe in ['12h', '1D', '1W']:
                 return {'mayor': 'NEUTRAL', 'media': 'NEUTRAL', 'menor': 'NEUTRAL'}
                 
@@ -714,9 +604,7 @@ class TradingIndicator:
             return {'mayor': 'NEUTRAL', 'media': 'NEUTRAL', 'menor': 'NEUTRAL'}
 
     def check_multi_timeframe_obligatory(self, symbol, interval, signal_type):
-        """Verificar condiciones multi-timeframe obligatorias"""
         try:
-            # Para temporalidades 12h, 1D, 1W no es obligatorio Multi-Timeframe
             if interval in ['12h', '1D', '1W']:
                 return True
                 
@@ -727,11 +615,9 @@ class TradingIndicator:
             tf_analysis = self.check_multi_timeframe_trend(symbol, interval)
             
             if signal_type == 'LONG':
-                # TF Mayor: Alcista o Neutral
                 mayor_ok = tf_analysis.get('mayor', 'NEUTRAL') in ['BULLISH', 'NEUTRAL']
-                # TF Medio: Alcista
                 media_ok = tf_analysis.get('media', 'NEUTRAL') == 'BULLISH'
-                # TF Menor: Fuerza Maverick Alcista sin zona no operar
+                
                 menor_df = self.get_kucoin_data(symbol, hierarchy['menor'], 30)
                 if menor_df is not None and len(menor_df) > 10:
                     menor_trend = self.calculate_trend_strength_maverick(menor_df['close'].values)
@@ -744,11 +630,9 @@ class TradingIndicator:
                 return mayor_ok and media_ok and menor_ok and menor_no_trade
                 
             elif signal_type == 'SHORT':
-                # TF Mayor: Bajista o Neutral
                 mayor_ok = tf_analysis.get('mayor', 'NEUTRAL') in ['BEARISH', 'NEUTRAL']
-                # TF Medio: Bajista
                 media_ok = tf_analysis.get('media', 'NEUTRAL') == 'BEARISH'
-                # TF Menor: Fuerza Maverick Bajista sin zona no operar
+                
                 menor_df = self.get_kucoin_data(symbol, hierarchy['menor'], 30)
                 if menor_df is not None and len(menor_df) > 10:
                     menor_trend = self.calculate_trend_strength_maverick(menor_df['close'].values)
@@ -768,7 +652,6 @@ class TradingIndicator:
 
     def calculate_whale_signals_improved(self, df, sensitivity=1.7, min_volume_multiplier=1.5, 
                                        support_resistance_lookback=50, signal_threshold=25):
-        """Implementación MEJORADA del indicador de ballenas"""
         try:
             close = df['close'].values
             low = df['low'].values
@@ -827,7 +710,8 @@ class TradingIndicator:
                 'confirmed_buy': confirmed_buy.tolist(),
                 'confirmed_sell': confirmed_sell.tolist(),
                 'support': current_support.tolist(),
-                'resistance': current_resistance.tolist()
+                'resistance': current_resistance.tolist(),
+                'volume_anomaly': (volume > np.mean(volume) * min_volume_multiplier).tolist()
             }
             
         except Exception as e:
@@ -839,11 +723,11 @@ class TradingIndicator:
                 'confirmed_buy': [False] * n,
                 'confirmed_sell': [False] * n,
                 'support': df['low'].values.tolist(),
-                'resistance': df['high'].values.tolist()
+                'resistance': df['high'].values.tolist(),
+                'volume_anomaly': [False] * n
             }
 
     def calculate_rsi_maverick(self, close, length=20, bb_multiplier=2.0):
-        """Implementación del RSI Modificado Maverick"""
         try:
             n = len(close)
             
@@ -866,179 +750,82 @@ class TradingIndicator:
             print(f"Error en calculate_rsi_maverick: {e}")
             return [0.5] * len(close)
 
-    def detect_divergence(self, price, indicator, lookback=14, confirmation_period=4):
-        """Detectar divergencias con confirmación de 7 velas"""
+    def detect_divergence(self, price, indicator, lookback=14):
         n = len(price)
         bullish_div = np.zeros(n, dtype=bool)
         bearish_div = np.zeros(n, dtype=bool)
         
-        for i in range(lookback, n-confirmation_period):
-            price_window = price[i-lookback:i+confirmation_period]
-            indicator_window = indicator[i-lookback:i+confirmation_period]
+        for i in range(lookback, n-1):
+            price_window = price[i-lookback:i+1]
+            indicator_window = indicator[i-lookback:i+1]
             
-            # Buscar divergencia alcista
-            price_lows = []
-            indicator_lows = []
+            if (price[i] < np.min(price_window[:-1]) and 
+                indicator[i] > np.min(indicator_window[:-1])):
+                bullish_div[i] = True
             
-            for j in range(confirmation_period):
-                current_idx = i + j
-                if current_idx >= n:
-                    break
-                    
-                # Buscar mínimo en precio
-                price_min_idx = np.argmin(price_window[:lookback])
-                indicator_value = indicator_window[price_min_idx]
-                
-                if (price[current_idx] < price_window[price_min_idx] and 
-                    indicator[current_idx] > indicator_value):
-                    bullish_div[current_idx] = True
-                    break
-            
-            # Buscar divergencia bajista
-            for j in range(confirmation_period):
-                current_idx = i + j
-                if current_idx >= n:
-                    break
-                    
-                # Buscar máximo en precio
-                price_max_idx = np.argmax(price_window[:lookback])
-                indicator_value = indicator_window[price_max_idx]
-                
-                if (price[current_idx] > price_window[price_max_idx] and 
-                    indicator[current_idx] < indicator_value):
-                    bearish_div[current_idx] = True
-                    break
-        
-        # Mantener señal activa por 7 velas
-        for i in range(n):
-            if i >= 7:
-                if np.any(bullish_div[i-7:i]):
-                    bullish_div[i] = True
-                if np.any(bearish_div[i-7:i]):
-                    bearish_div[i] = True
+            if (price[i] > np.max(price_window[:-1]) and 
+                indicator[i] < np.max(indicator_window[:-1])):
+                bearish_div[i] = True
         
         return bullish_div.tolist(), bearish_div.tolist()
 
+    def check_divergence_with_cache(self, symbol, interval, indicator_type, current_idx):
+        """Verificar divergencia con cache de 7 velas"""
+        cache_key = f"{symbol}_{interval}_{indicator_type}"
+        
+        if cache_key in self.divergence_cache:
+            cache_data, timestamp = self.divergence_cache[cache_key]
+            # Verificar si la señal sigue vigente (7 velas)
+            if current_idx <= cache_data['idx'] + 7:
+                return cache_data['type']
+        
+        return None
+
     def check_breakout(self, high, low, close, supports, resistances):
-        """Detectar rupturas de soportes/resistencias"""
         n = len(close)
         breakout_up = np.zeros(n, dtype=bool)
         breakout_down = np.zeros(n, dtype=bool)
         
         for i in range(1, n):
+            # Ruptura de resistencia
             for resistance in resistances:
                 if close[i] > resistance and high[i] > high[i-1]:
                     breakout_up[i] = True
                     break
             
+            # Ruptura de soporte
             for support in supports:
                 if close[i] < support and low[i] < low[i-1]:
                     breakout_down[i] = True
                     break
         
-        # Mantener señal activa por 1 vela
-        for i in range(1, n):
-            if breakout_up[i-1]:
-                breakout_up[i] = True
-            if breakout_down[i-1]:
-                breakout_down[i] = True
-        
         return breakout_up.tolist(), breakout_down.tolist()
 
     def check_di_crossover(self, plus_di, minus_di, lookback=3):
-        """Detectar cruces de +DI y -DI con confirmación de 1 vela"""
         n = len(plus_di)
         di_cross_bullish = np.zeros(n, dtype=bool)
         di_cross_bearish = np.zeros(n, dtype=bool)
+        di_trend_bullish = np.zeros(n, dtype=bool)
+        di_trend_bearish = np.zeros(n, dtype=bool)
         
         for i in range(lookback, n):
-            # Cruce alcista: +DI cruza por encima de -DI
             if (plus_di[i] > minus_di[i] and 
                 plus_di[i-1] <= minus_di[i-1]):
                 di_cross_bullish[i] = True
             
-            # Cruce bajista: -DI cruza por encima de +DI
             if (minus_di[i] > plus_di[i] and 
                 minus_di[i-1] <= plus_di[i-1]):
                 di_cross_bearish[i] = True
-        
-        # Mantener señal activa por 1 vela
-        for i in range(1, n):
-            if di_cross_bullish[i-1]:
-                di_cross_bullish[i] = True
-            if di_cross_bearish[i-1]:
-                di_cross_bearish[i] = True
-        
-        return di_cross_bullish.tolist(), di_cross_bearish.tolist()
-
-    def check_ma_crossover(self, ma_short, ma_long):
-        """Detectar cruce de medias móviles con confirmación de 1 vela"""
-        n = len(ma_short)
-        ma_cross_bullish = np.zeros(n, dtype=bool)
-        ma_cross_bearish = np.zeros(n, dtype=bool)
-        
-        for i in range(1, n):
-            # Cruce alcista: MA corta cruza por encima de MA larga
-            if (ma_short[i] > ma_long[i] and 
-                ma_short[i-1] <= ma_long[i-1]):
-                ma_cross_bullish[i] = True
             
-            # Cruce bajista: MA corta cruza por debajo de MA larga
-            if (ma_short[i] < ma_long[i] and 
-                ma_short[i-1] >= ma_long[i-1]):
-                ma_cross_bearish[i] = True
-        
-        # Mantener señal activa por 1 vela
-        for i in range(1, n):
-            if ma_cross_bullish[i-1]:
-                ma_cross_bullish[i] = True
-            if ma_cross_bearish[i-1]:
-                ma_cross_bearish[i] = True
-        
-        return ma_cross_bullish.tolist(), ma_cross_bearish.tolist()
-
-    def check_macd_crossover(self, macd, signal):
-        """Detectar cruce de MACD con confirmación de 1 vela"""
-        n = len(macd)
-        macd_cross_bullish = np.zeros(n, dtype=bool)
-        macd_cross_bearish = np.zeros(n, dtype=bool)
-        
-        for i in range(1, n):
-            # Cruce alcista: MACD cruza por encima de señal
-            if (macd[i] > signal[i] and 
-                macd[i-1] <= signal[i-1]):
-                macd_cross_bullish[i] = True
+            if plus_di[i] > np.mean(plus_di[i-lookback:i]):
+                di_trend_bullish[i] = True
             
-            # Cruce bajista: MACD cruza por debajo de señal
-            if (macd[i] < signal[i] and 
-                macd[i-1] >= signal[i-1]):
-                macd_cross_bearish[i] = True
+            if minus_di[i] > np.mean(minus_di[i-lookback:i]):
+                di_trend_bearish[i] = True
         
-        # Mantener señal activa por 1 vela
-        for i in range(1, n):
-            if macd_cross_bullish[i-1]:
-                macd_cross_bullish[i] = True
-            if macd_cross_bearish[i-1]:
-                macd_cross_bearish[i] = True
-        
-        return macd_cross_bullish.tolist(), macd_cross_bearish.tolist()
-
-    def check_adx_slope(self, adx, period=3):
-        """Verificar pendiente positiva del ADX"""
-        n = len(adx)
-        adx_slope_positive = np.zeros(n, dtype=bool)
-        
-        for i in range(period, n):
-            if i >= period:
-                current_adx = adx[i]
-                previous_adx = np.mean(adx[i-period:i])
-                if current_adx > previous_adx and current_adx > 25:
-                    adx_slope_positive[i] = True
-        
-        return adx_slope_positive.tolist()
+        return di_cross_bullish.tolist(), di_cross_bearish.tolist(), di_trend_bullish.tolist(), di_trend_bearish.tolist()
 
     def calculate_adx(self, high, low, close, period=14):
-        """Calcular ADX, +DI, -DI manualmente"""
         n = len(high)
         if n < period:
             return np.zeros(n), np.zeros(n), np.zeros(n)
@@ -1085,175 +872,224 @@ class TradingIndicator:
         return adx, plus_di, minus_di
 
     def detect_chart_patterns(self, high, low, close, lookback=50):
-        """Detectar patrones de chartismo con confirmación de 7 velas"""
         n = len(close)
         patterns = {
             'head_shoulders': np.zeros(n, dtype=bool),
             'double_top': np.zeros(n, dtype=bool),
             'double_bottom': np.zeros(n, dtype=bool),
-            'triple_top': np.zeros(n, dtype=bool),
-            'triple_bottom': np.zeros(n, dtype=bool),
             'bullish_flag': np.zeros(n, dtype=bool),
-            'bearish_flag': np.zeros(n, dtype=bool)
+            'bearish_flag': np.zeros(n, dtype=bool),
+            'rising_wedge': np.zeros(n, dtype=bool),
+            'falling_wedge': np.zeros(n, dtype=bool)
         }
         
         for i in range(lookback, n-7):
             window_high = high[i-lookback:i+1]
             window_low = low[i-lookback:i+1]
+            window_close = close[i-lookback:i+1]
             
-            # Doble Techo
-            peaks = []
-            for j in range(1, len(window_high)-1):
-                if window_high[j] > window_high[j-1] and window_high[j] > window_high[j+1]:
-                    peaks.append((j, window_high[j]))
+            if len(window_high) >= 20:
+                max_idx = np.argmax(window_high)
+                if (max_idx > 5 and max_idx < len(window_high)-5 and
+                    window_high[max_idx-3] < window_high[max_idx] and
+                    window_high[max_idx+3] < window_high[max_idx]):
+                    patterns['head_shoulders'][i] = True
             
-            if len(peaks) >= 2:
-                last_two_peaks = sorted(peaks, key=lambda x: x[0])[-2:]
-                if abs(last_two_peaks[0][1] - last_two_peaks[1][1]) / last_two_peaks[0][1] < 0.02:
-                    patterns['double_top'][i] = True
-            
-            # Doble Fondo
-            troughs = []
-            for j in range(1, len(window_low)-1):
-                if window_low[j] < window_low[j-1] and window_low[j] < window_low[j+1]:
-                    troughs.append((j, window_low[j]))
-            
-            if len(troughs) >= 2:
-                last_two_troughs = sorted(troughs, key=lambda x: x[0])[-2:]
-                if abs(last_two_troughs[0][1] - last_two_troughs[1][1]) / last_two_troughs[0][1] < 0.02:
-                    patterns['double_bottom'][i] = True
-            
-            # Bandera Alcista (simplificada)
-            if i > 20:
-                prev_high = np.max(high[i-20:i-10])
-                prev_low = np.min(low[i-20:i-10])
-                current_range = np.max(high[i-10:i+1]) - np.min(low[i-10:i+1])
+            if len(window_high) >= 15:
+                peaks = []
+                for j in range(1, len(window_high)-1):
+                    if window_high[j] > window_high[j-1] and window_high[j] > window_high[j+1]:
+                        peaks.append((j, window_high[j]))
                 
-                if (prev_high - prev_low) > current_range * 3:
-                    patterns['bullish_flag'][i] = True
+                if len(peaks) >= 2:
+                    last_two_peaks = sorted(peaks, key=lambda x: x[0])[-2:]
+                    if abs(last_two_peaks[0][1] - last_two_peaks[1][1]) / last_two_peaks[0][1] < 0.02:
+                        patterns['double_top'][i] = True
             
-            # Bandera Bajista (simplificada)
-            if i > 20:
-                prev_high = np.max(high[i-20:i-10])
-                prev_low = np.min(low[i-20:i-10])
-                current_range = np.max(high[i-10:i+1]) - np.min(low[i-10:i+1])
+            if len(window_low) >= 15:
+                troughs = []
+                for j in range(1, len(window_low)-1):
+                    if window_low[j] < window_low[j-1] and window_low[j] < window_low[j+1]:
+                        troughs.append((j, window_low[j]))
                 
-                if (prev_high - prev_low) > current_range * 3:
-                    patterns['bearish_flag'][i] = True
-        
-        # Mantener señal activa por 7 velas
-        for pattern_name in patterns:
-            pattern_array = patterns[pattern_name]
-            for i in range(n):
-                if i >= 7:
-                    if np.any(pattern_array[i-7:i]):
-                        pattern_array[i] = True
+                if len(troughs) >= 2:
+                    last_two_troughs = sorted(troughs, key=lambda x: x[0])[-2:]
+                    if abs(last_two_troughs[0][1] - last_two_troughs[1][1]) / last_two_troughs[0][1] < 0.02:
+                        patterns['double_bottom'][i] = True
+            
+            if len(window_high) >= 10:
+                highs_slope = np.polyfit(range(5), window_high[-5:], 1)[0]
+                lows_slope = np.polyfit(range(5), window_low[-5:], 1)[0]
+                
+                if highs_slope > 0 and lows_slope > 0 and highs_slope > lows_slope:
+                    patterns['rising_wedge'][i] = True
+                elif highs_slope < 0 and lows_slope < 0 and highs_slope < lows_slope:
+                    patterns['falling_wedge'][i] = True
         
         return patterns
 
-    def calculate_volume_anomaly_improved(self, volume, close, period=20, std_multiplier=2):
-        """Calcular anomalías de volumen mejoradas (compra/venta)"""
+    def calculate_volume_anomaly_improved(self, volume, close, period=21, std_multiplier=2.5):
+        """Nueva estrategia de volumen: barras verdes para compra, rojas para venta"""
         try:
             n = len(volume)
-            volume_anomaly_buy = np.zeros(n, dtype=bool)
-            volume_anomaly_sell = np.zeros(n, dtype=bool)
+            volume_anomaly = np.zeros(n, dtype=bool)
             volume_clusters = np.zeros(n, dtype=bool)
             volume_ratio = np.zeros(n)
-            volume_ma_21 = self.calculate_sma(volume, 21)
+            volume_colors = ['gray'] * n
+            volume_ma = np.zeros(n)
             
             for i in range(period, n):
-                # Media móvil de volumen
-                ema_volume = self.calculate_ema(volume[:i+1], period)
-                current_ema = ema_volume[i] if i < len(ema_volume) else volume[i]
+                window_volume = volume[max(0, i-period+1):i+1]
+                volume_ma[i] = np.mean(window_volume)
                 
-                # Desviación estándar
-                window = volume[max(0, i-period+1):i+1]
-                std_volume = np.std(window) if len(window) > 1 else 0
-                
-                # Ratio volumen actual vs EMA
-                if current_ema > 0:
-                    volume_ratio[i] = volume[i] / current_ema
+                if volume_ma[i] > 0:
+                    volume_ratio[i] = volume[i] / volume_ma[i]
                 else:
                     volume_ratio[i] = 1
                 
-                # Determinar si es compra o venta basado en precio de cierre
                 if i > 0:
-                    price_change = (close[i] - close[i-1]) / close[i-1] * 100
-                    
-                    # Anomalía de COMPRA: volumen alto + precio subiendo
-                    if (volume_ratio[i] > 1 + (std_multiplier * (std_volume / current_ema if current_ema > 0 else 0)) and
-                        price_change > 0.5):
-                        volume_anomaly_buy[i] = True
-                    
-                    # Anomalía de VENTA: volumen alto + precio bajando
-                    elif (volume_ratio[i] > 1 + (std_multiplier * (std_volume / current_ema if current_ema > 0 else 0)) and
-                          price_change < -0.5):
-                        volume_anomaly_sell[i] = True
+                    if close[i] > close[i-1]:
+                        volume_colors[i] = 'green'
+                    else:
+                        volume_colors[i] = 'red'
                 
-                # Detectar clusters (múltiples anomalías en 5-10 periodos)
+                if volume_ratio[i] > std_multiplier:
+                    volume_anomaly[i] = True
+                
                 if i >= 10:
-                    recent_buy_anomalies = volume_anomaly_buy[max(0, i-9):i+1]
-                    recent_sell_anomalies = volume_anomaly_sell[max(0, i-9):i+1]
-                    
-                    if np.sum(recent_buy_anomalies) >= 3 or np.sum(recent_sell_anomalies) >= 3:
+                    recent_anomalies = volume_anomaly[max(0, i-9):i+1]
+                    if np.sum(recent_anomalies) >= 3:
                         volume_clusters[i] = True
             
             return {
-                'volume_anomaly_buy': volume_anomaly_buy.tolist(),
-                'volume_anomaly_sell': volume_anomaly_sell.tolist(),
+                'volume_anomaly': volume_anomaly.tolist(),
                 'volume_clusters': volume_clusters.tolist(),
                 'volume_ratio': volume_ratio.tolist(),
-                'volume_ma_21': volume_ma_21.tolist(),
-                'volume_ema': ema_volume.tolist() if 'ema_volume' in locals() else [0] * n
+                'volume_ma': volume_ma.tolist(),
+                'volume_colors': volume_colors
             }
             
         except Exception as e:
             print(f"Error en calculate_volume_anomaly_improved: {e}")
             n = len(volume)
             return {
-                'volume_anomaly_buy': [False] * n,
-                'volume_anomaly_sell': [False] * n,
+                'volume_anomaly': [False] * n,
                 'volume_clusters': [False] * n,
                 'volume_ratio': [1] * n,
-                'volume_ma_21': [0] * n,
-                'volume_ema': [0] * n
+                'volume_ma': [0] * n,
+                'volume_colors': ['gray'] * n
             }
 
-    def get_complementary_indicator_value(self, indicator_key, symbol, interval, current_idx):
-        """Obtener valor de indicador complementario con cache de 7 velas"""
-        cache_key = f"{symbol}_{interval}_{indicator_key}"
-        
-        if cache_key in self.complementary_cache[indicator_key]:
-            cached_data, timestamp = self.complementary_cache[indicator_key][cache_key]
-            if (datetime.now() - timestamp).seconds < 300:  # 5 minutos de cache
-                return cached_data.get(current_idx, False)
-        
-        # Si no hay cache o expiró, retornar False
-        return False
+    def check_volume_ema_ftm_signal(self, symbol, interval):
+        """Nueva estrategia: Desplome por Volumen + EMA21 con Filtros FTMaverick/Multi-Timeframe"""
+        try:
+            df = self.get_kucoin_data(symbol, interval, 100)
+            if df is None or len(df) < 50:
+                return None
+            
+            close = df['close'].values
+            volume = df['volume'].values
+            
+            # Calcular EMA21 de precio
+            ema_21 = self.calculate_ema(close, 21)
+            current_ema = ema_21[-1]
+            current_close = close[-1]
+            
+            # Calcular Volume MA21
+            volume_ma_21 = self.calculate_sma(volume, 21)
+            current_volume_ma = volume_ma_21[-1]
+            current_volume = volume[-1]
+            
+            # Condición 1: Volumen > 2.5x MA21
+            volume_ratio = current_volume / current_volume_ma if current_volume_ma > 0 else 1
+            if volume_ratio < 2.5:
+                return None
+            
+            # Condición 2: Precio vs EMA21
+            signal_type = None
+            if current_close > current_ema:
+                signal_type = 'LONG'
+            elif current_close < current_ema:
+                signal_type = 'SHORT'
+            else:
+                return None
+            
+            # Condición 3: FTMaverick - Fuera de zona NO OPERAR
+            ftm_current = self.calculate_trend_strength_maverick(close)
+            if ftm_current['no_trade_zones'][-1]:
+                return None
+            
+            # Condición 4: Multi-Timeframe
+            if interval not in ['12h', '1D', '1W']:
+                hierarchy = TIMEFRAME_HIERARCHY.get(interval, {})
+                
+                # Timeframe Mayor
+                mayor_df = self.get_kucoin_data(symbol, hierarchy.get('mayor', '4h'), 50)
+                if mayor_df is not None and len(mayor_df) > 20:
+                    mayor_trend = self.check_multi_timeframe_trend(symbol, hierarchy['mayor'])
+                    mayor_tendencia = mayor_trend.get('mayor', 'NEUTRAL')
+                else:
+                    mayor_tendencia = 'NEUTRAL'
+                
+                # Timeframe Menor
+                menor_df = self.get_kucoin_data(symbol, hierarchy.get('menor', '30m'), 30)
+                if menor_df is not None and len(menor_df) > 10:
+                    menor_trend = self.calculate_trend_strength_maverick(menor_df['close'].values)
+                    menor_tendencia = menor_trend['strength_signals'][-1]
+                else:
+                    menor_tendencia = 'NEUTRAL'
+                
+                if signal_type == 'LONG':
+                    if not (mayor_tendencia in ['BULLISH', 'NEUTRAL'] and 
+                           menor_tendencia in ['STRONG_UP', 'WEAK_UP']):
+                        return None
+                else:  # SHORT
+                    if not (mayor_tendencia in ['BEARISH', 'NEUTRAL'] and 
+                           menor_tendencia in ['STRONG_DOWN', 'WEAK_DOWN']):
+                        return None
+            
+            # Todas las condiciones cumplidas
+            return {
+                'symbol': symbol,
+                'interval': interval,
+                'signal': signal_type,
+                'close_price': float(current_close),
+                'ema_21': float(current_ema),
+                'volume_ratio': float(volume_ratio),
+                'volume_ma_21': float(current_volume_ma),
+                'timestamp': self.get_bolivia_time().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            
+        except Exception as e:
+            print(f"Error en check_volume_ema_ftm_signal para {symbol} {interval}: {e}")
+            return None
 
-    def evaluate_signal_conditions_optimized(self, data, current_idx, interval, adx_threshold=25):
-        """Evaluar condiciones de señal con PESOS OPTIMIZADOS"""
+    def evaluate_signal_conditions_corrected(self, data, current_idx, interval, adx_threshold=25):
+        """Evaluar condiciones de señal con PESOS CORREGIDOS según temporalidad"""
+        
         # Definir pesos según temporalidad
         if interval in ['15m', '30m', '1h', '2h', '4h', '8h']:
             weights = {
                 'long': {
-                    'multi_timeframe': 30,  # Obligatorio
+                    'multi_timeframe': 30,  # Obligatorio para estas TF
                     'trend_strength': 25,   # Obligatorio
+                    'whale_signal': 0,      # Prohibido
                     'bollinger_bands': 8,
-                    'adx_dmi': 10,
-                    'ma_cross': 10,
+                    'adx_dmi': 5,           # ADX con pendiente positiva
+                    'ma_cross': 10,         # Cruce MA9 y MA21 (solo el cruce)
                     'rsi_traditional_divergence': 5,
                     'rsi_maverick_divergence': 8,
-                    'macd': 10,
+                    'macd': 10,             # Cruce MACD (solo el cruce)
                     'chart_pattern': 5,
                     'breakout': 5,
-                    'volume_anomaly': 7
+                    'volume_anomaly': 7     # Volumen anómalo y clúster >=1
                 },
                 'short': {
-                    'multi_timeframe': 30,  # Obligatorio
-                    'trend_strength': 25,   # Obligatorio
+                    'multi_timeframe': 30,
+                    'trend_strength': 25,
+                    'whale_signal': 0,
                     'bollinger_bands': 8,
-                    'adx_dmi': 10,
+                    'adx_dmi': 5,
                     'ma_cross': 10,
                     'rsi_traditional_divergence': 5,
                     'rsi_maverick_divergence': 8,
@@ -1266,10 +1102,11 @@ class TradingIndicator:
         elif interval in ['12h', '1D']:
             weights = {
                 'long': {
-                    'whale_signal': 30,     # Obligatorio
+                    'multi_timeframe': 0,   # Prohibido
                     'trend_strength': 25,   # Obligatorio
+                    'whale_signal': 30,     # Obligatorio para 12h y 1D
                     'bollinger_bands': 8,
-                    'adx_dmi': 10,
+                    'adx_dmi': 5,
                     'ma_cross': 10,
                     'rsi_traditional_divergence': 5,
                     'rsi_maverick_divergence': 8,
@@ -1279,10 +1116,11 @@ class TradingIndicator:
                     'volume_anomaly': 7
                 },
                 'short': {
-                    'whale_signal': 30,     # Obligatorio
-                    'trend_strength': 25,   # Obligatorio
+                    'multi_timeframe': 0,
+                    'trend_strength': 25,
+                    'whale_signal': 30,
                     'bollinger_bands': 8,
-                    'adx_dmi': 10,
+                    'adx_dmi': 5,
                     'ma_cross': 10,
                     'rsi_traditional_divergence': 5,
                     'rsi_maverick_divergence': 8,
@@ -1295,9 +1133,11 @@ class TradingIndicator:
         else:  # 1W
             weights = {
                 'long': {
-                    'trend_strength': 55,   # Obligatorio
+                    'multi_timeframe': 0,   # Prohibido
+                    'trend_strength': 55,   # Obligatorio con 55%
+                    'whale_signal': 0,      # Prohibido
                     'bollinger_bands': 8,
-                    'adx_dmi': 10,
+                    'adx_dmi': 5,
                     'ma_cross': 10,
                     'rsi_traditional_divergence': 5,
                     'rsi_maverick_divergence': 8,
@@ -1307,9 +1147,11 @@ class TradingIndicator:
                     'volume_anomaly': 7
                 },
                 'short': {
-                    'trend_strength': 55,   # Obligatorio
+                    'multi_timeframe': 0,
+                    'trend_strength': 55,
+                    'whale_signal': 0,
                     'bollinger_bands': 8,
-                    'adx_dmi': 10,
+                    'adx_dmi': 5,
                     'ma_cross': 10,
                     'rsi_traditional_divergence': 5,
                     'rsi_maverick_divergence': 8,
@@ -1346,147 +1188,207 @@ class TradingIndicator:
         ma_21 = data['ma_21'][current_idx] if current_idx < len(data['ma_21']) else 0
         ma_50 = data['ma_50'][current_idx] if current_idx < len(data['ma_50']) else 0
         
+        # Verificar condiciones con cache para indicadores de 1 vela
+        symbol = data.get('symbol', '')
+        interval = data.get('interval', '')
+        
         # Condiciones LONG
         if interval in ['15m', '30m', '1h', '2h', '4h', '8h']:
             conditions['long']['multi_timeframe']['value'] = data.get('multi_timeframe_long', False)
         elif interval in ['12h', '1D']:
             conditions['long']['whale_signal']['value'] = (
-                data['whale_pump'][current_idx] > 20 and
-                data['confirmed_buy'][current_idx]
+                current_idx < len(data['confirmed_buy']) and 
+                data['confirmed_buy'][current_idx] and
+                current_idx < len(data['whale_pump']) and
+                data['whale_pump'][current_idx] > 20
             )
         
         conditions['long']['trend_strength']['value'] = (
+            current_idx < len(data['trend_strength_signals']) and
             data['trend_strength_signals'][current_idx] in ['STRONG_UP', 'WEAK_UP'] and
+            current_idx < len(data['no_trade_zones']) and
             not data['no_trade_zones'][current_idx]
         )
         
         conditions['long']['bollinger_bands']['value'] = data.get('bollinger_conditions_long', False)
         
-        # Cruce DMI (+DI > -DI)
-        conditions['long']['adx_dmi']['value'] = (
-            data['adx'][current_idx] > adx_threshold and
-            data['plus_di'][current_idx] > data['minus_di'][current_idx] and
-            data['di_cross_bullish'][current_idx]
-        )
+        # ADX con pendiente positiva (no solo > threshold)
+        if current_idx > 0 and current_idx < len(data['adx']):
+            adx_current = data['adx'][current_idx]
+            adx_prev = data['adx'][current_idx-1]
+            conditions['long']['adx_dmi']['value'] = (
+                adx_current > adx_threshold and
+                adx_current > adx_prev
+            )
         
-        # Cruce Medias Móviles
-        conditions['long']['ma_cross']['value'] = data['ma_cross_bullish'][current_idx]
+        # Cruce de medias (solo el cruce)
+        if current_idx > 0:
+            ma_9_prev = data['ma_9'][current_idx-1] if current_idx-1 < len(data['ma_9']) else 0
+            ma_21_prev = data['ma_21'][current_idx-1] if current_idx-1 < len(data['ma_21']) else 0
+            conditions['long']['ma_cross']['value'] = (
+                ma_9 > ma_21 and
+                ma_9_prev <= ma_21_prev
+            )
         
-        # Divergencias RSI
-        conditions['long']['rsi_traditional_divergence']['value'] = (
-            current_idx < len(data['rsi_bullish_divergence']) and 
-            data['rsi_bullish_divergence'][current_idx]
-        )
+        # Divergencia RSI Maverick (7 velas)
+        if current_idx < len(data['rsi_maverick_bullish_divergence']):
+            divergence_maverick = self.check_divergence_with_cache(
+                symbol, interval, 'rsi_maverick', current_idx
+            )
+            if divergence_maverick == 'BULLISH' or data['rsi_maverick_bullish_divergence'][current_idx]:
+                conditions['long']['rsi_maverick_divergence']['value'] = True
         
-        conditions['long']['rsi_maverick_divergence']['value'] = (
-            current_idx < len(data['rsi_maverick_bullish_divergence']) and 
-            data['rsi_maverick_bullish_divergence'][current_idx]
-        )
+        # Divergencia RSI Tradicional (7 velas)
+        if current_idx < len(data['rsi_bullish_divergence']):
+            divergence_traditional = self.check_divergence_with_cache(
+                symbol, interval, 'rsi_traditional', current_idx
+            )
+            if divergence_traditional == 'BULLISH' or data['rsi_bullish_divergence'][current_idx]:
+                conditions['long']['rsi_traditional_divergence']['value'] = True
         
-        # Cruce MACD
-        conditions['long']['macd']['value'] = data['macd_cross_bullish'][current_idx]
+        # Cruce MACD (solo el cruce)
+        if current_idx > 0 and current_idx < len(data['macd']) and current_idx < len(data['macd_signal']):
+            macd_current = data['macd'][current_idx]
+            macd_prev = data['macd'][current_idx-1]
+            signal_current = data['macd_signal'][current_idx]
+            signal_prev = data['macd_signal'][current_idx-1]
+            conditions['long']['macd']['value'] = (
+                macd_current > signal_current and
+                macd_prev <= signal_prev
+            )
         
-        # Patrones Chartistas
-        conditions['long']['chart_pattern']['value'] = (
-            data['chart_patterns']['double_bottom'][current_idx] or
-            data['chart_patterns']['bullish_flag'][current_idx] or
-            data['chart_patterns']['triple_bottom'][current_idx]
-        )
+        # Patrones chartistas (7 velas)
+        if (current_idx < len(data['chart_patterns']['double_bottom']) and 
+            data['chart_patterns']['double_bottom'][current_idx]):
+            conditions['long']['chart_pattern']['value'] = True
+            conditions['long']['chart_pattern']['description'] = 'Patrón Chartista: Doble fondo'
+        elif (current_idx < len(data['chart_patterns']['bullish_flag']) and 
+              data['chart_patterns']['bullish_flag'][current_idx]):
+            conditions['long']['chart_pattern']['value'] = True
+            conditions['long']['chart_pattern']['description'] = 'Patrón Chartista: Bandera alcista'
+        elif (current_idx < len(data['chart_patterns']['falling_wedge']) and 
+              data['chart_patterns']['falling_wedge'][current_idx]):
+            conditions['long']['chart_pattern']['value'] = True
+            conditions['long']['chart_pattern']['description'] = 'Patrón Chartista: Cuña descendente'
         
-        # Rupturas
-        conditions['long']['breakout']['value'] = (
-            current_idx < len(data['breakout_up']) and 
-            data['breakout_up'][current_idx]
-        )
+        # Rupturas (1 vela)
+        if current_idx < len(data['breakout_up']) and data['breakout_up'][current_idx]:
+            conditions['long']['breakout']['value'] = True
         
-        # Volumen Anómalo (compra)
-        conditions['long']['volume_anomaly']['value'] = (
-            current_idx < len(data['volume_anomaly_buy']) and 
-            data['volume_anomaly_buy'][current_idx]
-        )
+        # Volumen anómalo y clúster >=1
+        if (current_idx < len(data['volume_anomaly']) and 
+            current_idx < len(data['volume_clusters']) and
+            data['volume_anomaly'][current_idx] and
+            data['volume_clusters'][current_idx]):
+            conditions['long']['volume_anomaly']['value'] = True
         
-        # Condiciones SHORT
+        # Condiciones SHORT (simétricas)
         if interval in ['15m', '30m', '1h', '2h', '4h', '8h']:
             conditions['short']['multi_timeframe']['value'] = data.get('multi_timeframe_short', False)
         elif interval in ['12h', '1D']:
             conditions['short']['whale_signal']['value'] = (
-                data['whale_dump'][current_idx] > 20 and
-                data['confirmed_sell'][current_idx]
+                current_idx < len(data['confirmed_sell']) and 
+                data['confirmed_sell'][current_idx] and
+                current_idx < len(data['whale_dump']) and
+                data['whale_dump'][current_idx] > 20
             )
         
         conditions['short']['trend_strength']['value'] = (
+            current_idx < len(data['trend_strength_signals']) and
             data['trend_strength_signals'][current_idx] in ['STRONG_DOWN', 'WEAK_DOWN'] and
+            current_idx < len(data['no_trade_zones']) and
             not data['no_trade_zones'][current_idx]
         )
         
         conditions['short']['bollinger_bands']['value'] = data.get('bollinger_conditions_short', False)
         
-        # Cruce DMI (-DI > +DI)
-        conditions['short']['adx_dmi']['value'] = (
-            data['adx'][current_idx] > adx_threshold and
-            data['minus_di'][current_idx] > data['plus_di'][current_idx] and
-            data['di_cross_bearish'][current_idx]
-        )
+        if current_idx > 0 and current_idx < len(data['adx']):
+            adx_current = data['adx'][current_idx]
+            adx_prev = data['adx'][current_idx-1]
+            conditions['short']['adx_dmi']['value'] = (
+                adx_current > adx_threshold and
+                adx_current > adx_prev
+            )
         
-        # Cruce Medias Móviles
-        conditions['short']['ma_cross']['value'] = data['ma_cross_bearish'][current_idx]
+        if current_idx > 0:
+            ma_9_prev = data['ma_9'][current_idx-1] if current_idx-1 < len(data['ma_9']) else 0
+            ma_21_prev = data['ma_21'][current_idx-1] if current_idx-1 < len(data['ma_21']) else 0
+            conditions['short']['ma_cross']['value'] = (
+                ma_9 < ma_21 and
+                ma_9_prev >= ma_21_prev
+            )
         
-        # Divergencias RSI
-        conditions['short']['rsi_traditional_divergence']['value'] = (
-            current_idx < len(data['rsi_bearish_divergence']) and 
-            data['rsi_bearish_divergence'][current_idx]
-        )
+        if current_idx < len(data['rsi_maverick_bearish_divergence']):
+            divergence_maverick = self.check_divergence_with_cache(
+                symbol, interval, 'rsi_maverick', current_idx
+            )
+            if divergence_maverick == 'BEARISH' or data['rsi_maverick_bearish_divergence'][current_idx]:
+                conditions['short']['rsi_maverick_divergence']['value'] = True
         
-        conditions['short']['rsi_maverick_divergence']['value'] = (
-            current_idx < len(data['rsi_maverick_bearish_divergence']) and 
-            data['rsi_maverick_bearish_divergence'][current_idx]
-        )
+        if current_idx < len(data['rsi_bearish_divergence']):
+            divergence_traditional = self.check_divergence_with_cache(
+                symbol, interval, 'rsi_traditional', current_idx
+            )
+            if divergence_traditional == 'BEARISH' or data['rsi_bearish_divergence'][current_idx]:
+                conditions['short']['rsi_traditional_divergence']['value'] = True
         
-        # Cruce MACD
-        conditions['short']['macd']['value'] = data['macd_cross_bearish'][current_idx]
+        if current_idx > 0 and current_idx < len(data['macd']) and current_idx < len(data['macd_signal']):
+            macd_current = data['macd'][current_idx]
+            macd_prev = data['macd'][current_idx-1]
+            signal_current = data['macd_signal'][current_idx]
+            signal_prev = data['macd_signal'][current_idx-1]
+            conditions['short']['macd']['value'] = (
+                macd_current < signal_current and
+                macd_prev >= signal_prev
+            )
         
-        # Patrones Chartistas
-        conditions['short']['chart_pattern']['value'] = (
-            data['chart_patterns']['head_shoulders'][current_idx] or
-            data['chart_patterns']['double_top'][current_idx] or
-            data['chart_patterns']['triple_top'][current_idx] or
-            data['chart_patterns']['bearish_flag'][current_idx]
-        )
+        if (current_idx < len(data['chart_patterns']['double_top']) and 
+            data['chart_patterns']['double_top'][current_idx]):
+            conditions['short']['chart_pattern']['value'] = True
+            conditions['short']['chart_pattern']['description'] = 'Patrón Chartista: Doble techo'
+        elif (current_idx < len(data['chart_patterns']['head_shoulders']) and 
+              data['chart_patterns']['head_shoulders'][current_idx]):
+            conditions['short']['chart_pattern']['value'] = True
+            conditions['short']['chart_pattern']['description'] = 'Patrón Chartista: Hombro cabeza hombro'
+        elif (current_idx < len(data['chart_patterns']['bearish_flag']) and 
+              data['chart_patterns']['bearish_flag'][current_idx]):
+            conditions['short']['chart_pattern']['value'] = True
+            conditions['short']['chart_pattern']['description'] = 'Patrón Chartista: Bandera bajista'
+        elif (current_idx < len(data['chart_patterns']['rising_wedge']) and 
+              data['chart_patterns']['rising_wedge'][current_idx]):
+            conditions['short']['chart_pattern']['value'] = True
+            conditions['short']['chart_pattern']['description'] = 'Patrón Chartista: Cuña ascendente'
         
-        # Rupturas
-        conditions['short']['breakout']['value'] = (
-            current_idx < len(data['breakout_down']) and 
-            data['breakout_down'][current_idx]
-        )
+        if current_idx < len(data['breakout_down']) and data['breakout_down'][current_idx]:
+            conditions['short']['breakout']['value'] = True
         
-        # Volumen Anómalo (venta)
-        conditions['short']['volume_anomaly']['value'] = (
-            current_idx < len(data['volume_anomaly_sell']) and 
-            data['volume_anomaly_sell'][current_idx]
-        )
+        if (current_idx < len(data['volume_anomaly']) and 
+            current_idx < len(data['volume_clusters']) and
+            data['volume_anomaly'][current_idx] and
+            data['volume_clusters'][current_idx]):
+            conditions['short']['volume_anomaly']['value'] = True
         
         return conditions
 
     def get_condition_description(self, condition_key):
-        """Obtener descripción de condición"""
         descriptions = {
-            'multi_timeframe': 'Multi-TF Confirmado',
-            'trend_strength': 'Fuerza Tendencia Favorable',
-            'whale_signal': 'Señal Ballenas Confirmada',
+            'multi_timeframe': 'Multi-TF obligatorio',
+            'trend_strength': 'Fuerza tendencia Maverick',
+            'whale_signal': 'Indicador Ballenas confirmado',
             'bollinger_bands': 'Bandas de Bollinger',
-            'adx_dmi': 'Cruce DMI + ADX > 25',
-            'ma_cross': 'Cruce MA9/MA21',
+            'adx_dmi': 'ADX con pendiente positiva',
+            'ma_cross': 'Cruce de Medias 9-21',
             'rsi_traditional_divergence': 'Divergencia RSI Tradicional',
             'rsi_maverick_divergence': 'Divergencia RSI Maverick',
             'macd': 'Cruce MACD',
             'chart_pattern': 'Patrón Chartista',
-            'breakout': 'Ruptura S/R',
-            'volume_anomaly': 'Volumen Anómalo'
+            'breakout': 'Ruptura',
+            'volume_anomaly': 'Volumen anómalo con clúster'
         }
         return descriptions.get(condition_key, condition_key)
 
     def calculate_signal_score(self, conditions, signal_type, ma200_condition):
-        """Calcular puntuación de señal basada en condiciones ponderadas"""
+        """Calcular puntuación de señal con umbrales por MA200"""
         total_weight = 0
         achieved_weight = 0
         fulfilled_conditions = []
@@ -1516,7 +1418,7 @@ class TradingIndicator:
         
         base_score = (achieved_weight / total_weight * 100)
         
-        # Score mínimo ajustado según posición de MA200
+        # Aplicar umbrales según MA200
         if signal_type == 'long':
             min_score = 65 if ma200_condition == 'above' else 70
         else:  # short
@@ -1526,519 +1428,23 @@ class TradingIndicator:
 
         return min(final_score, 100), fulfilled_conditions
 
-    # NUEVA ESTRATEGIA: Desplome por Volumen + EMA21
-    def check_volume_ema_ftm_signal(self, symbol, interval):
-        """Verificar señal de Desplome por Volumen + EMA21 con filtros FTMaverick/Multi-Timeframe"""
-        try:
-            # Solo para temporalidades 1H, 4H, 12H, 1D
-            if interval not in ['1h', '4h', '12h', '1D']:
-                return None
-            
-            # Verificar timing de ejecución
-            current_time = self.get_bolivia_time()
-            should_check = False
-            
-            if interval == '1h':
-                # Revisar desde el 50% del tiempo de vela, cada 300 segundos
-                next_close = current_time.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
-                remaining_seconds = (next_close - current_time).total_seconds()
-                if remaining_seconds <= 1800:  # 50% de 3600
-                    should_check = True
-            elif interval == '4h':
-                # Revisar desde el 25% del tiempo de vela, cada 420 segundos
-                current_hour = current_time.hour
-                next_4h_close = current_time.replace(minute=0, second=0, microsecond=0)
-                remainder = current_hour % 4
-                if remainder == 0:
-                    next_4h_close += timedelta(hours=4)
-                else:
-                    next_4h_close += timedelta(hours=4 - remainder)
-                remaining_seconds = (next_4h_close - current_time).total_seconds()
-                if remaining_seconds <= 3600:  # 25% de 14400
-                    should_check = True
-            elif interval in ['12h', '1D']:
-                # Revisar desde el 25% del tiempo de vela, cada 600 segundos
-                should_check = True
-            
-            if not should_check:
-                return None
-            
-            # Obtener datos
-            df = self.get_kucoin_data(symbol, interval, 100)
-            if df is None or len(df) < 50:
-                return None
-            
-            close = df['close'].values
-            volume = df['volume'].values
-            
-            current_idx = -1
-            current_price = close[current_idx]
-            current_volume = volume[current_idx]
-            
-            # Calcular EMA21 y Volume MA21
-            ema_21 = self.calculate_ema(close, 21)
-            volume_ma_21 = self.calculate_sma(volume, 21)
-            
-            current_ema_21 = ema_21[current_idx] if current_idx < len(ema_21) else 0
-            current_volume_ma_21 = volume_ma_21[current_idx] if current_idx < len(volume_ma_21) else 0
-            
-            # Condición A: Volumen y EMA
-            volume_ratio = current_volume / current_volume_ma_21 if current_volume_ma_21 > 0 else 1
-            condition_a_long = (volume_ratio > 2.5 and current_price > current_ema_21)
-            condition_a_short = (volume_ratio > 2.5 and current_price < current_ema_21)
-            
-            if not condition_a_long and not condition_a_short:
-                return None
-            
-            # Condición B: Filtro FTMaverick (Timeframe Actual)
-            ftm_current = self.calculate_trend_strength_maverick(close)
-            condition_b = not ftm_current['no_trade_zones'][current_idx]
-            
-            if not condition_b:
-                return None
-            
-            # Condición C: Filtro Multi-Timeframe
-            condition_c_long = False
-            condition_c_short = False
-            
-            if interval in ['1h', '4h']:
-                hierarchy = TIMEFRAME_HIERARCHY.get(interval, {})
-                
-                # Timeframe Mayor
-                if hierarchy.get('mayor'):
-                    df_mayor = self.get_kucoin_data(symbol, hierarchy['mayor'], 50)
-                    if df_mayor is not None and len(df_mayor) > 20:
-                        mayor_trend = self.check_multi_timeframe_trend(symbol, interval)
-                        mayor_condition = mayor_trend.get('mayor', 'NEUTRAL')
-                        
-                        # Timeframe Menor
-                        if hierarchy.get('menor'):
-                            df_menor = self.get_kucoin_data(symbol, hierarchy['menor'], 30)
-                            if df_menor is not None and len(df_menor) > 10:
-                                menor_ftm = self.calculate_trend_strength_maverick(df_menor['close'].values)
-                                menor_signal = menor_ftm['strength_signals'][-1]
-                                
-                                if condition_a_long:
-                                    condition_c_long = (
-                                        mayor_condition in ['BULLISH', 'NEUTRAL'] and
-                                        menor_signal in ['STRONG_UP', 'WEAK_UP']
-                                    )
-                                
-                                if condition_a_short:
-                                    condition_c_short = (
-                                        mayor_condition in ['BEARISH', 'NEUTRAL'] and
-                                        menor_signal in ['STRONG_DOWN', 'WEAK_DOWN']
-                                    )
-            
-            # Para 12h y 1D no hay multi-timeframe obligatorio
-            elif interval in ['12h', '1D']:
-                condition_c_long = condition_a_long
-                condition_c_short = condition_a_short
-            
-            # Determinar señal
-            signal_type = None
-            if condition_a_long and condition_b and condition_c_long:
-                signal_type = 'LONG'
-            elif condition_a_short and condition_b and condition_c_short:
-                signal_type = 'SHORT'
-            
-            if not signal_type:
-                return None
-            
-            # Calcular niveles
-            supports, resistances = self.calculate_support_resistance(
-                df['high'].values, df['low'].values, close
-            )
-            
-            if signal_type == 'LONG':
-                # Entrada en soporte más cercano
-                valid_supports = [s for s in supports if s < current_price]
-                entry = max(valid_supports) if valid_supports else current_price * 0.99
-            else:  # SHORT
-                # Entrada en resistencia más cercana
-                valid_resistances = [r for r in resistances if r > current_price]
-                entry = min(valid_resistances) if valid_resistances else current_price * 1.01
-            
-            # Generar ID único
-            signal_id = f"VOL_EMA21_{symbol}_{interval}_{signal_type}_{int(time.time())}"
-            
-            # Verificar si ya se envió esta señal recientemente
-            if signal_id in self.sent_volume_ema_signals:
-                return None
-            
-            return {
-                'symbol': symbol,
-                'interval': interval,
-                'signal': signal_type,
-                'entry': float(entry),
-                'current_price': float(current_price),
-                'volume_ratio': float(volume_ratio),
-                'ema_21': float(current_ema_21),
-                'volume_ma_21': float(current_volume_ma_21),
-                'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S"),
-                'signal_id': signal_id,
-                'supports': [float(s) for s in supports],
-                'resistances': [float(r) for r in resistances]
-            }
-            
-        except Exception as e:
-            print(f"Error en check_volume_ema_ftm_signal para {symbol} {interval}: {e}")
-            return None
-
-    def generate_telegram_chart_multi_strategy(self, signal_data, strategy_type='multi'):
-        """Generar gráfico para Telegram de la estrategia Multi-Timeframe"""
-        try:
-            symbol = signal_data['symbol']
-            interval = signal_data['interval']
-            signal_type = signal_data['signal']
-            
-            # Obtener datos
-            df = self.get_kucoin_data(symbol, interval, 100)
-            if df is None or len(df) < 50:
-                return None
-            
-            close = df['close'].values
-            high = df['high'].values
-            low = df['low'].values
-            volume = df['volume'].values
-            
-            # Calcular todos los indicadores necesarios
-            # 1. Velas japonesas con Bollinger y MA
-            bb_upper, bb_middle, bb_lower = self.calculate_bollinger_bands(close)
-            ma_9 = self.calculate_sma(close, 9)
-            ma_21 = self.calculate_sma(close, 21)
-            ma_50 = self.calculate_sma(close, 50)
-            ma_200 = self.calculate_sma(close, 200)
-            
-            # 2. ADX con DMI
-            adx, plus_di, minus_di = self.calculate_adx(high, low, close)
-            
-            # 3. Volumen con anomalías
-            volume_data = self.calculate_volume_anomaly_improved(volume, close)
-            
-            # 4. Fuerza de Tendencia Maverick
-            ftm_data = self.calculate_trend_strength_maverick(close)
-            
-            # 5. Ballenas (solo para 12h y 1D)
-            whale_data = None
-            if interval in ['12h', '1D']:
-                whale_data = self.calculate_whale_signals_improved(df)
-            
-            # 6. RSI Maverick
-            rsi_maverick = self.calculate_rsi_maverick(close)
-            
-            # 7. RSI Tradicional
-            rsi_trad = self.calculate_rsi(close)
-            
-            # 8. MACD
-            macd, macd_signal, macd_histogram = self.calculate_macd(close)
-            
-            # Crear figura con 8 subplots
-            fig = plt.figure(figsize=(14, 24))
-            
-            # 1. Gráfico de Velas (con Bollinger transparente y MAs)
-            ax1 = plt.subplot(8, 1, 1)
-            dates = pd.date_range(end=datetime.now(), periods=len(close), freq=interval)
-            
-            # Dibujar velas
-            for i in range(len(dates)):
-                color = 'green' if close[i] >= (df['open'].values[i] if i < len(df) else close[i]) else 'red'
-                ax1.plot([dates[i], dates[i]], [low[i], high[i]], color='black', linewidth=0.5)
-                ax1.plot([dates[i], dates[i]], 
-                        [df['open'].values[i] if i < len(df) else close[i], close[i]], 
-                        color=color, linewidth=2)
-            
-            # Bandas de Bollinger transparentes
-            ax1.fill_between(dates[-50:], bb_upper[-50:], bb_lower[-50:], 
-                           alpha=0.1, color='gray', label='Bollinger Bands')
-            
-            # Medias móviles
-            ax1.plot(dates[-50:], ma_9[-50:], 'orange', linewidth=1, label='MA9')
-            ax1.plot(dates[-50:], ma_21[-50:], 'blue', linewidth=1, label='MA21')
-            ax1.plot(dates[-50:], ma_50[-50:], 'purple', linewidth=1, label='MA50')
-            ax1.plot(dates[-50:], ma_200[-50:], 'black', linewidth=2, label='MA200')
-            
-            # Soporte/Resistencias
-            if 'supports' in signal_data:
-                for support in signal_data['supports'][:4]:
-                    ax1.axhline(y=support, color='blue', linestyle='--', alpha=0.5, linewidth=0.5)
-            
-            if 'resistances' in signal_data:
-                for resistance in signal_data['resistances'][:4]:
-                    ax1.axhline(y=resistance, color='red', linestyle='--', alpha=0.5, linewidth=0.5)
-            
-            ax1.set_title(f'{symbol} - {interval} - Velas Japonesas', fontsize=10)
-            ax1.set_ylabel('Precio')
-            ax1.legend(fontsize=6, loc='upper left')
-            ax1.grid(True, alpha=0.3)
-            
-            # 2. ADX con DMI (ADX negro, +DI verde, -DI rojo)
-            ax2 = plt.subplot(8, 1, 2, sharex=ax1)
-            ax2.plot(dates[-50:], adx[-50:], 'black', linewidth=2, label='ADX')
-            ax2.plot(dates[-50:], plus_di[-50:], 'green', linewidth=1, label='+DI')
-            ax2.plot(dates[-50:], minus_di[-50:], 'red', linewidth=1, label='-DI')
-            ax2.axhline(y=25, color='gray', linestyle='--', alpha=0.5)
-            ax2.set_ylabel('ADX/DMI')
-            ax2.legend(fontsize=6, loc='upper left')
-            ax2.grid(True, alpha=0.3)
-            
-            # 3. Volumen con Anomalías (barras)
-            ax3 = plt.subplot(8, 1, 3, sharex=ax1)
-            # Barras de volumen
-            volume_colors = []
-            for i in range(len(dates[-50:])):
-                idx = -50 + i
-                if idx >= 0 and idx < len(volume_data['volume_anomaly_buy']):
-                    if volume_data['volume_anomaly_buy'][idx]:
-                        volume_colors.append('green')
-                    elif volume_data['volume_anomaly_sell'][idx]:
-                        volume_colors.append('red')
-                    else:
-                        volume_colors.append('gray')
-                else:
-                    volume_colors.append('gray')
-            
-            ax3.bar(dates[-50:], volume[-50:], color=volume_colors, alpha=0.6, width=0.8)
-            ax3.plot(dates[-50:], volume_data['volume_ma_21'][-50:], 'orange', linewidth=1, label='MA21 Vol')
-            ax3.set_ylabel('Volumen')
-            ax3.legend(fontsize=6, loc='upper left')
-            ax3.grid(True, alpha=0.3)
-            
-            # 4. Fuerza de Tendencia Maverick (barras)
-            ax4 = plt.subplot(8, 1, 4, sharex=ax1)
-            ftm_colors = ftm_data['colors'][-50:]
-            ax4.bar(dates[-50:], ftm_data['trend_strength'][-50:], color=ftm_colors, alpha=0.7, width=0.8)
-            ax4.axhline(y=ftm_data['high_zone_threshold'], color='orange', linestyle='--', alpha=0.7)
-            ax4.axhline(y=-ftm_data['high_zone_threshold'], color='orange', linestyle='--', alpha=0.7)
-            ax4.set_ylabel('FT Maverick %')
-            ax4.grid(True, alpha=0.3)
-            
-            # 5. Ballenas Compradoras/Vendedoras (solo para 12h, 1D)
-            if whale_data and interval in ['12h', '1D']:
-                ax5 = plt.subplot(8, 1, 5, sharex=ax1)
-                ax5.bar(dates[-50:], whale_data['whale_pump'][-50:], color='green', alpha=0.6, width=0.8, label='Compra')
-                ax5.bar(dates[-50:], whale_data['whale_dump'][-50:], color='red', alpha=0.6, width=0.8, label='Venta')
-                ax5.set_ylabel('Ballenas')
-                ax5.legend(fontsize=6, loc='upper left')
-                ax5.grid(True, alpha=0.3)
-            else:
-                # Espacio vacío
-                ax5 = plt.subplot(8, 1, 5, sharex=ax1)
-                ax5.text(0.5, 0.5, 'Indicador Ballenas: Solo para 12H y 1D', 
-                        horizontalalignment='center', verticalalignment='center',
-                        transform=ax5.transAxes, fontsize=8)
-                ax5.set_ylabel('Ballenas')
-                ax5.grid(True, alpha=0.3)
-            
-            # 6. RSI Maverick
-            ax6 = plt.subplot(8, 1, 6, sharex=ax1)
-            ax6.plot(dates[-50:], rsi_maverick[-50:], 'blue', linewidth=1)
-            ax6.axhline(y=0.8, color='red', linestyle='--', alpha=0.5)
-            ax6.axhline(y=0.2, color='green', linestyle='--', alpha=0.5)
-            ax6.axhline(y=0.5, color='gray', linestyle='-', alpha=0.3)
-            ax6.set_ylabel('RSI Maverick')
-            ax6.set_ylim(0, 1)
-            ax6.grid(True, alpha=0.3)
-            
-            # 7. RSI Tradicional
-            ax7 = plt.subplot(8, 1, 7, sharex=ax1)
-            ax7.plot(dates[-50:], rsi_trad[-50:], 'purple', linewidth=1)
-            ax7.axhline(y=80, color='red', linestyle='--', alpha=0.5)
-            ax7.axhline(y=20, color='green', linestyle='--', alpha=0.5)
-            ax7.axhline(y=50, color='gray', linestyle='-', alpha=0.3)
-            ax7.set_ylabel('RSI Trad')
-            ax7.set_ylim(0, 100)
-            ax7.grid(True, alpha=0.3)
-            
-            # 8. MACD con Histograma (barras)
-            ax8 = plt.subplot(8, 1, 8, sharex=ax1)
-            ax8.plot(dates[-50:], macd[-50:], 'blue', linewidth=1, label='MACD')
-            ax8.plot(dates[-50:], macd_signal[-50:], 'red', linewidth=1, label='Señal')
-            
-            # Histograma como barras
-            macd_colors = ['green' if x > 0 else 'red' for x in macd_histogram[-50:]]
-            ax8.bar(dates[-50:], macd_histogram[-50:], color=macd_colors, alpha=0.6, width=0.8)
-            
-            ax8.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
-            ax8.set_ylabel('MACD')
-            ax8.set_xlabel('Fecha/Hora')
-            ax8.legend(fontsize=6, loc='upper left')
-            ax8.grid(True, alpha=0.3)
-            
-            plt.suptitle(f'{symbol} - {interval} - Señal {signal_type} (Multi-Timeframe)', fontsize=12, fontweight='bold')
-            plt.tight_layout()
-            
-            # Guardar imagen
-            img_buffer = BytesIO()
-            plt.savefig(img_buffer, format='png', dpi=100, bbox_inches='tight')
-            img_buffer.seek(0)
-            plt.close()
-            
-            return img_buffer
-            
-        except Exception as e:
-            print(f"Error generando gráfico multi-strategy para {signal_data['symbol']}: {e}")
-            return None
-
-    def generate_telegram_chart_volume_ema(self, signal_data):
-        """Generar gráfico para Telegram de la estrategia Volumen+EMA21"""
-        try:
-            symbol = signal_data['symbol']
-            interval = signal_data['interval']
-            signal_type = signal_data['signal']
-            
-            # Obtener datos
-            df = self.get_kucoin_data(symbol, interval, 50)
-            if df is None or len(df) < 30:
-                return None
-            
-            close = df['close'].values
-            volume = df['volume'].values
-            
-            # Calcular EMA21 y Volume MA21
-            ema_21 = self.calculate_ema(close, 21)
-            volume_ma_21 = self.calculate_sma(volume, 21)
-            
-            dates = pd.date_range(end=datetime.now(), periods=len(close), freq=interval)
-            
-            # Crear figura doble
-            fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-            
-            # Gráfico superior: Velas + EMA21
-            current_idx = -1
-            
-            # Dibujar velas
-            for i in range(max(0, len(dates)-30), len(dates)):
-                if i < len(df):
-                    color = 'green' if close[i] >= df['open'].values[i] else 'red'
-                    ax1.plot([dates[i], dates[i]], 
-                            [df['low'].values[i], df['high'].values[i]], 
-                            color='black', linewidth=0.5)
-                    ax1.plot([dates[i], dates[i]], 
-                            [df['open'].values[i], close[i]], 
-                            color=color, linewidth=2)
-            
-            # EMA21
-            ax1.plot(dates[-30:], ema_21[-30:], 'blue', linewidth=2, label='EMA21')
-            
-            # Destacar vela actual
-            marker_color = 'green' if signal_type == 'LONG' else 'red'
-            ax1.scatter(dates[current_idx], close[current_idx], 
-                       color=marker_color, s=100, marker='o', 
-                       edgecolors='black', linewidth=2, zorder=5,
-                       label=f'Señal {signal_type}')
-            
-            ax1.set_title(f'{symbol} - {interval} - Señal {signal_type} por Volumen+EMA21', 
-                         fontsize=12, fontweight='bold')
-            ax1.set_ylabel('Precio')
-            ax1.legend()
-            ax1.grid(True, alpha=0.3)
-            
-            # Gráfico inferior: Volumen + Volume_MA21
-            volume_colors = []
-            for i in range(max(0, len(dates)-30), len(dates)):
-                if i == current_idx:
-                    volume_colors.append(marker_color)
-                else:
-                    volume_colors.append('gray')
-            
-            ax2.bar(dates[-30:], volume[-30:], color=volume_colors, alpha=0.6, width=0.8)
-            ax2.plot(dates[-30:], volume_ma_21[-30:], 'orange', linewidth=2, label='MA21 Volumen')
-            
-            # Línea de ratio 2.5x
-            current_volume_ma = volume_ma_21[current_idx] if current_idx < len(volume_ma_21) else 0
-            ax2.axhline(y=current_volume_ma * 2.5, color='red', linestyle='--', 
-                       alpha=0.5, label='Umbral 2.5x')
-            
-            ax2.set_ylabel('Volumen')
-            ax2.set_xlabel('Fecha/Hora')
-            ax2.legend()
-            ax2.grid(True, alpha=0.3)
-            
-            plt.tight_layout()
-            
-            # Guardar imagen
-            img_buffer = BytesIO()
-            plt.savefig(img_buffer, format='png', dpi=100, bbox_inches='tight')
-            img_buffer.seek(0)
-            plt.close()
-            
-            return img_buffer
-            
-        except Exception as e:
-            print(f"Error generando gráfico volume+ema para {signal_data['symbol']}: {e}")
-            return None
-
-    def generate_multi_strategy_signals(self):
-        """Generar señales de la estrategia Multi-Timeframe"""
-        signals = []
-        
-        for interval in ['15m', '30m', '1h', '2h', '4h', '8h', '12h', '1D', '1W']:
-            for symbol in CRYPTO_SYMBOLS[:15]:  # Limitar para no sobrecargar
-                try:
-                    signal_data = self.generate_signals_improved(symbol, interval)
-                    
-                    if (signal_data['signal'] in ['LONG', 'SHORT'] and 
-                        signal_data['signal_score'] >= 65):
-                        
-                        # Generar ID único
-                        signal_id = f"MULTI_{symbol}_{interval}_{signal_data['signal']}_{int(time.time())}"
-                        
-                        # Verificar si ya se envió esta señal recientemente
-                        if signal_id in self.sent_multi_signals:
-                            continue
-                        
-                        # Obtener condiciones cumplidas
-                        conditions_text = ", ".join(signal_data.get('fulfilled_conditions', []))
-                        
-                        signal_info = {
-                            'symbol': symbol,
-                            'interval': interval,
-                            'signal': signal_data['signal'],
-                            'score': signal_data['signal_score'],
-                            'entry': signal_data['entry'],
-                            'current_price': signal_data['current_price'],
-                            'conditions': conditions_text,
-                            'timestamp': self.get_bolivia_time().strftime("%Y-%m-%d %H:%M:%S"),
-                            'signal_id': signal_id,
-                            'supports': signal_data.get('supports', []),
-                            'resistances': signal_data.get('resistances', []),
-                            'strategy': 'multi'
-                        }
-                        
-                        signals.append(signal_info)
-                        self.sent_multi_signals.add(signal_id)
-                        
-                        print(f"Señal MULTI generada: {symbol} {interval} {signal_data['signal']} Score: {signal_data['signal_score']}%")
-                    
-                except Exception as e:
-                    print(f"Error generando señal MULTI para {symbol} {interval}: {e}")
-                    continue
-        
-        return signals
-
     def generate_signals_improved(self, symbol, interval, di_period=14, adx_threshold=25, 
                                 sr_period=50, rsi_length=14, bb_multiplier=2.0, volume_filter='Todos', leverage=15):
-        """GENERACIÓN DE SEÑALES MEJORADA - CON PESOS OPTIMIZADOS"""
+        """GENERACIÓN DE SEÑALES MEJORADA"""
         try:
             df = self.get_kucoin_data(symbol, interval, 100)
             
             if df is None or len(df) < 50:
                 return self._create_empty_signal(symbol)
             
-            # Calcular todos los indicadores
             close = df['close'].values
             high = df['high'].values
             low = df['low'].values
             volume = df['volume'].values
             
-            # Calcular soportes y resistencias dinámicos
-            supports, resistances = self.calculate_support_resistance(high, low, close, sr_period)
-            
             whale_data = self.calculate_whale_signals_improved(df, support_resistance_lookback=sr_period)
             adx, plus_di, minus_di = self.calculate_adx(high, low, close, di_period)
-            
-            di_cross_bullish, di_cross_bearish = self.check_di_crossover(plus_di, minus_di)
+            di_cross_bullish, di_cross_bearish, di_trend_bullish, di_trend_bearish = self.check_di_crossover(plus_di, minus_di)
             
             rsi_maverick = self.calculate_rsi_maverick(close, 20, bb_multiplier)
             rsi_traditional = self.calculate_rsi(close, rsi_length)
@@ -2046,46 +1452,34 @@ class TradingIndicator:
             rsi_maverick_bullish, rsi_maverick_bearish = self.detect_divergence(close, rsi_maverick)
             rsi_bullish, rsi_bearish = self.detect_divergence(close, rsi_traditional)
             
+            supports, resistances = self.calculate_support_resistance_levels(high, low, close)
             breakout_up, breakout_down = self.check_breakout(high, low, close, supports, resistances)
-            
             chart_patterns = self.detect_chart_patterns(high, low, close)
             
             trend_strength_data = self.calculate_trend_strength_maverick(close)
             
-            # Medias móviles
             ma_9 = self.calculate_sma(close, 9)
             ma_21 = self.calculate_sma(close, 21)
             ma_50 = self.calculate_sma(close, 50)
             ma_200 = self.calculate_sma(close, 200)
             
-            # Cruce de medias
-            ma_cross_bullish, ma_cross_bearish = self.check_ma_crossover(ma_9, ma_21)
-            
-            # MACD
             macd, macd_signal, macd_histogram = self.calculate_macd(close)
-            macd_cross_bullish, macd_cross_bearish = self.check_macd_crossover(macd, macd_signal)
             
-            # ADX pendiente
-            adx_slope_positive = self.check_adx_slope(adx)
-            
-            # Bandas de Bollinger
             bb_upper, bb_middle, bb_lower = self.calculate_bollinger_bands(close)
             
-            # Verificar condiciones de Bollinger
-            bollinger_conditions_long = self.check_bollinger_conditions(df, interval, 'LONG')
-            bollinger_conditions_short = self.check_bollinger_conditions(df, interval, 'SHORT')
+            bollinger_conditions_long = self.check_bollinger_conditions_corrected(df, interval, 'LONG')
+            bollinger_conditions_short = self.check_bollinger_conditions_corrected(df, interval, 'SHORT')
             
-            # Volumen anómalo mejorado
             volume_anomaly_data = self.calculate_volume_anomaly_improved(volume, close)
             
-            current_idx = -1
-            
-            # Verificar condiciones multi-timeframe obligatorias
             multi_timeframe_long = self.check_multi_timeframe_obligatory(symbol, interval, 'LONG')
             multi_timeframe_short = self.check_multi_timeframe_obligatory(symbol, interval, 'SHORT')
             
-            # Preparar datos para análisis
+            current_idx = -1
+            
             analysis_data = {
+                'symbol': symbol,
+                'interval': interval,
                 'close': close,
                 'high': high,
                 'low': low,
@@ -2099,7 +1493,8 @@ class TradingIndicator:
                 'adx': adx,
                 'di_cross_bullish': di_cross_bullish,
                 'di_cross_bearish': di_cross_bearish,
-                'adx_slope_positive': adx_slope_positive,
+                'di_trend_bullish': di_trend_bullish,
+                'di_trend_bearish': di_trend_bearish,
                 'rsi_maverick': rsi_maverick,
                 'rsi_traditional': rsi_traditional,
                 'rsi_maverick_bullish_divergence': rsi_maverick_bullish,
@@ -2116,30 +1511,25 @@ class TradingIndicator:
                 'ma_21': ma_21,
                 'ma_50': ma_50,
                 'ma_200': ma_200,
-                'ma_cross_bullish': ma_cross_bullish,
-                'ma_cross_bearish': ma_cross_bearish,
                 'macd': macd,
                 'macd_signal': macd_signal,
                 'macd_histogram': macd_histogram,
-                'macd_cross_bullish': macd_cross_bullish,
-                'macd_cross_bearish': macd_cross_bearish,
                 'bb_upper': bb_upper,
                 'bb_middle': bb_middle,
                 'bb_lower': bb_lower,
-                'volume_anomaly_buy': volume_anomaly_data['volume_anomaly_buy'],
-                'volume_anomaly_sell': volume_anomaly_data['volume_anomaly_sell'],
+                'volume_anomaly': volume_anomaly_data['volume_anomaly'],
                 'volume_clusters': volume_anomaly_data['volume_clusters'],
                 'volume_ratio': volume_anomaly_data['volume_ratio'],
-                'volume_ma_21': volume_anomaly_data['volume_ma_21'],
+                'volume_ma': volume_anomaly_data['volume_ma'],
+                'volume_colors': volume_anomaly_data['volume_colors'],
                 'multi_timeframe_long': multi_timeframe_long,
                 'multi_timeframe_short': multi_timeframe_short,
                 'bollinger_conditions_long': bollinger_conditions_long,
                 'bollinger_conditions_short': bollinger_conditions_short
             }
             
-            conditions = self.evaluate_signal_conditions_optimized(analysis_data, current_idx, interval, adx_threshold)
+            conditions = self.evaluate_signal_conditions_corrected(analysis_data, current_idx, interval, adx_threshold)
             
-            # Calcular condición MA200
             current_ma200 = ma_200[current_idx] if current_idx < len(ma_200) else 0
             current_price = close[current_idx]
             ma200_condition = 'above' if current_price > current_ma200 else 'below'
@@ -2151,23 +1541,32 @@ class TradingIndicator:
             signal_score = 0
             fulfilled_conditions = []
             
-            if long_score >= 65:
+            if long_score >= (65 if ma200_condition == 'above' else 70):
                 signal_type = 'LONG'
                 signal_score = long_score
                 fulfilled_conditions = long_conditions
-            elif short_score >= 65:
+            elif short_score >= (65 if ma200_condition == 'below' else 70):
                 signal_type = 'SHORT'
                 signal_score = short_score
                 fulfilled_conditions = short_conditions
             
-            # Calcular niveles con soportes/resistencias dinámicos
-            levels_data = self.calculate_optimal_entry_exit(df, signal_type, leverage, supports, resistances)
+            levels_data = self.calculate_optimal_entry_exit(df, signal_type, leverage)
             
-            current_price = float(close[current_idx])
+            if signal_type in ['LONG', 'SHORT']:
+                signal_key = f"{symbol}_{interval}_{signal_type}_{int(time.time())}"
+                self.active_operations[signal_key] = {
+                    'symbol': symbol,
+                    'interval': interval,
+                    'signal': signal_type,
+                    'entry_price': levels_data['entry'],
+                    'timestamp': self.get_bolivia_time(),
+                    'score': signal_score
+                }
+                print(f"Señal generada: {symbol} {interval} {signal_type} Score: {signal_score}%")
             
             return {
                 'symbol': symbol,
-                'current_price': current_price,
+                'current_price': float(current_price),
                 'signal': signal_type,
                 'signal_score': float(signal_score),
                 'entry': levels_data['entry'],
@@ -2200,7 +1599,8 @@ class TradingIndicator:
                     'minus_di': minus_di[-50:].tolist(),
                     'di_cross_bullish': di_cross_bullish[-50:],
                     'di_cross_bearish': di_cross_bearish[-50:],
-                    'adx_slope_positive': adx_slope_positive[-50:],
+                    'di_trend_bullish': di_trend_bullish[-50:],
+                    'di_trend_bearish': di_trend_bearish[-50:],
                     'rsi_maverick': rsi_maverick[-50:],
                     'rsi_traditional': rsi_traditional[-50:],
                     'rsi_maverick_bullish_divergence': rsi_maverick_bullish[-50:],
@@ -2213,21 +1613,17 @@ class TradingIndicator:
                     'ma_21': ma_21[-50:].tolist(),
                     'ma_50': ma_50[-50:].tolist(),
                     'ma_200': ma_200[-50:].tolist(),
-                    'ma_cross_bullish': ma_cross_bullish[-50:],
-                    'ma_cross_bearish': ma_cross_bearish[-50:],
                     'macd': macd[-50:].tolist(),
                     'macd_signal': macd_signal[-50:].tolist(),
                     'macd_histogram': macd_histogram[-50:].tolist(),
-                    'macd_cross_bullish': macd_cross_bullish[-50:],
-                    'macd_cross_bearish': macd_cross_bearish[-50:],
                     'bb_upper': bb_upper[-50:].tolist(),
                     'bb_middle': bb_middle[-50:].tolist(),
                     'bb_lower': bb_lower[-50:].tolist(),
-                    'volume_anomaly_buy': volume_anomaly_data['volume_anomaly_buy'][-50:],
-                    'volume_anomaly_sell': volume_anomaly_data['volume_anomaly_sell'][-50:],
+                    'volume_anomaly': volume_anomaly_data['volume_anomaly'][-50:],
                     'volume_clusters': volume_anomaly_data['volume_clusters'][-50:],
                     'volume_ratio': volume_anomaly_data['volume_ratio'][-50:],
-                    'volume_ma_21': volume_anomaly_data['volume_ma_21'][-50:],
+                    'volume_ma': volume_anomaly_data['volume_ma'][-50:],
+                    'volume_colors': volume_anomaly_data['volume_colors'][-50:],
                     'trend_strength': trend_strength_data['trend_strength'][-50:],
                     'bb_width': trend_strength_data['bb_width'][-50:],
                     'no_trade_zones': trend_strength_data['no_trade_zones'][-50:],
@@ -2244,7 +1640,6 @@ class TradingIndicator:
             return self._create_empty_signal(symbol)
 
     def _create_empty_signal(self, symbol):
-        """Crear señal vacía en caso de error"""
         return {
             'symbol': symbol,
             'current_price': 0,
@@ -2253,8 +1648,8 @@ class TradingIndicator:
             'entry': 0,
             'stop_loss': 0,
             'take_profit': [0],
-            'supports': [0, 0, 0, 0],
-            'resistances': [0, 0, 0, 0],
+            'supports': [0],
+            'resistances': [0],
             'atr': 0,
             'atr_percentage': 0,
             'volume': 0,
@@ -2273,11 +1668,86 @@ class TradingIndicator:
             'indicators': {}
         }
 
+    def generate_scalping_alerts(self):
+        """Generar alertas de trading para la estrategia principal"""
+        alerts = []
+        current_time = self.get_bolivia_time()
+        
+        for interval in ['15m', '30m', '1h', '2h', '4h', '8h', '12h', '1D', '1W']:
+            if interval in ['15m', '30m'] and not self.is_scalping_time():
+                continue
+                
+            should_send_alert = self.calculate_remaining_time(interval, current_time, 0.5)
+            
+            if not should_send_alert:
+                continue
+                
+            for symbol in CRYPTO_SYMBOLS[:15]:
+                try:
+                    signal_data = self.generate_signals_improved(symbol, interval)
+                    
+                    if (signal_data['signal'] in ['LONG', 'SHORT'] and 
+                        signal_data['signal_score'] >= 65):
+                        
+                        alert_key = f"{symbol}_{interval}_{signal_data['signal']}"
+                        if (alert_key not in self.alert_cache or 
+                            (datetime.now() - self.alert_cache[alert_key]).seconds > 300):
+                            
+                            alert = {
+                                'symbol': symbol,
+                                'interval': interval,
+                                'signal': signal_data['signal'],
+                                'score': signal_data['signal_score'],
+                                'entry': signal_data['entry'],
+                                'current_price': signal_data['current_price'],
+                                'ma200_condition': signal_data.get('ma200_condition', 'below'),
+                                'fulfilled_conditions': signal_data.get('fulfilled_conditions', []),
+                                'timestamp': current_time.strftime("%Y-%m-%d %H:%M:%S")
+                            }
+                            
+                            alerts.append(alert)
+                            self.alert_cache[alert_key] = datetime.now()
+                    
+                except Exception as e:
+                    print(f"Error generando alerta para {symbol} {interval}: {e}")
+                    continue
+        
+        return alerts
+
+    def generate_volume_ema_alerts(self):
+        """Generar alertas para la nueva estrategia de volumen"""
+        alerts = []
+        intervals = ['1h', '4h', '12h', '1D']
+        current_time = self.get_bolivia_time()
+        
+        for interval in intervals:
+            # Lógica de ejecución según el intervalo
+            if interval == '1h':
+                if not self.calculate_remaining_time(interval, current_time, 0.5):
+                    continue
+            elif interval in ['4h', '12h', '1D']:
+                if not self.calculate_remaining_time(interval, current_time, 0.25):
+                    continue
+            
+            for symbol in CRYPTO_SYMBOLS:
+                try:
+                    signal = self.check_volume_ema_ftm_signal(symbol, interval)
+                    if signal:
+                        alert_key = f"volume_ema_{symbol}_{interval}_{signal['signal']}"
+                        if alert_key not in self.sent_volume_ema_alerts:
+                            alerts.append(signal)
+                            self.sent_volume_ema_alerts.add(alert_key)
+                            print(f"Alerta Vol+EMA21 generada: {symbol} {interval} {signal['signal']}")
+                except Exception as e:
+                    print(f"Error en generate_volume_ema_alerts para {symbol} {interval}: {e}")
+                    continue
+        
+        return alerts
+
 # Instancia global del indicador
 indicator = TradingIndicator()
 
 def get_risk_classification(symbol):
-    """Obtener la clasificación de riesgo de una criptomoneda"""
     for risk_level, symbols in CRYPTO_RISK_CLASSIFICATION.items():
         if symbol in symbols:
             if risk_level == "bajo":
@@ -2290,94 +1760,301 @@ def get_risk_classification(symbol):
                 return "Memecoin"
     return "Medio Riesgo"
 
-def send_telegram_alert(signal_data, chart_buffer, strategy_type='multi'):
+async def send_telegram_alert_async(alert_data, alert_type='multiframe'):
     """Enviar alerta por Telegram con imagen"""
     try:
         bot = telegram.Bot(token=TELEGRAM_BOT_TOKEN)
         
-        symbol = signal_data['symbol']
-        interval = signal_data['interval']
-        signal_type = signal_data['signal']
-        
-        risk_classification = get_risk_classification(symbol)
-        
-        if strategy_type == 'multi':
-            # Mensaje para estrategia Multi-Timeframe
+        if alert_type == 'multiframe':
+            # Mensaje para estrategia multiframe
             message = f"""
-🚨 MULTI-TIMEFRAME | {signal_type} | {symbol} | {interval}
-Riesgo: {risk_classification}
+🚨 {alert_data['signal']} | {alert_data['symbol']} | {alert_data['interval']}
+Score: {alert_data['score']:.1f}%
 
-🎯 Entrada: ${signal_data['entry']:.6f}
-💰 Actual: ${signal_data['current_price']:.6f}
-📊 Score: {signal_data['score']:.1f}%
+Precio: ${alert_data.get('current_price', alert_data['entry']):.6f}
+Entrada: ${alert_data['entry']:.6f}
+MA200: {'ABOVE' if alert_data.get('ma200_condition') == 'above' else 'BELOW'}
 
-✅ Condiciones: {signal_data.get('conditions', 'Confirmada')}
-
-🕐 {signal_data['timestamp']}
+Condiciones cumplidas:
+{chr(10).join(['• ' + cond for cond in alert_data.get('fulfilled_conditions', [])])}
 """
-        else:
-            # Mensaje para estrategia Volumen+EMA21
+            
+            # Generar imagen para estrategia multiframe
+            img_buffer = generate_telegram_image_multiframe(alert_data)
+            
+        else:  # volume_ema
             message = f"""
-🚨 VOL+EMA21 | {signal_type} | {symbol} | {interval}
-Riesgo: {risk_classification}
-
-🎯 Entrada: ${signal_data['entry']:.6f}
-💰 Actual: ${signal_data['current_price']:.6f}
-📈 Vol: {signal_data['volume_ratio']:.1f}x MA21
-
-✅ Filtros: FTMaverick OK | MF Confirmado
-
-🕐 {signal_data['timestamp']}
+🚨 VOL+EMA21 | {alert_data['signal']} | {alert_data['symbol']} | {alert_data['interval']}
+Entrada: ${alert_data['close_price']:.6f} | Vol: {alert_data['volume_ratio']:.1f}x
+Filtros: FTMaverick OK | MF: OK
 """
+            
+            # Generar imagen para estrategia volumen
+            img_buffer = generate_telegram_image_volume_ema(alert_data)
         
-        # Enviar mensaje con imagen
-        asyncio.run(bot.send_photo(
+        # Enviar imagen primero
+        await bot.send_photo(
             chat_id=TELEGRAM_CHAT_ID,
-            photo=chart_buffer,
-            caption=message
-        ))
+            photo=img_buffer,
+            caption=message[:1024]  # Limitar caption a 1024 caracteres
+        )
         
-        print(f"Alerta {strategy_type} enviada a Telegram: {symbol} {interval} {signal_type}")
+        print(f"Alerta {alert_type} enviada a Telegram: {alert_data['symbol']}")
         
     except Exception as e:
         print(f"Error enviando alerta a Telegram: {e}")
 
+def send_telegram_alert(alert_data, alert_type='multiframe'):
+    """Wrapper síncrono para enviar alertas a Telegram"""
+    asyncio.run(send_telegram_alert_async(alert_data, alert_type))
+
+def generate_telegram_image_multiframe(alert_data):
+    """Generar imagen para Telegram - Estrategia Multiframe"""
+    try:
+        symbol = alert_data['symbol']
+        interval = alert_data['interval']
+        
+        # Obtener datos
+        signal_data = indicator.generate_signals_improved(symbol, interval)
+        if not signal_data or not signal_data['data']:
+            return None
+        
+        # Crear figura con 8 subplots
+        fig = plt.figure(figsize=(12, 20))
+        
+        # 1. Gráfico de Velas
+        ax1 = plt.subplot(8, 1, 1)
+        dates = [datetime.strptime(d['timestamp'], '%Y-%m-%d %H:%M:%S') if isinstance(d['timestamp'], str) 
+                else d['timestamp'] for d in signal_data['data'][-50:]]
+        opens = [d['open'] for d in signal_data['data'][-50:]]
+        highs = [d['high'] for d in signal_data['data'][-50:]]
+        lows = [d['low'] for d in signal_data['data'][-50:]]
+        closes = [d['close'] for d in signal_data['data'][-50:]]
+        
+        for i in range(len(dates)):
+            color = 'green' if closes[i] >= opens[i] else 'red'
+            ax1.plot([dates[i], dates[i]], [lows[i], highs[i]], color='black', linewidth=1)
+            ax1.plot([dates[i], dates[i]], [opens[i], closes[i]], color=color, linewidth=3)
+        
+        # Añadir Bandas de Bollinger (transparentes)
+        if 'indicators' in signal_data and 'bb_upper' in signal_data['indicators']:
+            bb_upper = signal_data['indicators']['bb_upper'][-50:]
+            bb_lower = signal_data['indicators']['bb_lower'][-50:]
+            ax1.fill_between(dates, bb_lower, bb_upper, color='orange', alpha=0.1)
+        
+        # Añadir soportes y resistencias
+        for support in signal_data.get('supports', [])[-4:]:
+            ax1.axhline(y=support, color='blue', linestyle='--', alpha=0.5, linewidth=1)
+        
+        for resistance in signal_data.get('resistances', [])[-4:]:
+            ax1.axhline(y=resistance, color='red', linestyle='--', alpha=0.5, linewidth=1)
+        
+        ax1.set_title(f'{symbol} - {interval} - Velas Japonesas', fontsize=10)
+        ax1.set_ylabel('Precio')
+        ax1.grid(True, alpha=0.3)
+        
+        # 2. ADX con DMI
+        ax2 = plt.subplot(8, 1, 2, sharex=ax1)
+        if 'indicators' in signal_data:
+            adx_dates = dates[-len(signal_data['indicators']['adx'][-50:]):]
+            ax2.plot(adx_dates, signal_data['indicators']['adx'][-50:], 'black', linewidth=2, label='ADX')
+            ax2.plot(adx_dates, signal_data['indicators']['plus_di'][-50:], 'green', linewidth=1, label='+DI')
+            ax2.plot(adx_dates, signal_data['indicators']['minus_di'][-50:], 'red', linewidth=1, label='-DI')
+        ax2.set_ylabel('ADX/DMI')
+        ax2.legend(fontsize=8)
+        ax2.grid(True, alpha=0.3)
+        
+        # 3. Volumen con Anomalías
+        ax3 = plt.subplot(8, 1, 3, sharex=ax1)
+        volumes = [d['volume'] for d in signal_data['data'][-50:]]
+        if 'indicators' in signal_data and 'volume_colors' in signal_data['indicators']:
+            volume_colors = signal_data['indicators']['volume_colors'][-50:]
+            for i, (date, vol, color) in enumerate(zip(dates, volumes, volume_colors)):
+                ax3.bar(date, vol, color=color, alpha=0.7, width=0.8)
+        
+        if 'indicators' in signal_data and 'volume_ma' in signal_data['indicators']:
+            ax3.plot(dates, signal_data['indicators']['volume_ma'][-50:], 'yellow', linewidth=1.5, label='MA Volumen')
+        
+        ax3.set_ylabel('Volumen')
+        ax3.legend(fontsize=8)
+        ax3.grid(True, alpha=0.3)
+        
+        # 4. Fuerza de Tendencia Maverick
+        ax4 = plt.subplot(8, 1, 4, sharex=ax1)
+        if 'indicators' in signal_data and 'trend_strength' in signal_data['indicators']:
+            trend_strength = signal_data['indicators']['trend_strength'][-50:]
+            colors = signal_data['indicators']['colors'][-50:]
+            
+            for i, (date, strength, color) in enumerate(zip(dates, trend_strength, colors)):
+                ax4.bar(date, strength, color=color, alpha=0.7, width=0.8)
+        
+        ax4.set_ylabel('FT Maverick')
+        ax4.grid(True, alpha=0.3)
+        
+        # 5. Indicador Ballenas (solo para 12h y 1D)
+        if interval in ['12h', '1D'] and 'indicators' in signal_data:
+            ax5 = plt.subplot(8, 1, 5, sharex=ax1)
+            if 'whale_pump' in signal_data['indicators']:
+                whale_dates = dates[-len(signal_data['indicators']['whale_pump'][-50:]):]
+                ax5.bar(whale_dates, signal_data['indicators']['whale_pump'][-50:], 
+                       color='green', alpha=0.7, label='Compradoras')
+                ax5.bar(whale_dates, signal_data['indicators']['whale_dump'][-50:], 
+                       color='red', alpha=0.7, label='Vendedoras')
+            ax5.set_ylabel('Ballenas')
+            ax5.legend(fontsize=8)
+            ax5.grid(True, alpha=0.3)
+        
+        # 6. RSI Maverick
+        ax6 = plt.subplot(8, 1, 6, sharex=ax1)
+        if 'indicators' in signal_data and 'rsi_maverick' in signal_data['indicators']:
+            rsi_maverick = signal_data['indicators']['rsi_maverick'][-50:]
+            ax6.plot(dates, rsi_maverick, 'blue', linewidth=2)
+            ax6.axhline(y=0.8, color='red', linestyle='--', alpha=0.5)
+            ax6.axhline(y=0.2, color='green', linestyle='--', alpha=0.5)
+        ax6.set_ylabel('RSI Maverick')
+        ax6.grid(True, alpha=0.3)
+        
+        # 7. RSI Tradicional
+        ax7 = plt.subplot(8, 1, 7, sharex=ax1)
+        if 'indicators' in signal_data and 'rsi_traditional' in signal_data['indicators']:
+            rsi_traditional = signal_data['indicators']['rsi_traditional'][-50:]
+            ax7.plot(dates, rsi_traditional, 'purple', linewidth=2)
+            ax7.axhline(y=80, color='red', linestyle='--', alpha=0.5)
+            ax7.axhline(y=20, color='green', linestyle='--', alpha=0.5)
+        ax7.set_ylabel('RSI Tradicional')
+        ax7.grid(True, alpha=0.3)
+        
+        # 8. MACD
+        ax8 = plt.subplot(8, 1, 8, sharex=ax1)
+        if 'indicators' in signal_data:
+            macd_dates = dates[-len(signal_data['indicators']['macd'][-50:]):]
+            ax8.plot(macd_dates, signal_data['indicators']['macd'][-50:], 'blue', linewidth=1, label='MACD')
+            ax8.plot(macd_dates, signal_data['indicators']['macd_signal'][-50:], 'red', linewidth=1, label='Señal')
+            
+            histogram = signal_data['indicators']['macd_histogram'][-50:]
+            colors = ['green' if x > 0 else 'red' for x in histogram]
+            ax8.bar(macd_dates, histogram, color=colors, alpha=0.6, width=0.8)
+        
+        ax8.set_ylabel('MACD')
+        ax8.legend(fontsize=8)
+        ax8.grid(True, alpha=0.3)
+        
+        plt.tight_layout()
+        
+        img_buffer = BytesIO()
+        plt.savefig(img_buffer, format='png', dpi=100, bbox_inches='tight')
+        img_buffer.seek(0)
+        plt.close()
+        
+        return img_buffer
+        
+    except Exception as e:
+        print(f"Error generando imagen para Telegram (multiframe): {e}")
+        return None
+
+def generate_telegram_image_volume_ema(alert_data):
+    """Generar imagen para Telegram - Estrategia Volumen+EMA21"""
+    try:
+        symbol = alert_data['symbol']
+        interval = alert_data['interval']
+        
+        df = indicator.get_kucoin_data(symbol, interval, 50)
+        if df is None or len(df) < 30:
+            return None
+        
+        close = df['close'].values
+        volume = df['volume'].values
+        
+        # Calcular EMA21 y Volume MA21
+        ema_21 = indicator.calculate_ema(close, 21)
+        volume_ma_21 = indicator.calculate_sma(volume, 21)
+        
+        dates = [datetime.strptime(str(d), '%Y-%m-%d %H:%M:%S') if isinstance(d, str) 
+                else d for d in df['timestamp'].tail(30)]
+        
+        # Crear figura doble
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+        
+        # Gráfico superior: Velas + EMA21
+        for i in range(len(dates)):
+            color = 'green' if df['close'].iloc[i] >= df['open'].iloc[i] else 'red'
+            ax1.plot([dates[i], dates[i]], 
+                    [df['low'].iloc[i], df['high'].iloc[i]], 
+                    color='black', linewidth=1)
+            ax1.plot([dates[i], dates[i]], 
+                    [df['open'].iloc[i], df['close'].iloc[i]], 
+                    color=color, linewidth=3)
+        
+        # EMA21
+        ax1.plot(dates, ema_21[-30:], 'blue', linewidth=2, label='EMA 21')
+        
+        # Destacar vela actual
+        if alert_data['signal'] == 'LONG':
+            marker_color = 'green'
+        else:
+            marker_color = 'red'
+        
+        ax1.scatter(dates[-1], close[-1], color=marker_color, s=100, 
+                   edgecolor='black', zorder=5, label=f"Señal {alert_data['signal']}")
+        
+        ax1.set_title(f'{symbol} - {interval} - Señal {alert_data["signal"]} por Volumen+EMA21', fontsize=12)
+        ax1.set_ylabel('Precio')
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+        
+        # Gráfico inferior: Volumen + Volume MA21
+        volume_colors = []
+        for i in range(len(dates)):
+            if i > 0:
+                if df['close'].iloc[i] > df['close'].iloc[i-1]:
+                    volume_colors.append('green')
+                else:
+                    volume_colors.append('red')
+            else:
+                volume_colors.append('gray')
+        
+        ax2.bar(dates, volume[-30:], color=volume_colors, alpha=0.7)
+        ax2.plot(dates, volume_ma_21[-30:], 'orange', linewidth=2, label='Volume MA21')
+        
+        # Destacar volumen actual
+        ax2.bar(dates[-1], volume[-1], color=marker_color, alpha=1.0, edgecolor='black')
+        
+        ax2.set_ylabel('Volumen')
+        ax2.legend()
+        ax2.grid(True, alpha=0.3)
+        
+        plt.tight_layout()
+        
+        img_buffer = BytesIO()
+        plt.savefig(img_buffer, format='png', dpi=100, bbox_inches='tight')
+        img_buffer.seek(0)
+        plt.close()
+        
+        return img_buffer
+        
+    except Exception as e:
+        print(f"Error generando imagen para Telegram (volume_ema): {e}")
+        return None
+
 def background_alert_checker():
-    """Verificador de alertas en segundo plano para ambas estrategias"""
+    """Verificador de alertas en segundo plano"""
     while True:
         try:
-            print("Verificando alertas...")
+            current_time = datetime.now()
             
-            # ESTRATEGIA 1: Multi-Timeframe
-            multi_signals = indicator.generate_multi_strategy_signals()
-            for signal in multi_signals:
-                # Generar gráfico
-                chart_buffer = indicator.generate_telegram_chart_multi_strategy(signal, 'multi')
-                if chart_buffer:
-                    # Enviar alerta
-                    send_telegram_alert(signal, chart_buffer, 'multi')
-                    # Registrar señal enviada
-                    indicator.sent_multi_signals.add(signal['signal_id'])
+            # Estrategia principal (multiframe)
+            print("Verificando alertas estrategia principal...")
+            alerts = indicator.generate_scalping_alerts()
+            for alert in alerts:
+                send_telegram_alert(alert, 'multiframe')
             
-            # ESTRATEGIA 2: Volumen + EMA21
-            for interval in ['1h', '4h', '12h', '1D']:
-                for symbol in CRYPTO_SYMBOLS[:10]:  # Limitar para no sobrecargar
-                    try:
-                        signal = indicator.check_volume_ema_ftm_signal(symbol, interval)
-                        if signal:
-                            # Generar gráfico
-                            chart_buffer = indicator.generate_telegram_chart_volume_ema(signal)
-                            if chart_buffer:
-                                # Enviar alerta
-                                send_telegram_alert(signal, chart_buffer, 'volume_ema')
-                                # Registrar señal enviada
-                                indicator.sent_volume_ema_signals.add(signal['signal_id'])
-                    except Exception as e:
-                        print(f"Error verificando señal VOL+EMA21 para {symbol} {interval}: {e}")
-                        continue
+            # Nueva estrategia volumen
+            print("Verificando alertas estrategia volumen...")
+            volume_alerts = indicator.generate_volume_ema_alerts()
+            for alert in volume_alerts:
+                send_telegram_alert(alert, 'volume_ema')
             
-            # Esperar según estrategia
-            time.sleep(300)  # 5 minutos entre verificaciones
+            time.sleep(60)  # Revisar cada 60 segundos
             
         except Exception as e:
             print(f"Error en background_alert_checker: {e}")
@@ -2401,7 +2078,6 @@ def manual():
 
 @app.route('/api/signals')
 def get_signals():
-    """Endpoint para obtener señales de trading"""
     try:
         symbol = request.args.get('symbol', 'BTC-USDT')
         interval = request.args.get('interval', '4h')
@@ -2422,8 +2098,6 @@ def get_signals():
             for key in signal_data['indicators']:
                 if isinstance(signal_data['indicators'][key], (np.ndarray, np.generic)):
                     signal_data['indicators'][key] = signal_data['indicators'][key].tolist()
-                elif isinstance(signal_data['indicators'][key], list):
-                    signal_data['indicators'][key] = [int(x) if isinstance(x, (bool, np.bool_)) else x for x in signal_data['indicators'][key]]
         
         return jsonify(signal_data)
         
@@ -2433,7 +2107,6 @@ def get_signals():
 
 @app.route('/api/multiple_signals')
 def get_multiple_signals():
-    """Endpoint para obtener múltiples señales"""
     try:
         interval = request.args.get('interval', '4h')
         di_period = int(request.args.get('di_period', 14))
@@ -2480,7 +2153,6 @@ def get_multiple_signals():
 
 @app.route('/api/scatter_data_improved')
 def get_scatter_data_improved():
-    """Endpoint para datos del scatter plot mejorado"""
     try:
         interval = request.args.get('interval', '4h')
         di_period = int(request.args.get('di_period', 14))
@@ -2497,7 +2169,6 @@ def get_scatter_data_improved():
                 signal_data = indicator.generate_signals_improved(symbol, interval, di_period, adx_threshold)
                 if signal_data and signal_data['current_price'] > 0:
                     
-                    # Calcular presiones basadas en indicadores reales
                     buy_pressure = min(100, max(0,
                         (signal_data['whale_pump'] / 100 * 25) +
                         (1 if signal_data['plus_di'] > signal_data['minus_di'] else 0) * 20 +
@@ -2514,7 +2185,6 @@ def get_scatter_data_improved():
                         (min(1, signal_data['volume'] / max(1, signal_data['volume_ma'])) * 20)
                     ))
                     
-                    # Ajustar según señal
                     if signal_data['signal'] == 'LONG':
                         buy_pressure = min(100, buy_pressure * 1.3)
                         sell_pressure = max(0, sell_pressure * 0.7)
@@ -2547,47 +2217,13 @@ def get_scatter_data_improved():
 
 @app.route('/api/crypto_risk_classification')
 def get_crypto_risk_classification():
-    """Endpoint para obtener la clasificación de riesgo"""
     return jsonify(CRYPTO_RISK_CLASSIFICATION)
 
 @app.route('/api/scalping_alerts')
 def get_scalping_alerts():
-    """Endpoint para obtener alertas de trading (solo Multi-Timeframe)"""
     try:
-        alerts = []
-        
-        for interval in ['15m', '30m', '1h', '2h', '4h', '8h', '12h', '1D', '1W']:
-            for symbol in CRYPTO_SYMBOLS[:8]:
-                try:
-                    signal_data = indicator.generate_signals_improved(symbol, interval)
-                    
-                    if (signal_data['signal'] in ['LONG', 'SHORT'] and 
-                        signal_data['signal_score'] >= 65):
-                        
-                        risk_category = next(
-                            (cat for cat, symbols in CRYPTO_RISK_CLASSIFICATION.items() 
-                             if symbol in symbols), 'medio'
-                        )
-                        
-                        alert = {
-                            'symbol': symbol,
-                            'interval': interval,
-                            'signal': signal_data['signal'],
-                            'score': signal_data['signal_score'],
-                            'entry': signal_data['entry'],
-                            'current_price': signal_data['current_price'],
-                            'timestamp': indicator.get_bolivia_time().strftime("%Y-%m-%d %H:%M:%S"),
-                            'fulfilled_conditions': signal_data.get('fulfilled_conditions', []),
-                            'risk_category': risk_category
-                        }
-                        
-                        alerts.append(alert)
-                    
-                except Exception as e:
-                    print(f"Error generando alerta para {symbol} {interval}: {e}")
-                    continue
-        
-        return jsonify({'alerts': alerts[:10]})  # Limitar a 10 alertas
+        alerts = indicator.generate_scalping_alerts()
+        return jsonify({'alerts': alerts})
         
     except Exception as e:
         print(f"Error en /api/scalping_alerts: {e}")
@@ -2595,221 +2231,206 @@ def get_scalping_alerts():
 
 @app.route('/api/volume_ema_signals')
 def get_volume_ema_signals():
-    """Endpoint para obtener señales de Volumen+EMA21"""
     try:
-        signals = []
-        
-        for interval in ['1h', '4h', '12h', '1D']:
-            for symbol in CRYPTO_SYMBOLS[:8]:
-                try:
-                    signal = indicator.check_volume_ema_ftm_signal(symbol, interval)
-                    if signal:
-                        signals.append(signal)
-                except Exception as e:
-                    print(f"Error obteniendo señal VOL+EMA21 para {symbol} {interval}: {e}")
-                    continue
-        
-        return jsonify({'signals': signals})
+        alerts = indicator.generate_volume_ema_alerts()
+        return jsonify({'alerts': alerts})
         
     except Exception as e:
         print(f"Error en /api/volume_ema_signals: {e}")
-        return jsonify({'signals': []})
+        return jsonify({'alerts': []})
 
 @app.route('/api/generate_report')
 def generate_report():
-    """Generar reporte técnico completo"""
+    """Generar reporte técnico completo - CORREGIDO"""
     try:
         symbol = request.args.get('symbol', 'BTC-USDT')
         interval = request.args.get('interval', '4h')
+        leverage = int(request.args.get('leverage', 15))
         
         signal_data = indicator.generate_signals_improved(symbol, interval)
         
         if not signal_data or signal_data['current_price'] == 0:
             return jsonify({'error': 'No hay datos para generar el reporte'}), 400
         
+        # Verificar que tenemos datos
+        if not signal_data.get('data') or len(signal_data['data']) == 0:
+            return jsonify({'error': 'No hay datos de velas disponibles'}), 400
+        
         fig = plt.figure(figsize=(14, 18))
         
         # Gráfico 1: Precio y niveles
         ax1 = plt.subplot(9, 1, 1)
         if signal_data['data']:
-            dates = [datetime.strptime(d['timestamp'], '%Y-%m-%d %H:%M:%S') if isinstance(d['timestamp'], str) 
-                    else d['timestamp'] for d in signal_data['data']]
-            opens = [d['open'] for d in signal_data['data']]
-            highs = [d['high'] for d in signal_data['data']]
-            lows = [d['low'] for d in signal_data['data']]
-            closes = [d['close'] for d in signal_data['data']]
+            dates = []
+            for d in signal_data['data'][-50:]:
+                if isinstance(d['timestamp'], str):
+                    try:
+                        dates.append(datetime.strptime(d['timestamp'], '%Y-%m-%d %H:%M:%S'))
+                    except:
+                        dates.append(datetime.now())
+                else:
+                    dates.append(d['timestamp'])
+            
+            opens = [d['open'] for d in signal_data['data'][-50:]]
+            highs = [d['high'] for d in signal_data['data'][-50:]]
+            lows = [d['low'] for d in signal_data['data'][-50:]]
+            closes = [d['close'] for d in signal_data['data'][-50:]]
             
             for i in range(len(dates)):
                 color = 'green' if closes[i] >= opens[i] else 'red'
                 ax1.plot([dates[i], dates[i]], [lows[i], highs[i]], color='black', linewidth=1)
                 ax1.plot([dates[i], dates[i]], [opens[i], closes[i]], color=color, linewidth=3)
             
-            # Niveles de trading
+            # Añadir niveles de trading
             ax1.axhline(y=signal_data['entry'], color='blue', linestyle='--', alpha=0.7, label='Entrada')
             ax1.axhline(y=signal_data['stop_loss'], color='red', linestyle='--', alpha=0.7, label='Stop Loss')
             for i, tp in enumerate(signal_data['take_profit']):
                 ax1.axhline(y=tp, color='green', linestyle='--', alpha=0.7, label=f'TP{i+1}')
             
-            # Soporte/Resistencias (4-6 niveles)
-            if 'supports' in signal_data:
-                for i, support in enumerate(signal_data['supports'][:4]):
-                    ax1.axhline(y=support, color='orange', linestyle=':', alpha=0.5, label=f'Soporte {i+1}')
+            # Añadir soportes y resistencias
+            for support in signal_data.get('supports', [])[-4:]:
+                ax1.axhline(y=support, color='orange', linestyle=':', alpha=0.5, label='Soporte')
             
-            if 'resistances' in signal_data:
-                for i, resistance in enumerate(signal_data['resistances'][:4]):
-                    ax1.axhline(y=resistance, color='purple', linestyle=':', alpha=0.5, label=f'Resistencia {i+1}')
+            for resistance in signal_data.get('resistances', [])[-4:]:
+                ax1.axhline(y=resistance, color='purple', linestyle=':', alpha=0.5, label='Resistencia')
         
         ax1.set_title(f'{symbol} - Análisis Técnico Completo ({interval})', fontsize=14, fontweight='bold')
         ax1.set_ylabel('Precio (USDT)')
         ax1.legend(fontsize=8)
         ax1.grid(True, alpha=0.3)
         
-        # Gráfico 2: ADX con DMI
+        # Gráfico 2: ADX/DMI
         ax2 = plt.subplot(9, 1, 2, sharex=ax1)
-        if 'indicators' in signal_data:
-            adx_dates = dates[-len(signal_data['indicators']['adx']):]
-            ax2.plot(adx_dates, signal_data['indicators']['adx'], 
-                    'black', linewidth=2, label='ADX')
-            ax2.plot(adx_dates, signal_data['indicators']['plus_di'], 
-                    'green', linewidth=1, label='+DI')
-            ax2.plot(adx_dates, signal_data['indicators']['minus_di'], 
-                    'red', linewidth=1, label='-DI')
-            ax2.axhline(y=25, color='yellow', linestyle='--', alpha=0.7, label='Umbral 25')
+        if 'indicators' in signal_data and 'adx' in signal_data['indicators']:
+            adx_data = signal_data['indicators']['adx'][-50:]
+            plus_di = signal_data['indicators']['plus_di'][-50:]
+            minus_di = signal_data['indicators']['minus_di'][-50:]
+            
+            if len(dates) == len(adx_data):
+                ax2.plot(dates, adx_data, 'white', linewidth=2, label='ADX')
+                ax2.plot(dates, plus_di, 'green', linewidth=1, label='+DI')
+                ax2.plot(dates, minus_di, 'red', linewidth=1, label='-DI')
+                ax2.axhline(y=25, color='yellow', linestyle='--', alpha=0.7, label='Umbral 25')
+        
         ax2.set_ylabel('ADX/DMI')
         ax2.legend(fontsize=8)
         ax2.grid(True, alpha=0.3)
         
-        # Gráfico 3: Volumen con anomalías
+        # Gráfico 3: Volumen
         ax3 = plt.subplot(9, 1, 3, sharex=ax1)
-        if 'indicators' in signal_data:
-            volume_dates = dates[-len(signal_data['indicators']['volume_ratio']):]
-            
-            # Barras de volumen coloreadas
-            volume_colors = []
-            for i in range(len(volume_dates)):
-                if i < len(signal_data['indicators']['volume_anomaly_buy']):
-                    if signal_data['indicators']['volume_anomaly_buy'][i]:
-                        volume_colors.append('green')
-                    elif signal_data['indicators']['volume_anomaly_sell'][i]:
-                        volume_colors.append('red')
-                    else:
-                        volume_colors.append('gray')
-                else:
-                    volume_colors.append('gray')
-            
-            ax3.bar(volume_dates, 
-                   [signal_data['data'][-len(signal_data['indicators']['volume_ratio'])+i]['volume'] 
-                    for i in range(len(volume_dates))], 
-                   color=volume_colors, alpha=0.6, label='Volumen')
-            
-            # MA21 de volumen
-            ax3.plot(volume_dates, signal_data['indicators']['volume_ma_21'], 
-                    'orange', linewidth=1, label='MA21 Volumen')
+        volumes = [d['volume'] for d in signal_data['data'][-50:]]
+        if 'indicators' in signal_data and 'volume_colors' in signal_data['indicators']:
+            volume_colors = signal_data['indicators']['volume_colors'][-50:]
+            if len(dates) == len(volumes) == len(volume_colors):
+                for i, (date, vol, color) in enumerate(zip(dates, volumes, volume_colors)):
+                    ax3.bar(date, vol, color=color, alpha=0.7, width=0.8)
         
         ax3.set_ylabel('Volumen')
-        ax3.legend(fontsize=8)
         ax3.grid(True, alpha=0.3)
         
         # Gráfico 4: Fuerza de Tendencia Maverick
         ax4 = plt.subplot(9, 1, 4, sharex=ax1)
         if 'indicators' in signal_data and 'trend_strength' in signal_data['indicators']:
-            trend_dates = dates[-len(signal_data['indicators']['trend_strength']):]
-            trend_strength = signal_data['indicators']['trend_strength']
-            colors = signal_data['indicators']['colors']
+            trend_strength = signal_data['indicators']['trend_strength'][-50:]
+            colors = signal_data['indicators']['colors'][-50:]
             
-            for i in range(len(trend_dates)):
-                color = colors[i] if i < len(colors) else 'gray'
-                ax4.bar(trend_dates[i], trend_strength[i], color=color, alpha=0.7, width=0.8)
-            
-            if 'high_zone_threshold' in signal_data['indicators']:
-                threshold = signal_data['indicators']['high_zone_threshold']
-                ax4.axhline(y=threshold, color='orange', linestyle='--', alpha=0.7, 
-                           label=f'Umbral Alto ({threshold:.1f}%)')
-                ax4.axhline(y=-threshold, color='orange', linestyle='--', alpha=0.7)
-            
-            ax4.set_ylabel('FT Maverick %')
-            ax4.legend(fontsize=8)
-            ax4.grid(True, alpha=0.3)
+            if len(dates) == len(trend_strength) == len(colors):
+                for i, (date, strength, color) in enumerate(zip(dates, trend_strength, colors)):
+                    ax4.bar(date, strength, color=color, alpha=0.7, width=0.8)
         
-        # Gráfico 5: Ballenas (solo si hay datos)
+        ax4.set_ylabel('FT Maverick')
+        ax4.grid(True, alpha=0.3)
+        
+        # Gráfico 5: RSI Tradicional
         ax5 = plt.subplot(9, 1, 5, sharex=ax1)
-        if 'indicators' in signal_data and 'whale_pump' in signal_data['indicators']:
-            whale_dates = dates[-len(signal_data['indicators']['whale_pump']):]
-            ax5.bar(whale_dates, signal_data['indicators']['whale_pump'], 
-                   color='green', alpha=0.6, label='Compradoras')
-            ax5.bar(whale_dates, signal_data['indicators']['whale_dump'], 
-                   color='red', alpha=0.6, label='Vendedoras')
-        ax5.set_ylabel('Ballenas')
+        if 'indicators' in signal_data and 'rsi_traditional' in signal_data['indicators']:
+            rsi_traditional = signal_data['indicators']['rsi_traditional'][-50:]
+            if len(dates) == len(rsi_traditional):
+                ax5.plot(dates, rsi_traditional, 'cyan', linewidth=2, label='RSI Tradicional')
+                ax5.axhline(y=80, color='red', linestyle='--', alpha=0.7, label='Sobrecompra')
+                ax5.axhline(y=20, color='green', linestyle='--', alpha=0.7, label='Sobreventa')
+                ax5.axhline(y=50, color='gray', linestyle='-', alpha=0.3)
+        
+        ax5.set_ylabel('RSI Tradicional')
         ax5.legend(fontsize=8)
         ax5.grid(True, alpha=0.3)
         
         # Gráfico 6: RSI Maverick
         ax6 = plt.subplot(9, 1, 6, sharex=ax1)
-        if 'indicators' in signal_data:
-            rsi_maverick_dates = dates[-len(signal_data['indicators']['rsi_maverick']):]
-            ax6.plot(rsi_maverick_dates, signal_data['indicators']['rsi_maverick'], 
-                    'blue', linewidth=2, label='RSI Maverick')
-            ax6.axhline(y=0.8, color='red', linestyle='--', alpha=0.5, label='Sobrecompra')
-            ax6.axhline(y=0.2, color='green', linestyle='--', alpha=0.5, label='Sobreventa')
-            ax6.axhline(y=0.5, color='gray', linestyle='-', alpha=0.3)
+        if 'indicators' in signal_data and 'rsi_maverick' in signal_data['indicators']:
+            rsi_maverick = signal_data['indicators']['rsi_maverick'][-50:]
+            if len(dates) == len(rsi_maverick):
+                ax6.plot(dates, rsi_maverick, 'blue', linewidth=2, label='RSI Maverick')
+                ax6.axhline(y=0.8, color='red', linestyle='--', alpha=0.7, label='Sobrecompra')
+                ax6.axhline(y=0.2, color='green', linestyle='--', alpha=0.7, label='Sobreventa')
+                ax6.axhline(y=0.5, color='gray', linestyle='-', alpha=0.3)
+        
         ax6.set_ylabel('RSI Maverick')
-        ax6.set_ylim(0, 1)
         ax6.legend(fontsize=8)
         ax6.grid(True, alpha=0.3)
         
-        # Gráfico 7: RSI Tradicional
+        # Gráfico 7: MACD
         ax7 = plt.subplot(9, 1, 7, sharex=ax1)
-        if 'indicators' in signal_data:
-            rsi_trad_dates = dates[-len(signal_data['indicators']['rsi_traditional']):]
-            ax7.plot(rsi_trad_dates, signal_data['indicators']['rsi_traditional'], 
-                    'purple', linewidth=2, label='RSI Tradicional')
-            ax7.axhline(y=80, color='red', linestyle='--', alpha=0.5)
-            ax7.axhline(y=20, color='green', linestyle='--', alpha=0.5)
-            ax7.axhline(y=50, color='gray', linestyle='-', alpha=0.3)
-        ax7.set_ylabel('RSI Tradicional')
-        ax7.set_ylim(0, 100)
+        if 'indicators' in signal_data and 'macd' in signal_data['indicators']:
+            macd_data = signal_data['indicators']['macd'][-50:]
+            macd_signal = signal_data['indicators']['macd_signal'][-50:]
+            macd_histogram = signal_data['indicators']['macd_histogram'][-50:]
+            
+            if len(dates) == len(macd_data):
+                ax7.plot(dates, macd_data, 'blue', linewidth=1, label='MACD')
+                ax7.plot(dates, macd_signal, 'red', linewidth=1, label='Señal')
+                
+                colors = ['green' if x > 0 else 'red' for x in macd_histogram]
+                ax7.bar(dates, macd_histogram, color=colors, alpha=0.6, label='Histograma')
+                
+                ax7.axhline(y=0, color='gray', linestyle='-', alpha=0.5)
+        
+        ax7.set_ylabel('MACD')
         ax7.legend(fontsize=8)
         ax7.grid(True, alpha=0.3)
         
-        # Gráfico 8: MACD
-        ax8 = plt.subplot(9, 1, 8, sharex=ax1)
-        if 'indicators' in signal_data:
-            macd_dates = dates[-len(signal_data['indicators']['macd']):]
-            ax8.plot(macd_dates, signal_data['indicators']['macd'], 
-                    'blue', linewidth=1, label='MACD')
-            ax8.plot(macd_dates, signal_data['indicators']['macd_signal'], 
-                    'red', linewidth=1, label='Señal')
+        # Gráfico 8: Ballenas (si aplica)
+        if interval in ['12h', '1D'] and 'indicators' in signal_data:
+            ax8 = plt.subplot(9, 1, 8, sharex=ax1)
+            if 'whale_pump' in signal_data['indicators']:
+                whale_pump = signal_data['indicators']['whale_pump'][-50:]
+                whale_dump = signal_data['indicators']['whale_dump'][-50:]
+                
+                if len(dates) == len(whale_pump):
+                    ax8.bar(dates, whale_pump, color='green', alpha=0.7, label='Compradoras')
+                    ax8.bar(dates, whale_dump, color='red', alpha=0.7, label='Vendedoras')
             
-            colors = ['green' if x > 0 else 'red' for x in signal_data['indicators']['macd_histogram']]
-            ax8.bar(macd_dates, signal_data['indicators']['macd_histogram'], 
-                   color=colors, alpha=0.6, label='Histograma')
-            
-            ax8.axhline(y=0, color='gray', linestyle='-', alpha=0.5)
-        ax8.set_ylabel('MACD')
-        ax8.set_xlabel('Fecha/Hora')
-        ax8.legend(fontsize=8)
-        ax8.grid(True, alpha=0.3)
+            ax8.set_ylabel('Ballenas')
+            ax8.legend(fontsize=8)
+            ax8.grid(True, alpha=0.3)
         
         # Información de la señal
         ax9 = plt.subplot(9, 1, 9)
         ax9.axis('off')
         
+        multi_tf_info = "✅ MULTI-TIMEFRAME: Confirmado" if signal_data.get('multi_timeframe_ok') else "❌ MULTI-TIMEFRAME: No confirmado"
+        ma200_info = f"MA200: {'ENCIMA' if signal_data.get('ma200_condition') == 'above' else 'DEBAJO'}"
+        
         signal_info = f"""
         SEÑAL: {signal_data['signal']}
         SCORE: {signal_data['signal_score']:.1f}%
+        
+        {multi_tf_info}
+        {ma200_info}
         
         PRECIO ACTUAL: ${signal_data['current_price']:.6f}
         ENTRADA: ${signal_data['entry']:.6f}
         STOP LOSS: ${signal_data['stop_loss']:.6f}
         TAKE PROFIT: ${signal_data['take_profit'][0]:.6f}
         
+        APALANCAMIENTO: x{leverage}
         ATR: {signal_data['atr']:.6f} ({signal_data['atr_percentage']*100:.1f}%)
         
         CONDICIONES CUMPLIDAS:
         {chr(10).join(['• ' + cond for cond in signal_data.get('fulfilled_conditions', [])])}
         """
         
-        ax9.text(0.1, 0.9, signal_info, transform=ax9.transAxes, fontsize=10,
+        ax9.text(0.1, 0.9, signal_info, transform=ax9.transAxes, fontsize=9,
                 verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
         
         plt.tight_layout()
@@ -2825,11 +2446,10 @@ def generate_report():
         
     except Exception as e:
         print(f"Error generando reporte: {e}")
-        return jsonify({'error': 'Error generando reporte'}), 500
+        return jsonify({'error': 'Error generando reporte', 'details': str(e)}), 500
 
 @app.route('/api/bolivia_time')
 def get_bolivia_time():
-    """Endpoint para obtener la hora actual de Bolivia"""
     bolivia_tz = pytz.timezone('America/La_Paz')
     current_time = datetime.now(bolivia_tz)
     return jsonify({
