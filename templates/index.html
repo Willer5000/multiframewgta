@@ -236,7 +236,7 @@
                     </div>
                 </div>
 
-                <!-- Indicador de Volumen con Anomalías y Clusters -->
+                <!-- Gráfico de Volumen con Anomalías -->
                 <div class="card bg-dark border-info mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -249,16 +249,15 @@
                         <div class="mt-2">
                             <small class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 Verde:</strong> Compra | 
-                                <strong>🔴 Rojo:</strong> Venta |
-                                <strong>📈 Amarillo:</strong> MA21 Volumen |
-                                <strong>🔴 Círculo:</strong> Anomalía (>2.5x MA)
+                                <strong>🟢 VERDE:</strong> Volumen Anómalo COMPRA | 
+                                <strong>🔴 ROJO:</strong> Volumen Anómalo VENTA |
+                                <strong>📊 GRIS:</strong> Volumen Normal
                             </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Fuerza de Tendencia Maverick -->
+                <!-- Gráfico Fuerza de Tendencia Maverick -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -271,9 +270,9 @@
                         <div class="mt-2">
                             <small class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Fuerza creciente (Operar) | 
-                                <strong>🔴 ROJO:</strong> Fuerza decreciente (Evitar) |
-                                <strong>❌ X ROJO:</strong> Zona de NO OPERAR
+                                <strong>🟢 VERDE:</strong> Fuerza creciente | 
+                                <strong>🔴 ROJO:</strong> Fuerza decreciente |
+                                <strong>❌ NARANJA:</strong> Zona de NO OPERAR
                             </small>
                         </div>
                     </div>
@@ -353,35 +352,18 @@
                     </div>
                 </div>
 
-                <!-- Alertas de Entrada - Estrategia Multi-TF -->
+                <!-- Alertas de Entrada -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header bg-warning bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Alertas Multi-TF</h5>
+                        <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Alertas de Entrada</h5>
                     </div>
                     <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                        <div id="multi-tf-alerts">
+                        <div id="scalping-alerts">
                             <div class="text-center py-2">
                                 <div class="spinner-border spinner-border-sm text-warning" role="status">
                                     <span class="visually-hidden">Cargando...</span>
                                 </div>
-                                <p class="mt-2 mb-0 small">Buscando oportunidades Multi-TF...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Alertas de Volumen+EMA -->
-                <div class="card bg-dark border-danger mb-4">
-                    <div class="card-header bg-danger bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-volume-up me-2"></i>Alertas Volumen+EMA</h5>
-                    </div>
-                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                        <div id="volume-ema-alerts">
-                            <div class="text-center py-2">
-                                <div class="spinner-border spinner-border-sm text-danger" role="status">
-                                    <span class="visually-hidden">Cargando...</span>
-                                </div>
-                                <p class="mt-2 mb-0 small">Buscando anomalías de volumen...</p>
+                                <p class="mt-2 mb-0 small">Buscando oportunidades...</p>
                             </div>
                         </div>
                     </div>
@@ -481,13 +463,12 @@
                 });
         }
 
-        // Función para descargar reporte estratégico
-        function downloadStrategicReport() {
+        // Función para descargar reporte
+        function downloadReport() {
             const symbol = document.getElementById('selected-crypto').textContent;
             const interval = document.getElementById('interval-select').value;
-            const leverage = document.getElementById('leverage').value;
             
-            const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}`;
+            const url = `/api/generate_report?symbol=${symbol}&interval=${interval}`;
             window.open(url, '_blank');
         }
 
