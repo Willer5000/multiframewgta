@@ -195,7 +195,6 @@ function selectCrypto(symbol) {
     updateCharts();
 }
 
-// Función para cargar clasificación de riesgo
 function loadCryptoRiskClassification() {
     fetch('/api/crypto_risk_classification')
         .then(response => {
@@ -274,6 +273,7 @@ function startAutoUpdate() {
         if (document.visibilityState === 'visible') {
             console.log('Actualización automática (cada 90 segundos)');
             updateCharts();
+            updateCalendarInfo();
         }
     }, 90000);
 }
@@ -295,7 +295,7 @@ function updateCharts() {
     updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
     
     // Actualizar gráfico de dispersión
-    updateScatterChart(interval, diPeriod, adxThreshold);
+    updateScatterChartImproved(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
     
     // Actualizar señales múltiples
     updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
@@ -317,9 +317,9 @@ function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsi
             }
             currentData = data;
             renderCandleChart(data);
-            renderAdxChart(data);
+            renderAdxChartImproved(data);
             renderTrendStrengthChart(data);
-            renderWhaleChart(data);
+            renderWhaleChartImproved(data);
             renderRsiMaverickChart(data);
             renderRsiTraditionalChart(data);
             renderMacdChart(data);
@@ -344,8 +344,8 @@ function showSampleData(symbol) {
         entry: 50000,
         stop_loss: 48000,
         take_profit: [52000],
-        supports: [48000, 47000],
-        resistances: [52000, 53000],
+        supports: [48000, 47500, 47000],
+        resistances: [52000, 52500, 53000],
         volume: 1000000,
         volume_ma: 800000,
         adx: 25,
@@ -399,29 +399,31 @@ function renderCandleChart(data, indicatorOptions = {}) {
     
     const traces = [candlestickTrace];
     
-    // Añadir soportes y resistencias
+    // Añadir líneas de soporte y resistencia
     if (data.supports && data.resistances) {
-        // Soportes
-        data.supports.forEach((support, index) => {
+        // Soporte (4 líneas)
+        data.supports.slice(-4).forEach((support, index) => {
             traces.push({
                 type: 'scatter',
                 x: [dates[0], dates[dates.length - 1]],
                 y: [support, support],
                 mode: 'lines',
-                line: {color: 'blue', dash: 'dash', width: 1},
-                name: `Soporte ${index + 1}`
+                line: {color: 'blue', dash: 'dash', width: 1 + (index * 0.5)},
+                name: `Soporte ${index + 1}`,
+                showlegend: index === 0
             });
         });
         
-        // Resistencias
-        data.resistances.forEach((resistance, index) => {
+        // Resistencia (4 líneas)
+        data.resistances.slice(0, 4).forEach((resistance, index) => {
             traces.push({
                 type: 'scatter',
                 x: [dates[0], dates[dates.length - 1]],
                 y: [resistance, resistance],
                 mode: 'lines',
-                line: {color: 'red', dash: 'dash', width: 1},
-                name: `Resistencia ${index + 1}`
+                line: {color: 'red', dash: 'dash', width: 1 + (index * 0.5)},
+                name: `Resistencia ${index + 1}`,
+                showlegend: index === 0
             });
         });
     }
@@ -443,7 +445,7 @@ function renderCandleChart(data, indicatorOptions = {}) {
             x: [dates[0], dates[dates.length - 1]],
             y: [data.stop_loss, data.stop_loss],
             mode: 'lines',
-            line: {color: '#FF0000', dash: 'dash', width: 1.5},
+            line: {color: '#FF0000', dash: 'solid', width: 2},
             name: 'Stop Loss'
         });
         
@@ -510,7 +512,7 @@ function renderCandleChart(data, indicatorOptions = {}) {
                 x: dates,
                 y: data.indicators.ma_200,
                 mode: 'lines',
-                line: {color: '#795548', width: 2},
+                line: {color: '#795548', width: 3},
                 name: 'MA 200'
             });
         }
@@ -627,7 +629,7 @@ function renderCandleChart(data, indicatorOptions = {}) {
     currentChart = Plotly.newPlot('candle-chart', traces, layout, config);
 }
 
-function renderAdxChart(data) {
+function renderAdxChartImproved(data) {
     const chartElement = document.getElementById('adx-chart');
     
     if (!data.indicators || !data.data) {
@@ -881,7 +883,7 @@ function renderTrendStrengthChart(data) {
     currentTrendStrengthChart = Plotly.newPlot('trend-strength-chart', traces, layout, config);
 }
 
-function renderWhaleChart(data) {
+function renderWhaleChartImproved(data) {
     const chartElement = document.getElementById('whale-chart');
     
     if (!data.indicators || !data.data) {
@@ -1335,6 +1337,8 @@ function renderMacdChart(data) {
     const macd = data.indicators.macd || [];
     const macdSignal = data.indicators.macd_signal || [];
     const macdHistogram = data.indicators.macd_histogram || [];
+    const macdCrossUp = data.indicators.macd_cross_up || [];
+    const macdCrossDown = data.indicators.macd_cross_down || [];
     
     // Colores para el histograma
     const histogramColors = macdHistogram.map(value => 
@@ -1364,12 +1368,28 @@ function renderMacdChart(data) {
             type: 'bar',
             name: 'Histograma',
             marker: {color: histogramColors}
+        },
+        {
+            x: dates.filter((_, i) => macdCrossUp[i]),
+            y: macd.filter((_, i) => macdCrossUp[i]),
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Cruce Alcista',
+            marker: {color: '#00FF00', size: 10, symbol: 'triangle-up'}
+        },
+        {
+            x: dates.filter((_, i) => macdCrossDown[i]),
+            y: macd.filter((_, i) => macdCrossDown[i]),
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Cruce Bajista',
+            marker: {color: '#FF0000', size: 10, symbol: 'triangle-down'}
         }
     ];
     
     const layout = {
         title: {
-            text: 'MACD con Histograma',
+            text: 'MACD con Histograma y Cruces',
             font: {color: '#ffffff', size: 14}
         },
         xaxis: {
@@ -1424,18 +1444,17 @@ function renderVolumeChart(data) {
 
     const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
     const volumes = data.data.slice(-50).map(d => parseFloat(d.volume));
-    const volumeAnomaly = data.indicators.volume_anomaly || [];
+    const volumeAnomalyBuy = data.indicators.volume_anomaly_buy || [];
+    const volumeAnomalySell = data.indicators.volume_anomaly_sell || [];
     const volumeClusters = data.indicators.volume_clusters || [];
     const volumeRatio = data.indicators.volume_ratio || [];
-    const volumeEma = data.indicators.volume_ema || [];
-    const volumeDirection = data.indicators.volume_direction || [];
+    const volumeMa = data.indicators.volume_ma || [];
     
-    // Crear barras de volumen con colores según dirección
+    // Colores para barras de volumen
     const volumeColors = volumes.map((vol, i) => {
-        if (volumeAnomaly[i]) {
-            return volumeDirection[i] == 1 ? '#00C853' : '#FF1744';
-        }
-        return 'rgba(128, 128, 128, 0.7)';
+        if (volumeAnomalyBuy[i]) return '#00C853';  // Verde para compra anómala
+        if (volumeAnomalySell[i]) return '#FF1744'; // Rojo para venta anómala
+        return 'rgba(128, 128, 128, 0.7)';          // Gris para volumen normal
     });
     
     const traces = [
@@ -1448,10 +1467,10 @@ function renderVolumeChart(data) {
         },
         {
             x: dates,
-            y: volumeEma,
+            y: volumeMa,
             type: 'scatter',
             mode: 'lines',
-            name: 'EMA Volumen (21)',
+            name: 'MA Volumen',
             line: {color: '#FFD700', width: 2}
         }
     ];
@@ -1510,7 +1529,22 @@ function renderVolumeChart(data) {
             font: {color: '#ffffff'},
             bgcolor: 'rgba(0,0,0,0)'
         },
-        margin: {t: 60, r: 50, b: 50, l: 50}
+        margin: {t: 60, r: 50, b: 50, l: 50},
+        annotations: [
+            {
+                x: 0.02,
+                y: 0.98,
+                xref: 'paper',
+                yref: 'paper',
+                text: '🟢 Compra anómala | 🔴 Venta anómala | 📊 MA Volumen | 🔷 Clusters',
+                showarrow: false,
+                font: {color: 'white', size: 10},
+                bgcolor: 'rgba(0,0,0,0.7)',
+                bordercolor: 'rgba(255,255,255,0.5)',
+                borderwidth: 1,
+                borderpad: 4
+            }
+        ]
     };
     
     const config = {
@@ -1637,15 +1671,15 @@ function updateSignalAnalysis(data) {
 
 function getVolumeLevel(currentVolume, averageVolume) {
     const ratio = currentVolume / averageVolume;
-    if (ratio > 2.5) return { text: 'MUY ALTO', class: 'bg-success' };
-    if (ratio > 2.0) return { text: 'ALTO', class: 'bg-info' };
-    if (ratio > 1.5) return { text: 'MEDIO', class: 'bg-warning' };
-    if (ratio > 1.0) return { text: 'BAJO', class: 'bg-secondary' };
+    if (ratio > 2.0) return { text: 'MUY ALTO', class: 'bg-success' };
+    if (ratio > 1.5) return { text: 'ALTO', class: 'bg-info' };
+    if (ratio > 1.0) return { text: 'MEDIO', class: 'bg-warning' };
+    if (ratio > 0.5) return { text: 'BAJO', class: 'bg-secondary' };
     return { text: 'MUY BAJO', class: 'bg-dark' };
 }
 
-function updateScatterChart(interval, diPeriod, adxThreshold) {
-    const url = `/api/scatter_data?interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}`;
+function updateScatterChartImproved(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage) {
+    const url = `/api/scatter_data_improved?interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&volume_filter=${volumeFilter}&leverage=${leverage}`;
     
     fetch(url)
         .then(response => {
@@ -1655,15 +1689,14 @@ function updateScatterChart(interval, diPeriod, adxThreshold) {
             return response.json();
         })
         .then(scatterData => {
-            renderScatterChart(scatterData);
+            renderScatterChartImproved(scatterData);
         })
         .catch(error => {
             console.error('Error cargando datos de scatter:', error);
-            showError('Error cargando mapa de oportunidades');
         });
 }
 
-function renderScatterChart(scatterData) {
+function renderScatterChartImproved(scatterData) {
     const scatterElement = document.getElementById('scatter-chart');
     
     if (!scatterData || scatterData.length === 0) {
@@ -1675,6 +1708,7 @@ function renderScatterChart(scatterData) {
         return;
     }
     
+    // Calcular valores para colores basados en señal real
     const traces = [{
         x: scatterData.map(d => d.x),
         y: scatterData.map(d => d.y),
@@ -1685,6 +1719,7 @@ function renderScatterChart(scatterData) {
         marker: {
             size: scatterData.map(d => 8 + (d.signal_score / 15)),
             color: scatterData.map(d => {
+                // Color basado en señal real y categoría de riesgo
                 if (d.signal === 'LONG') {
                     return d.risk_category === 'bajo' ? '#00C853' : 
                            d.risk_category === 'medio' ? '#FFC107' : 
@@ -1765,6 +1800,14 @@ function renderScatterChart(scatterData) {
                 font: {color: 'green', size: 12, weight: 'bold'},
                 bgcolor: 'rgba(0, 255, 0, 0.3)',
                 bordercolor: 'green'
+            },
+            {
+                x: 50, y: 95,
+                text: '● LONG (Bajo) ● LONG (Medio) ● LONG (Alto) ● LONG (Memecoin) ● SHORT (Bajo) ● SHORT (Medio) ● SHORT (Alto) ● SHORT (Memecoin)',
+                showarrow: false,
+                font: {color: 'white', size: 9},
+                bgcolor: 'rgba(0,0,0,0.7)',
+                bordercolor: 'white'
             }
         ],
         plot_bgcolor: 'rgba(0,0,0,0)',
@@ -1821,7 +1864,6 @@ function updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLe
                 throw new Error(data.error);
             }
             updateSignalsTables(data);
-            updateScalpingAlerts(data.long_signals.concat(data.short_signals));
         })
         .catch(error => {
             console.error('Error cargando múltiples señales:', error);
@@ -1882,32 +1924,43 @@ function updateSignalsTables(data) {
     }
 }
 
-function updateScalpingAlerts(signals = []) {
-    const alertsElement = document.getElementById('scalping-alerts');
-    
-    if (signals && signals.length > 0) {
-        alertsElement.innerHTML = signals.slice(0, 3).map(alert => `
-            <div class="alert alert-warning scalping-alert mb-2 p-2">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <strong>${alert.symbol}</strong>
-                        <div class="small">${alert.interval || '4h'} - ${alert.signal}</div>
-                        <div class="small">Score: ${alert.signal_score.toFixed(1)}%</div>
+function updateScalpingAlerts() {
+    fetch('/api/scalping_alerts')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const alertsElement = document.getElementById('scalping-alerts');
+            if (data.alerts && data.alerts.length > 0) {
+                alertsElement.innerHTML = data.alerts.slice(0, 3).map(alert => `
+                    <div class="alert alert-warning scalping-alert mb-2 p-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>${alert.symbol}</strong>
+                                <div class="small">${alert.interval} - ${alert.signal}</div>
+                                <div class="small">Score: ${alert.score.toFixed(1)}%</div>
+                            </div>
+                            <span class="badge bg-${alert.signal === 'LONG' ? 'success' : 'danger'}">
+                                $${formatPriceForDisplay(alert.entry)}
+                            </span>
+                        </div>
                     </div>
-                    <span class="badge bg-${alert.signal === 'LONG' ? 'success' : 'danger'}">
-                        $${formatPriceForDisplay(alert.entry)}
-                    </span>
-                </div>
-            </div>
-        `).join('');
-    } else {
-        alertsElement.innerHTML = `
-            <div class="text-center text-muted py-3">
-                <i class="fas fa-bell-slash fa-2x mb-2"></i>
-                <div class="small">No hay alertas activas</div>
-            </div>
-        `;
-    }
+                `).join('');
+            } else {
+                alertsElement.innerHTML = `
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                        <div class="small">No hay alertas activas</div>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error cargando alertas:', error);
+        });
 }
 
 function showSignalDetails(symbol, signalType) {
@@ -1965,14 +2018,13 @@ function showSignalDetails(symbol, signalType) {
                             <span>Take Profit:</span>
                             <span class="fw-bold text-success">$${signalData.take_profit[0].toFixed(6)}</span>
                         </div>
-                        <div class="d-flex justify-content-between small">
-                            <span>Soportes:</span>
-                            <span class="fw-bold text-info">${signalData.supports.map(s => `$${s.toFixed(6)}`).join('<br>')}</span>
-                        </div>
-                        <div class="d-flex justify-content-between small">
-                            <span>Resistencias:</span>
-                            <span class="fw-bold text-info">${signalData.resistances.map(r => `$${r.toFixed(6)}`).join('<br>')}</span>
-                        </div>
+                        <h6 class="mt-3">Soportes</h6>
+                        ${signalData.supports.slice(-4).map((s, i) => `
+                            <div class="d-flex justify-content-between small">
+                                <span>Soporte ${i + 1}:</span>
+                                <span class="fw-bold text-info">$${s.toFixed(6)}</span>
+                            </div>
+                        `).join('')}
                     </div>
                     <div class="col-md-6">
                         <h6>Indicadores Clave</h6>
@@ -2004,6 +2056,13 @@ function showSignalDetails(symbol, signalType) {
                                 ${signalData.ma200_condition === 'above' ? 'ENCIMA' : 'DEBAJO'}
                             </span>
                         </div>
+                        <h6 class="mt-3">Resistencias</h6>
+                        ${signalData.resistances.slice(0, 4).map((r, i) => `
+                            <div class="d-flex justify-content-between small">
+                                <span>Resistencia ${i + 1}:</span>
+                                <span class="fw-bold text-info">$${r.toFixed(6)}</span>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
                 
@@ -2078,7 +2137,6 @@ function showError(message) {
     });
 }
 
-// Función para actualizar el reloj de Bolivia
 function updateBoliviaClock() {
     fetch('/api/bolivia_time')
         .then(response => response.json())
@@ -2094,10 +2152,17 @@ function updateBoliviaClock() {
         });
 }
 
-// Actualizar el reloj cada segundo
+function downloadStrategicReport() {
+    const symbol = document.getElementById('selected-crypto').textContent;
+    const interval = document.getElementById('interval-select').value;
+    const leverage = document.getElementById('leverage').value;
+    
+    const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}`;
+    window.open(url, '_blank');
+}
+
 setInterval(updateBoliviaClock, 1000);
 
-// Inicializar el reloj al cargar la página
 document.addEventListener('DOMContentLoaded', function() {
     updateBoliviaClock();
 });
