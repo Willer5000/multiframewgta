@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeApp() {
     console.log('MULTI-TIMEFRAME CRYPTO WGTA PRO - Inicializado');
     loadCryptoRiskClassification();
+    loadMarketIndicators();
     updateCalendarInfo();
 }
 
@@ -35,6 +36,7 @@ function setupEventListeners() {
     document.getElementById('sr-period').addEventListener('change', updateCharts);
     document.getElementById('rsi-length').addEventListener('change', updateCharts);
     document.getElementById('bb-multiplier').addEventListener('change', updateCharts);
+    document.getElementById('volume-filter').addEventListener('change', updateCharts);
     document.getElementById('leverage').addEventListener('change', updateCharts);
     
     // Configurar buscador de cryptos
@@ -194,6 +196,7 @@ function selectCrypto(symbol) {
     updateCharts();
 }
 
+// Función para cargar clasificación de riesgo
 function loadCryptoRiskClassification() {
     fetch('/api/crypto_risk_classification')
         .then(response => {
@@ -241,6 +244,13 @@ function loadBasicCryptoSymbols() {
     filterCryptoList('');
 }
 
+function loadMarketIndicators() {
+    // Actualizar información del mercado
+    updateScalpingAlerts();
+    updateVolumeEmaAlerts();
+    updateCalendarInfo();
+}
+
 function showLoadingState() {
     document.getElementById('market-summary').innerHTML = `
         <div class="text-center py-4">
@@ -272,7 +282,7 @@ function startAutoUpdate() {
         if (document.visibilityState === 'visible') {
             console.log('Actualización automática (cada 90 segundos)');
             updateCharts();
-            updateCalendarInfo();
+            loadMarketIndicators();
         }
     }, 90000);
 }
@@ -287,20 +297,21 @@ function updateCharts() {
     const srPeriod = document.getElementById('sr-period').value;
     const rsiLength = document.getElementById('rsi-length').value;
     const bbMultiplier = document.getElementById('bb-multiplier').value;
+    const volumeFilter = document.getElementById('volume-filter').value;
     const leverage = document.getElementById('leverage').value;
     
     // Actualizar gráfico principal
-    updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, leverage);
+    updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
     
     // Actualizar gráfico de dispersión
-    updateScatterChartImproved(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, leverage);
+    updateScatterChartImproved(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
     
     // Actualizar señales múltiples
-    updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, leverage);
+    updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
 }
 
-function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, leverage) {
-    const url = `/api/signals?symbol=${symbol}&interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&leverage=${leverage}`;
+function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage) {
+    const url = `/api/signals?symbol=${symbol}&interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&volume_filter=${volumeFilter}&leverage=${leverage}`;
     
     fetch(url)
         .then(response => {
@@ -316,12 +327,12 @@ function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsi
             currentData = data;
             renderCandleChart(data);
             renderAdxChartImproved(data);
-            renderVolumeChart(data);
             renderTrendStrengthChart(data);
             renderWhaleChartImproved(data);
             renderRsiMaverickChart(data);
             renderRsiTraditionalChart(data);
             renderMacdChart(data);
+            renderVolumeChart(data);
             updateMarketSummary(data);
             updateSignalAnalysis(data);
         })
@@ -342,13 +353,15 @@ function showSampleData(symbol) {
         entry: 50000,
         stop_loss: 48000,
         take_profit: [52000],
-        supports: [48000, 47500],
-        resistances: [52000, 52500],
+        support_levels: [48000, 47000],
+        resistance_levels: [52000, 53000],
         volume: 1000000,
         volume_ma: 800000,
         adx: 25,
         plus_di: 30,
         minus_di: 20,
+        whale_pump: 15,
+        whale_dump: 10,
         rsi_maverick: 0.5,
         rsi_traditional: 50,
         multi_timeframe_ok: false,
@@ -396,20 +409,20 @@ function renderCandleChart(data, indicatorOptions = {}) {
     const traces = [candlestickTrace];
     
     // Añadir líneas de soporte y resistencia
-    if (data.supports && data.resistances) {
-        data.supports.forEach((support, index) => {
+    if (data.support_levels && data.resistance_levels) {
+        data.support_levels.forEach((support, index) => {
             traces.push({
                 type: 'scatter',
                 x: [dates[0], dates[dates.length - 1]],
                 y: [support, support],
                 mode: 'lines',
-                line: {color: 'green', dash: 'dash', width: 1},
+                line: {color: 'blue', dash: 'dash', width: 1},
                 name: `Soporte ${index + 1}`,
-                opacity: 0.7
+                showlegend: index === 0
             });
         });
         
-        data.resistances.forEach((resistance, index) => {
+        data.resistance_levels.forEach((resistance, index) => {
             traces.push({
                 type: 'scatter',
                 x: [dates[0], dates[dates.length - 1]],
@@ -417,7 +430,7 @@ function renderCandleChart(data, indicatorOptions = {}) {
                 mode: 'lines',
                 line: {color: 'red', dash: 'dash', width: 1},
                 name: `Resistencia ${index + 1}`,
-                opacity: 0.7
+                showlegend: index === 0
             });
         });
     }
@@ -433,16 +446,6 @@ function renderCandleChart(data, indicatorOptions = {}) {
             name: 'Entrada'
         });
         
-        // Añadir stop loss
-        traces.push({
-            type: 'scatter',
-            x: [dates[0], dates[dates.length - 1]],
-            y: [data.stop_loss, data.stop_loss],
-            mode: 'lines',
-            line: {color: '#FF1744', dash: 'dash', width: 2},
-            name: 'Stop Loss'
-        });
-        
         // Añadir take profits
         data.take_profit.forEach((tp, index) => {
             traces.push({
@@ -450,10 +453,22 @@ function renderCandleChart(data, indicatorOptions = {}) {
                 x: [dates[0], dates[dates.length - 1]],
                 y: [tp, tp],
                 mode: 'lines',
-                line: {color: '#00C853', dash: 'dash', width: 1.5},
+                line: {color: '#00FF00', dash: 'dash', width: 1.5},
                 name: `TP${index + 1}`
             });
         });
+        
+        // Stop loss
+        if (data.stop_loss) {
+            traces.push({
+                type: 'scatter',
+                x: [dates[0], dates[dates.length - 1]],
+                y: [data.stop_loss, data.stop_loss],
+                mode: 'lines',
+                line: {color: '#FF0000', dash: 'dash', width: 1.5},
+                name: 'Stop Loss'
+            });
+        }
     }
     
     // Añadir indicadores informativos si están activados
@@ -639,6 +654,8 @@ function renderAdxChartImproved(data) {
     const adx = data.indicators.adx || [];
     const plusDi = data.indicators.plus_di || [];
     const minusDi = data.indicators.minus_di || [];
+    const diCrossBullish = data.indicators.di_cross_bullish || [];
+    const diCrossBearish = data.indicators.di_cross_bearish || [];
     
     const traces = [
         {
@@ -666,18 +683,26 @@ function renderAdxChartImproved(data) {
             line: {color: '#FF1744', width: 1.5}
         },
         {
-            x: [dates[0], dates[dates.length - 1]],
-            y: [25, 25],
+            x: dates.filter((_, i) => diCrossBullish[i]),
+            y: plusDi.filter((_, i) => diCrossBullish[i]),
             type: 'scatter',
-            mode: 'lines',
-            name: 'Umbral 25',
-            line: {color: 'yellow', dash: 'dash', width: 1}
+            mode: 'markers',
+            name: 'Cruce Alcista',
+            marker: {color: '#00FF00', size: 8, symbol: 'star'}
+        },
+        {
+            x: dates.filter((_, i) => diCrossBearish[i]),
+            y: minusDi.filter((_, i) => diCrossBearish[i]),
+            type: 'scatter',
+            mode: 'markers',
+            name: 'Cruce Bajista',
+            marker: {color: '#FF0000', size: 8, symbol: 'star'}
         }
     ];
     
     const layout = {
         title: {
-            text: 'ADX con Indicadores Direccionales (+DI / -DI)',
+            text: 'ADX con Indicadores Direccionales (+DI / -DI) y Cruces',
             font: {color: '#ffffff', size: 14}
         },
         xaxis: {
@@ -836,7 +861,22 @@ function renderTrendStrengthChart(data) {
             font: {color: '#ffffff'},
             bgcolor: 'rgba(0,0,0,0)'
         },
-        margin: {t: 60, r: 50, b: 50, l: 50}
+        margin: {t: 60, r: 50, b: 50, l: 50},
+        annotations: [
+            {
+                x: 0.02,
+                y: 0.98,
+                xref: 'paper',
+                yref: 'paper',
+                text: '🟢 Verde: Fuerza creciente | 🔴 Rojo: Fuerza decreciente',
+                showarrow: false,
+                font: {color: 'white', size: 10},
+                bgcolor: 'rgba(0,0,0,0.7)',
+                bordercolor: 'rgba(255,255,255,0.5)',
+                borderwidth: 1,
+                borderpad: 4
+            }
+        ]
     };
     
     const config = {
@@ -884,51 +924,28 @@ function renderWhaleChartImproved(data) {
             type: 'bar',
             name: 'Ballenas Vendedoras',
             marker: {color: '#FF1744'}
-        }
-    ];
-    
-    // Añadir señales confirmadas
-    const buyDates = [];
-    const buyValues = [];
-    const sellDates = [];
-    const sellValues = [];
-    
-    dates.forEach((date, i) => {
-        if (confirmedBuy[i]) {
-            buyDates.push(date);
-            buyValues.push(whalePump[i]);
-        }
-        if (confirmedSell[i]) {
-            sellDates.push(date);
-            sellValues.push(whaleDump[i]);
-        }
-    });
-    
-    if (buyDates.length > 0) {
-        traces.push({
-            x: buyDates,
-            y: buyValues,
+        },
+        {
+            x: dates.filter((_, i) => confirmedBuy[i]),
+            y: whalePump.filter((_, i) => confirmedBuy[i]),
             type: 'scatter',
             mode: 'markers',
             name: 'Compra Confirmada',
             marker: {color: '#00FF00', size: 10, symbol: 'diamond'}
-        });
-    }
-    
-    if (sellDates.length > 0) {
-        traces.push({
-            x: sellDates,
-            y: sellValues,
+        },
+        {
+            x: dates.filter((_, i) => confirmedSell[i]),
+            y: whaleDump.filter((_, i) => confirmedSell[i]),
             type: 'scatter',
             mode: 'markers',
             name: 'Venta Confirmada',
             marker: {color: '#FF0000', size: 10, symbol: 'diamond'}
-        });
-    }
+        }
+    ];
     
     const layout = {
         title: {
-            text: 'Indicador de Ballenas - Compradoras vs Vendedoras',
+            text: 'Actividad de Ballenas - Compradoras vs Vendedoras',
             font: {color: '#ffffff', size: 14}
         },
         xaxis: {
@@ -988,6 +1005,23 @@ function renderRsiMaverickChart(data) {
     const bullishDivergence = data.indicators.rsi_maverick_bullish_divergence || [];
     const bearishDivergence = data.indicators.rsi_maverick_bearish_divergence || [];
     
+    // Preparar datos para divergencias
+    const bullishDates = [];
+    const bullishValues = [];
+    const bearishDates = [];
+    const bearishValues = [];
+    
+    for (let i = 7; i < bullishDivergence.length; i++) {
+        if (bullishDivergence[i] && !bullishDivergence[i-1] && !bullishDivergence[i-2]) {
+            bullishDates.push(dates[i]);
+            bullishValues.push(rsiMaverick[i]);
+        }
+        if (bearishDivergence[i] && !bearishDivergence[i-1] && !bearishDivergence[i-2]) {
+            bearishDates.push(dates[i]);
+            bearishValues.push(rsiMaverick[i]);
+        }
+    }
+    
     const traces = [
         {
             x: dates,
@@ -996,30 +1030,10 @@ function renderRsiMaverickChart(data) {
             mode: 'lines',
             name: 'RSI Maverick (%B)',
             line: {color: '#FF6B6B', width: 2}
-        }
-    ];
-    
-    // Añadir divergencias
-    const bullDates = [];
-    const bullValues = [];
-    const bearDates = [];
-    const bearValues = [];
-    
-    dates.forEach((date, i) => {
-        if (bullishDivergence[i]) {
-            bullDates.push(date);
-            bullValues.push(rsiMaverick[i]);
-        }
-        if (bearishDivergence[i]) {
-            bearDates.push(date);
-            bearValues.push(rsiMaverick[i]);
-        }
-    });
-    
-    if (bullDates.length > 0) {
-        traces.push({
-            x: bullDates,
-            y: bullValues,
+        },
+        {
+            x: bullishDates,
+            y: bullishValues,
             type: 'scatter',
             mode: 'markers',
             name: 'Divergencia Alcista',
@@ -1029,13 +1043,10 @@ function renderRsiMaverickChart(data) {
                 symbol: 'triangle-up',
                 line: {color: 'white', width: 1}
             }
-        });
-    }
-    
-    if (bearDates.length > 0) {
-        traces.push({
-            x: bearDates,
-            y: bearValues,
+        },
+        {
+            x: bearishDates,
+            y: bearishValues,
             type: 'scatter',
             mode: 'markers',
             name: 'Divergencia Bajista',
@@ -1045,39 +1056,8 @@ function renderRsiMaverickChart(data) {
                 symbol: 'triangle-down',
                 line: {color: 'white', width: 1}
             }
-        });
-    }
-    
-    // Líneas de referencia
-    traces.push({
-        x: [dates[0], dates[dates.length - 1]],
-        y: [0.8, 0.8],
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Sobrecompra',
-        line: {color: 'red', dash: 'dash', width: 1},
-        showlegend: false
-    });
-    
-    traces.push({
-        x: [dates[0], dates[dates.length - 1]],
-        y: [0.2, 0.2],
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Sobreventa',
-        line: {color: 'green', dash: 'dash', width: 1},
-        showlegend: false
-    });
-    
-    traces.push({
-        x: [dates[0], dates[dates.length - 1]],
-        y: [0.5, 0.5],
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Neutro',
-        line: {color: 'white', dash: 'solid', width: 1},
-        showlegend: false
-    });
+        }
+    ];
     
     const layout = {
         title: {
@@ -1096,18 +1076,74 @@ function renderRsiMaverickChart(data) {
             gridcolor: '#444',
             zerolinecolor: '#444'
         },
+        shapes: [
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 0.8,
+                y1: 0.8,
+                line: {
+                    color: 'red',
+                    width: 1,
+                    dash: 'dash'
+                }
+            },
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 0.2,
+                y1: 0.2,
+                line: {
+                    color: 'green',
+                    width: 1,
+                    dash: 'dash'
+                }
+            },
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 0.5,
+                y1: 0.5,
+                line: {
+                    color: 'white',
+                    width: 1,
+                    dash: 'solid'
+                }
+            }
+        ],
+        annotations: [
+            {
+                x: dates[dates.length - 1],
+                y: 0.8,
+                xanchor: 'left',
+                text: 'Sobrecompra',
+                showarrow: false,
+                font: {color: 'red', size: 10}
+            },
+            {
+                x: dates[dates.length - 1],
+                y: 0.2,
+                xanchor: 'left',
+                text: 'Sobreventa',
+                showarrow: false,
+                font: {color: 'green', size: 10}
+            }
+        ],
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'rgba(0,0,0,0)',
         font: {color: '#ffffff'},
         showlegend: true,
         legend: {
             x: 0,
-            y: 1.1,
+            y: -0.2,
             orientation: 'h',
             font: {color: '#ffffff'},
             bgcolor: 'rgba(0,0,0,0)'
         },
-        margin: {t: 60, r: 50, b: 50, l: 50}
+        margin: {t: 60, r: 50, b: 80, l: 50}
     };
     
     const config = {
@@ -1140,6 +1176,23 @@ function renderRsiTraditionalChart(data) {
     const bullishDivergence = data.indicators.rsi_bullish_divergence || [];
     const bearishDivergence = data.indicators.rsi_bearish_divergence || [];
     
+    // Preparar datos para divergencias
+    const bullishDates = [];
+    const bullishValues = [];
+    const bearishDates = [];
+    const bearishValues = [];
+    
+    for (let i = 7; i < bullishDivergence.length; i++) {
+        if (bullishDivergence[i] && !bullishDivergence[i-1] && !bullishDivergence[i-2]) {
+            bullishDates.push(dates[i]);
+            bullishValues.push(rsiTraditional[i]);
+        }
+        if (bearishDivergence[i] && !bearishDivergence[i-1] && !bearishDivergence[i-2]) {
+            bearishDates.push(dates[i]);
+            bearishValues.push(rsiTraditional[i]);
+        }
+    }
+    
     const traces = [
         {
             x: dates,
@@ -1148,30 +1201,10 @@ function renderRsiTraditionalChart(data) {
             mode: 'lines',
             name: 'RSI Tradicional',
             line: {color: '#2196F3', width: 2}
-        }
-    ];
-    
-    // Añadir divergencias
-    const bullDates = [];
-    const bullValues = [];
-    const bearDates = [];
-    const bearValues = [];
-    
-    dates.forEach((date, i) => {
-        if (bullishDivergence[i]) {
-            bullDates.push(date);
-            bullValues.push(rsiTraditional[i]);
-        }
-        if (bearishDivergence[i]) {
-            bearDates.push(date);
-            bearValues.push(rsiTraditional[i]);
-        }
-    });
-    
-    if (bullDates.length > 0) {
-        traces.push({
-            x: bullDates,
-            y: bullValues,
+        },
+        {
+            x: bullishDates,
+            y: bullishValues,
             type: 'scatter',
             mode: 'markers',
             name: 'Divergencia Alcista',
@@ -1181,13 +1214,10 @@ function renderRsiTraditionalChart(data) {
                 symbol: 'triangle-up',
                 line: {color: 'white', width: 1}
             }
-        });
-    }
-    
-    if (bearDates.length > 0) {
-        traces.push({
-            x: bearDates,
-            y: bearValues,
+        },
+        {
+            x: bearishDates,
+            y: bearishValues,
             type: 'scatter',
             mode: 'markers',
             name: 'Divergencia Bajista',
@@ -1197,39 +1227,8 @@ function renderRsiTraditionalChart(data) {
                 symbol: 'triangle-down',
                 line: {color: 'white', width: 1}
             }
-        });
-    }
-    
-    // Líneas de referencia
-    traces.push({
-        x: [dates[0], dates[dates.length - 1]],
-        y: [80, 80],
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Sobrecompra',
-        line: {color: 'red', dash: 'dash', width: 1},
-        showlegend: false
-    });
-    
-    traces.push({
-        x: [dates[0], dates[dates.length - 1]],
-        y: [20, 20],
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Sobreventa',
-        line: {color: 'green', dash: 'dash', width: 1},
-        showlegend: false
-    });
-    
-    traces.push({
-        x: [dates[0], dates[dates.length - 1]],
-        y: [50, 50],
-        type: 'scatter',
-        mode: 'lines',
-        name: 'Neutro',
-        line: {color: 'white', dash: 'solid', width: 1},
-        showlegend: false
-    });
+        }
+    ];
     
     const layout = {
         title: {
@@ -1248,18 +1247,74 @@ function renderRsiTraditionalChart(data) {
             gridcolor: '#444',
             zerolinecolor: '#444'
         },
+        shapes: [
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 80,
+                y1: 80,
+                line: {
+                    color: 'red',
+                    width: 1,
+                    dash: 'dash'
+                }
+            },
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 20,
+                y1: 20,
+                line: {
+                    color: 'green',
+                    width: 1,
+                    dash: 'dash'
+                }
+            },
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 50,
+                y1: 50,
+                line: {
+                    color: 'white',
+                    width: 1,
+                    dash: 'solid'
+                }
+            }
+        ],
+        annotations: [
+            {
+                x: dates[dates.length - 1],
+                y: 80,
+                xanchor: 'left',
+                text: 'Sobrecompra',
+                showarrow: false,
+                font: {color: 'red', size: 10}
+            },
+            {
+                x: dates[dates.length - 1],
+                y: 20,
+                xanchor: 'left',
+                text: 'Sobreventa',
+                showarrow: false,
+                font: {color: 'green', size: 10}
+            }
+        ],
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'rgba(0,0,0,0)',
         font: {color: '#ffffff'},
         showlegend: true,
         legend: {
             x: 0,
-            y: 1.1,
+            y: -0.2,
             orientation: 'h',
             font: {color: '#ffffff'},
             bgcolor: 'rgba(0,0,0,0)'
         },
-        margin: {t: 60, r: 50, b: 50, l: 50}
+        margin: {t: 60, r: 50, b: 80, l: 50}
     };
     
     const config = {
@@ -1382,20 +1437,14 @@ function renderVolumeChart(data) {
     const volumes = data.data.slice(-50).map(d => parseFloat(d.volume));
     const volumeAnomaly = data.indicators.volume_anomaly || [];
     const volumeClusters = data.indicators.volume_clusters || [];
-    const volumeEma = data.indicators.volume_ema || [];
+    const volumeRatio = data.indicators.volume_ratio || [];
+    const volumeMa = data.indicators.volume_ma || [];
+    const volumeColors = data.indicators.volume_colors || [];
     
-    // Colores para las barras de volumen (verde para compra, rojo para venta)
-    const volumeColors = [];
-    const closes = data.data.slice(-50).map(d => parseFloat(d.close));
-    const opens = data.data.slice(-50).map(d => parseFloat(d.open));
-    
-    for (let i = 0; i < volumes.length; i++) {
-        if (closes[i] >= opens[i]) {
-            volumeColors.push('rgba(0, 200, 83, 0.7)'); // Verde para compra
-        } else {
-            volumeColors.push('rgba(255, 23, 68, 0.7)'); // Rojo para venta
-        }
-    }
+    // Asegurar que tenemos colores para cada barra
+    const barColors = volumeColors.length === volumes.length ? 
+        volumeColors : 
+        volumes.map((_, i) => i > 0 ? (volumes[i] > volumes[i-1] ? '#00C853' : '#FF1744') : 'gray');
     
     const traces = [
         {
@@ -1403,17 +1452,21 @@ function renderVolumeChart(data) {
             y: volumes,
             type: 'bar',
             name: 'Volumen',
-            marker: {color: volumeColors}
-        },
-        {
-            x: dates,
-            y: volumeEma,
-            type: 'scatter',
-            mode: 'lines',
-            name: 'EMA Volumen',
-            line: {color: '#FFD700', width: 2}
+            marker: {color: barColors}
         }
     ];
+    
+    // Añadir MA de volumen
+    if (volumeMa.length === dates.length) {
+        traces.push({
+            x: dates,
+            y: volumeMa,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'MA21 Volumen',
+            line: {color: '#FFD700', width: 2}
+        });
+    }
     
     // Añadir anomalías de volumen
     const anomalyDates = [];
@@ -1600,10 +1653,28 @@ function updateSignalAnalysis(data) {
                     <span class="fw-bold text-danger">$${data.stop_loss.toFixed(6)}</span>
                 </div>
                 <div class="d-flex justify-content-between small">
-                    <span>Take Profit 1:</span>
+                    <span>Take Profit:</span>
                     <span class="fw-bold text-success">$${data.take_profit[0].toFixed(6)}</span>
                 </div>
             </div>
+            
+            ${data.support_levels && data.support_levels.length > 0 ? `
+                <div class="mt-2">
+                    <small class="text-muted d-block mb-1">Soportes:</small>
+                    ${data.support_levels.map((support, index) => `
+                        <div class="small text-info mb-1">$${support.toFixed(6)}</div>
+                    `).join('')}
+                </div>
+            ` : ''}
+            
+            ${data.resistance_levels && data.resistance_levels.length > 0 ? `
+                <div class="mt-2">
+                    <small class="text-muted d-block mb-1">Resistencias:</small>
+                    ${data.resistance_levels.map((resistance, index) => `
+                        <div class="small text-warning mb-1">$${resistance.toFixed(6)}</div>
+                    `).join('')}
+                </div>
+            ` : ''}
             
             ${data.fulfilled_conditions && data.fulfilled_conditions.length > 0 ? `
                 <div class="mt-2">
@@ -1623,6 +1694,7 @@ function updateSignalAnalysis(data) {
 
 function getVolumeLevel(currentVolume, averageVolume) {
     const ratio = currentVolume / averageVolume;
+    if (ratio > 2.5) return { text: 'ANOMALÍA', class: 'bg-success' };
     if (ratio > 2.0) return { text: 'MUY ALTO', class: 'bg-success' };
     if (ratio > 1.5) return { text: 'ALTO', class: 'bg-info' };
     if (ratio > 1.0) return { text: 'MEDIO', class: 'bg-warning' };
@@ -1630,8 +1702,8 @@ function getVolumeLevel(currentVolume, averageVolume) {
     return { text: 'MUY BAJO', class: 'bg-dark' };
 }
 
-function updateScatterChartImproved(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, leverage) {
-    const url = `/api/scatter_data_improved?interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&leverage=${leverage}`;
+function updateScatterChartImproved(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage) {
+    const url = `/api/scatter_data_improved?interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&volume_filter=${volumeFilter}&leverage=${leverage}`;
     
     fetch(url)
         .then(response => {
@@ -1751,6 +1823,14 @@ function renderScatterChartImproved(scatterData) {
                 font: {color: 'green', size: 12, weight: 'bold'},
                 bgcolor: 'rgba(0, 255, 0, 0.3)',
                 bordercolor: 'green'
+            },
+            {
+                x: 50, y: 95,
+                text: '● LONG (Bajo) ● LONG (Medio) ● LONG (Alto) ● LONG (Memecoin) ● SHORT (Bajo) ● SHORT (Medio) ● SHORT (Alto) ● SHORT (Memecoin)',
+                showarrow: false,
+                font: {color: 'white', size: 9},
+                bgcolor: 'rgba(0,0,0,0.7)',
+                bordercolor: 'white'
             }
         ],
         plot_bgcolor: 'rgba(0,0,0,0)',
@@ -1792,8 +1872,8 @@ function formatPriceForDisplay(price) {
     }
 }
 
-function updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, leverage) {
-    const url = `/api/multiple_signals?interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&leverage=${leverage}`;
+function updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage) {
+    const url = `/api/multiple_signals?interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&volume_filter=${volumeFilter}&leverage=${leverage}`;
     
     fetch(url)
         .then(response => {
@@ -1807,7 +1887,6 @@ function updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLe
                 throw new Error(data.error);
             }
             updateSignalsTables(data);
-            updateScalpingAlerts(data);
         })
         .catch(error => {
             console.error('Error cargando múltiples señales:', error);
@@ -1868,50 +1947,92 @@ function updateSignalsTables(data) {
     }
 }
 
-function updateScalpingAlerts(data) {
-    const alertsElement = document.getElementById('scalping-alerts');
-    
-    if (!data || (!data.long_signals && !data.short_signals)) {
-        alertsElement.innerHTML = `
-            <div class="text-center text-muted py-3">
-                <i class="fas fa-bell-slash fa-2x mb-2"></i>
-                <div class="small">No hay alertas activas</div>
-            </div>
-        `;
-        return;
-    }
-    
-    let allSignals = [];
-    if (data.long_signals) allSignals = allSignals.concat(data.long_signals);
-    if (data.short_signals) allSignals = allSignals.concat(data.short_signals);
-    
-    // Ordenar por score y tomar las top 3
-    allSignals.sort((a, b) => b.signal_score - a.signal_score);
-    const topSignals = allSignals.slice(0, 3);
-    
-    if (topSignals.length > 0) {
-        alertsElement.innerHTML = topSignals.map(alert => `
-            <div class="alert ${alert.signal === 'LONG' ? 'alert-success' : 'alert-danger'} scalping-alert mb-2 p-2">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <strong>${alert.symbol}</strong>
-                        <div class="small">${alert.signal} - Score: ${alert.signal_score.toFixed(1)}%</div>
-                        <div class="small">Entrada: $${formatPriceForDisplay(alert.entry)}</div>
+function updateScalpingAlerts() {
+    fetch('/api/scalping_alerts')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const alertsElement = document.getElementById('multi-tf-alerts');
+            if (data.alerts && data.alerts.length > 0) {
+                const multiTfAlerts = data.alerts.filter(alert => alert.strategy === 'MULTI_TF_WGTA');
+                if (multiTfAlerts.length > 0) {
+                    alertsElement.innerHTML = multiTfAlerts.slice(0, 3).map(alert => `
+                        <div class="alert alert-warning scalping-alert mb-2 p-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>${alert.symbol}</strong>
+                                    <div class="small">${alert.interval} - ${alert.signal}</div>
+                                    <div class="small">Score: ${alert.score.toFixed(1)}%</div>
+                                </div>
+                                <span class="badge bg-${alert.signal === 'LONG' ? 'success' : 'danger'}">
+                                    $${formatPriceForDisplay(alert.entry)}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    alertsElement.innerHTML = `
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                            <div class="small">No hay alertas Multi-TF activas</div>
+                        </div>
+                    `;
+                }
+            } else {
+                alertsElement.innerHTML = `
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-bell-slash fa-2x mb-2"></i>
+                        <div class="small">No hay alertas activas</div>
                     </div>
-                    <span class="badge ${alert.signal === 'LONG' ? 'bg-success' : 'bg-danger'}">
-                        ${alert.signal === 'LONG' ? 'L' : 'S'}
-                    </span>
-                </div>
-            </div>
-        `).join('');
-    } else {
-        alertsElement.innerHTML = `
-            <div class="text-center text-muted py-3">
-                <i class="fas fa-bell-slash fa-2x mb-2"></i>
-                <div class="small">No hay alertas activas</div>
-            </div>
-        `;
-    }
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error cargando alertas:', error);
+        });
+}
+
+function updateVolumeEmaAlerts() {
+    fetch('/api/volume_ema_signals')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            const alertsElement = document.getElementById('volume-ema-alerts');
+            if (data.signals && data.signals.length > 0) {
+                alertsElement.innerHTML = data.signals.slice(0, 3).map(signal => `
+                    <div class="alert alert-danger mb-2 p-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>${signal.symbol}</strong>
+                                <div class="small">${signal.interval} - ${signal.signal}</div>
+                                <div class="small">Vol: ${signal.volume_ratio.toFixed(1)}x MA</div>
+                            </div>
+                            <span class="badge bg-${signal.signal === 'LONG' ? 'success' : 'danger'}">
+                                $${formatPriceForDisplay(signal.current_price)}
+                            </span>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                alertsElement.innerHTML = `
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-volume-off fa-2x mb-2"></i>
+                        <div class="small">No hay anomalías de volumen</div>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error cargando alertas de volumen:', error);
+        });
 }
 
 function showSignalDetails(symbol, signalType) {
@@ -1966,15 +2087,13 @@ function showSignalDetails(symbol, signalType) {
                             <span class="fw-bold text-danger">$${signalData.stop_loss.toFixed(6)}</span>
                         </div>
                         <div class="d-flex justify-content-between small mb-1">
-                            <span>Take Profit 1:</span>
+                            <span>Take Profit:</span>
                             <span class="fw-bold text-success">$${signalData.take_profit[0].toFixed(6)}</span>
                         </div>
-                        ${signalData.take_profit.length > 1 ? `
-                            <div class="d-flex justify-content-between small mb-1">
-                                <span>Take Profit 2:</span>
-                                <span class="fw-bold text-success">$${signalData.take_profit[1].toFixed(6)}</span>
-                            </div>
-                        ` : ''}
+                        <div class="d-flex justify-content-between small">
+                            <span>Apalancamiento:</span>
+                            <span class="fw-bold text-info">x${document.getElementById('leverage').value}</span>
+                        </div>
                     </div>
                     <div class="col-md-6">
                         <h6>Indicadores Clave</h6>
@@ -2009,31 +2128,25 @@ function showSignalDetails(symbol, signalType) {
                     </div>
                 </div>
                 
-                ${signalData.supports && signalData.supports.length > 0 ? `
+                ${signalData.support_levels && signalData.support_levels.length > 0 ? `
                     <hr>
                     <h6>Soportes</h6>
                     <div class="row">
-                        ${signalData.supports.map((support, index) => `
+                        ${signalData.support_levels.map((support, index) => `
                             <div class="col-6">
-                                <div class="d-flex justify-content-between small mb-1">
-                                    <span>Soporte ${index + 1}:</span>
-                                    <span class="fw-bold text-info">$${support.toFixed(6)}</span>
-                                </div>
+                                <div class="small text-info mb-1">S${index + 1}: $${support.toFixed(6)}</div>
                             </div>
                         `).join('')}
                     </div>
                 ` : ''}
                 
-                ${signalData.resistances && signalData.resistances.length > 0 ? `
+                ${signalData.resistance_levels && signalData.resistance_levels.length > 0 ? `
                     <hr>
                     <h6>Resistencias</h6>
                     <div class="row">
-                        ${signalData.resistances.map((resistance, index) => `
+                        ${signalData.resistance_levels.map((resistance, index) => `
                             <div class="col-6">
-                                <div class="d-flex justify-content-between small mb-1">
-                                    <span>Resistencia ${index + 1}:</span>
-                                    <span class="fw-bold text-info">$${resistance.toFixed(6)}</span>
-                                </div>
+                                <div class="small text-warning mb-1">R${index + 1}: $${resistance.toFixed(6)}</div>
                             </div>
                         `).join('')}
                     </div>
@@ -2109,3 +2222,37 @@ function showError(message) {
         toastElement.remove();
     });
 }
+
+// Función para actualizar el reloj de Bolivia
+function updateBoliviaClock() {
+    fetch('/api/bolivia_time')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('bolivia-clock').textContent = data.time;
+            document.getElementById('bolivia-date').textContent = data.date;
+        })
+        .catch(error => {
+            console.error('Error actualizando reloj:', error);
+            const now = new Date();
+            document.getElementById('bolivia-clock').textContent = now.toLocaleTimeString('es-BO');
+            document.getElementById('bolivia-date').textContent = now.toLocaleDateString('es-BO');
+        });
+}
+
+// Función para descargar reporte estratégico
+function downloadStrategicReport() {
+    const symbol = document.getElementById('selected-crypto').textContent;
+    const interval = document.getElementById('interval-select').value;
+    const leverage = document.getElementById('leverage').value;
+    
+    const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}`;
+    window.open(url, '_blank');
+}
+
+// Actualizar el reloj cada segundo
+setInterval(updateBoliviaClock, 1000);
+
+// Inicializar el reloj al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    updateBoliviaClock();
+});
