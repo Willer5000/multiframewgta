@@ -27,7 +27,6 @@ body {
     overflow-x: hidden;
 }
 
-/* Layout y Contenedores */
 .container-fluid {
     padding-left: 15px;
     padding-right: 15px;
@@ -58,7 +57,6 @@ body {
     padding: 1.25rem;
 }
 
-/* Tablas */
 .table {
     --bs-table-color: #ffffff;
     --bs-table-bg: transparent;
@@ -71,7 +69,6 @@ body {
     cursor: pointer;
 }
 
-/* Formularios y Controles */
 .form-control, .form-select {
     background-color: var(--bs-dark);
     border-color: var(--bs-border-color);
@@ -96,7 +93,6 @@ body {
     color: #ccc;
 }
 
-/* Botones */
 .btn {
     border-radius: 8px;
     font-weight: 500;
@@ -159,7 +155,6 @@ body {
     color: var(--bs-body-color);
 }
 
-/* Navbar */
 .navbar-brand {
     font-weight: 700;
     font-size: 1.3rem;
@@ -174,7 +169,6 @@ body {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-/* Reloj Digital */
 .digital-clock-container {
     font-size: 0.9rem;
     font-weight: 500;
@@ -193,14 +187,12 @@ body {
     color: #ccc;
 }
 
-/* Información del Calendario */
 .calendar-info {
     font-size: 0.8rem;
     padding: 0.25rem 0;
     text-align: center;
 }
 
-/* Dropdown Menus */
 .dropdown-menu {
     background-color: var(--bs-dark);
     border: 1px solid var(--bs-border-color);
@@ -229,14 +221,12 @@ body {
     margin: 0.25rem 0;
 }
 
-/* Badges */
 .badge {
     font-size: 0.75em;
     font-weight: 600;
     padding: 0.35em 0.65em;
 }
 
-/* Progress Bars */
 .progress {
     background-color: var(--bs-border-color);
     border-radius: 10px;
@@ -248,7 +238,6 @@ body {
     transition: width 0.6s ease;
 }
 
-/* Alertas */
 .alert {
     border: 1px solid transparent;
     border-radius: 8px;
@@ -286,7 +275,6 @@ body {
     color: #a8b1b8;
 }
 
-/* Gráficos - Leyendas en parte superior */
 .js-plotly-plot .plotly .main-svg {
     border-radius: 8px;
 }
@@ -309,7 +297,6 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
 }
 
-/* Indicadores Informativos */
 .indicator-controls {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 8px;
@@ -336,7 +323,6 @@ body {
     color: #ccc;
 }
 
-/* Alertas de Scalping */
 .scalping-alert {
     border-left: 4px solid var(--bs-warning);
     animation: pulse 2s infinite;
@@ -349,12 +335,10 @@ body {
     100% { background-color: rgba(255, 193, 7, 0.1); }
 }
 
-/* Tablas de Señales */
 .table-responsive {
     border-radius: 8px;
 }
 
-/* Modal */
 .modal-content {
     background-color: var(--bs-dark);
     border: 1px solid var(--bs-border-color);
@@ -378,7 +362,6 @@ body {
     filter: invert(1);
 }
 
-/* Toast Notifications */
 .toast-container {
     position: fixed;
     top: 20px;
@@ -390,24 +373,9 @@ body {
     background: var(--bs-dark);
     border: 1px solid var(--bs-border-color);
     border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 0.5rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    animation: slideInRight 0.3s ease;
 }
 
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-/* Scrollbar Personalizado */
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -426,7 +394,6 @@ body {
     background: #555;
 }
 
-/* Spinners */
 .spinner-border {
     animation: spinner-border 0.75s linear infinite;
 }
@@ -435,7 +402,6 @@ body {
     to { transform: rotate(360deg); }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
     .container-fluid {
         padding-left: 10px;
@@ -471,7 +437,6 @@ body {
         font-size: 1.1rem;
     }
     
-    /* Ajustes para gráficos en móviles */
     .js-plotly-plot .plotly .legend {
         transform: scale(0.8) !important;
         transform-origin: top center !important;
@@ -505,7 +470,6 @@ body {
         padding: 0.25rem 0.5rem;
     }
     
-    /* Ocultar algunas columnas en tablas en móviles */
     .table-responsive table {
         font-size: 0.8rem;
     }
@@ -516,7 +480,6 @@ body {
     }
 }
 
-/* Estados de Carga */
 .loading-state {
     display: flex;
     flex-direction: column;
@@ -530,7 +493,6 @@ body {
     margin-bottom: 1rem;
 }
 
-/* Estados de Error */
 .error-state {
     background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05));
     border: 1px solid rgba(220, 53, 69, 0.3);
@@ -546,7 +508,21 @@ body {
     color: #dc3545;
 }
 
-/* Categorías de Riesgo */
+.success-state {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.05));
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.success-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #28a745;
+}
+
 .risk-low {
     color: #28a745 !important;
 }
@@ -587,119 +563,59 @@ body {
     border: 1px solid rgba(232, 62, 140, 0.3);
 }
 
-/* Efectos de hover para filas de tabla */
-.hover-row:hover {
-    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.05)) !important;
-    cursor: pointer;
-    transform: translateX(2px);
-    transition: all 0.2s ease;
-}
-
-/* Gradientes para tarjetas de categoría */
-.card-border-success {
-    border-left: 4px solid var(--bs-success) !important;
-}
-
-.card-border-warning {
-    border-left: 4px solid var(--bs-warning) !important;
-}
-
-.card-border-danger {
-    border-left: 4px solid var(--bs-danger) !important;
-}
-
-.card-border-info {
-    border-left: 4px solid var(--bs-info) !important;
-}
-
-/* Animaciones para alertas importantes */
-@keyframes highlight {
-    0% { background-color: rgba(255, 193, 7, 0.1); }
-    50% { background-color: rgba(255, 193, 7, 0.3); }
-    100% { background-color: rgba(255, 193, 7, 0.1); }
-}
-
-.highlight-alert {
-    animation: highlight 2s infinite;
-}
-
-/* Efectos de transición para carga suave */
-.fade-in {
-    animation: fadeIn 0.5s ease-in;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Mejoras para botones de acción */
-.btn-action {
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-action::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s;
-}
-
-.btn-action:hover::before {
-    left: 100%;
-}
-
-/* Estilos para gráficos responsivos */
-.chart-container {
-    position: relative;
-    height: 400px;
-    width: 100%;
-}
-
-@media (max-width: 768px) {
-    .chart-container {
-        height: 300px;
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .card:hover {
+        transform: none;
+    }
+    
+    .btn:hover {
+        transform: none;
     }
 }
 
-@media (max-width: 576px) {
-    .chart-container {
-        height: 250px;
+@media (prefers-contrast: high) {
+    :root {
+        --bs-border-color: #ffffff;
+        --bs-body-color: #ffffff;
+        --bs-body-bg: #000000;
+    }
+    
+    .card {
+        border-width: 2px;
+    }
+    
+    .form-control, .form-select {
+        border-width: 2px;
     }
 }
 
-/* Efectos de sombra mejorados */
-.shadow-custom {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+@media print {
+    .navbar, .btn, .dropdown, .toast-container {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
 }
 
-.shadow-custom-lg {
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4) !important;
+.plot-container {
+    will-change: transform;
 }
 
-/* Gradientes de fondo para secciones importantes */
-.gradient-bg {
-    background: linear-gradient(135deg, var(--bs-darker), var(--bs-dark)) !important;
-}
-
-.gradient-bg-primary {
-    background: linear-gradient(135deg, var(--bs-primary), #0a58ca) !important;
-}
-
-.gradient-bg-success {
-    background: linear-gradient(135deg, var(--bs-success), #146c43) !important;
-}
-
-.gradient-bg-danger {
-    background: linear-gradient(135deg, var(--bs-danger), #b02a37) !important;
-}
-
-/* Estilos específicos para el indicador de Fuerza de Tendencia Maverick */
 .trend-strength-legend {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
@@ -760,7 +676,21 @@ body {
     margin: 0.5rem 0;
 }
 
-/* Estilos específicos para el nuevo indicador de volumen */
+.scatter-opportunity-high {
+    background: linear-gradient(135deg, rgba(0, 200, 83, 0.1), rgba(0, 200, 83, 0.05));
+    border: 1px solid rgba(0, 200, 83, 0.3);
+}
+
+.scatter-opportunity-medium {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05));
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.scatter-opportunity-low {
+    background: linear-gradient(135deg, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.05));
+    border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
 .volume-anomaly-indicator {
     background: linear-gradient(135deg, rgba(13, 202, 240, 0.1), rgba(13, 202, 240, 0.05));
     border: 1px solid rgba(13, 202, 240, 0.3);
@@ -777,47 +707,162 @@ body {
     margin: 0.5rem 0;
 }
 
-/* Modo Alto Contraste */
-@media (prefers-contrast: high) {
-    :root {
-        --bs-border-color: #ffffff;
-        --bs-body-color: #ffffff;
-        --bs-body-bg: #000000;
-    }
-    
-    .card {
-        border-width: 2px;
-    }
-    
-    .form-control, .form-select {
-        border-width: 2px;
+.hover-row:hover {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.05)) !important;
+    cursor: pointer;
+    transform: translateX(2px);
+    transition: all 0.2s ease;
+}
+
+.card-border-success {
+    border-left: 4px solid var(--bs-success) !important;
+}
+
+.card-border-warning {
+    border-left: 4px solid var(--bs-warning) !important;
+}
+
+.card-border-danger {
+    border-left: 4px solid var(--bs-danger) !important;
+}
+
+.card-border-info {
+    border-left: 4px solid var(--bs-info) !important;
+}
+
+@keyframes highlight {
+    0% { background-color: rgba(255, 193, 7, 0.1); }
+    50% { background-color: rgba(255, 193, 7, 0.3); }
+    100% { background-color: rgba(255, 193, 7, 0.1); }
+}
+
+.highlight-alert {
+    animation: highlight 2s infinite;
+}
+
+.custom-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.custom-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: var(--bs-dark);
+    color: var(--bs-body-color);
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border: 1px solid var(--bs-border-color);
+    font-size: 0.8rem;
+}
+
+.custom-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+.signal-details-modal .modal-content {
+    background: linear-gradient(135deg, var(--bs-dark), var(--bs-darker));
+}
+
+.signal-details-modal .modal-header {
+    border-bottom: 2px solid var(--bs-primary);
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.btn-action {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-action:hover::before {
+    left: 100%;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .chart-container {
+        height: 300px;
     }
 }
 
-/* Impresión */
-@media print {
-    .navbar, .btn, .dropdown, .toast-container {
-        display: none !important;
-    }
-    
-    .card {
-        border: 1px solid #000 !important;
-        box-shadow: none !important;
-        break-inside: avoid;
-    }
-    
-    body {
-        background: white !important;
-        color: black !important;
+@media (max-width: 576px) {
+    .chart-container {
+        height: 250px;
     }
 }
 
-/* Optimizaciones de Rendimiento para Gráficos */
-.plot-container {
-    will-change: transform;
+.shadow-custom {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Estilos para el sistema de notificaciones */
+.shadow-custom-lg {
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4) !important;
+}
+
+.gradient-bg {
+    background: linear-gradient(135deg, var(--bs-darker), var(--bs-dark)) !important;
+}
+
+.gradient-bg-primary {
+    background: linear-gradient(135deg, var(--bs-primary), #0a58ca) !important;
+}
+
+.gradient-bg-success {
+    background: linear-gradient(135deg, var(--bs-success), #146c43) !important;
+}
+
+.gradient-bg-danger {
+    background: linear-gradient(135deg, var(--bs-danger), #b02a37) !important;
+}
+
+.footer-custom {
+    background: linear-gradient(135deg, var(--bs-darker), #000000);
+    border-top: 1px solid var(--bs-border-color);
+    padding: 2rem 0;
+    margin-top: 3rem;
+}
+
+.glow-on-hover {
+    transition: all 0.3s ease;
+}
+
+.glow-on-hover:hover {
+    box-shadow: 0 0 15px rgba(13, 110, 253, 0.5);
+}
+
 .notification-system {
     position: fixed;
     top: 20px;
@@ -826,7 +871,27 @@ body {
     max-width: 350px;
 }
 
-/* Estilos para el modo de impresión mejorado */
+.notification {
+    background: var(--bs-dark);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
 @media print {
     .no-print {
         display: none !important;
