@@ -114,16 +114,33 @@ body {
     background: linear-gradient(135deg, #0d6efd, #0a58ca);
 }
 
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0a58ca, #084298);
+}
+
 .btn-success {
     background: linear-gradient(135deg, #198754, #146c43);
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #146c43, #0f5132);
 }
 
 .btn-danger {
     background: linear-gradient(135deg, #dc3545, #b02a37);
 }
 
+.btn-danger:hover {
+    background: linear-gradient(135deg, #b02a37, #8a2530);
+}
+
 .btn-warning {
     background: linear-gradient(135deg, #ffc107, #e0a800);
+    color: #000;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #e0a800, #c69500);
     color: #000;
 }
 
@@ -132,6 +149,12 @@ body {
 }
 
 .btn-outline-secondary {
+    border-color: var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--bs-border-color);
     border-color: var(--bs-border-color);
     color: var(--bs-body-color);
 }
@@ -170,6 +193,13 @@ body {
     color: #ccc;
 }
 
+/* Información del Calendario */
+.calendar-info {
+    font-size: 0.8rem;
+    padding: 0.25rem 0;
+    text-align: center;
+}
+
 /* Dropdown Menus */
 .dropdown-menu {
     background-color: var(--bs-dark);
@@ -194,11 +224,28 @@ body {
     padding: 0.5rem 1rem;
 }
 
+.dropdown-divider {
+    border-color: var(--bs-border-color);
+    margin: 0.25rem 0;
+}
+
 /* Badges */
 .badge {
     font-size: 0.75em;
     font-weight: 600;
     padding: 0.35em 0.65em;
+}
+
+/* Progress Bars */
+.progress {
+    background-color: var(--bs-border-color);
+    border-radius: 10px;
+    height: 8px;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.6s ease;
 }
 
 /* Alertas */
@@ -233,7 +280,13 @@ body {
     color: #79dfc1;
 }
 
-/* Gráficos */
+.alert-secondary {
+    background: rgba(108, 117, 125, 0.1);
+    border-color: rgba(108, 117, 125, 0.3);
+    color: #a8b1b8;
+}
+
+/* Gráficos - Leyendas en parte superior */
 .js-plotly-plot .plotly .main-svg {
     border-radius: 8px;
 }
@@ -243,6 +296,10 @@ body {
     border: 1px solid #444 !important;
     border-radius: 8px !important;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+.js-plotly-plot .plotly .legend .traces {
+    font-size: 12px !important;
 }
 
 .js-plotly-plot .plotly .hovertext {
@@ -279,6 +336,42 @@ body {
     color: #ccc;
 }
 
+/* Winrate Display */
+.winrate-display {
+    text-align: center;
+}
+
+.winrate-value {
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.winrate-label {
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Fear & Greed Index */
+.fear-greed-value {
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.fear-greed-level {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.fear-greed-progress {
+    height: 12px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #dc3545, #ffc107, #198754) !important;
+}
+
+.fear-greed-progress .progress-bar {
+    background-color: transparent !important;
+}
+
 /* Alertas de Scalping */
 .scalping-alert {
     border-left: 4px solid var(--bs-warning);
@@ -290,6 +383,50 @@ body {
     0% { background-color: rgba(255, 193, 7, 0.1); }
     50% { background-color: rgba(255, 193, 7, 0.2); }
     100% { background-color: rgba(255, 193, 7, 0.1); }
+}
+
+/* Tablas de Señales */
+.table-responsive {
+    border-radius: 8px;
+}
+
+/* Modal */
+.modal-content {
+    background-color: var(--bs-dark);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 12px;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--bs-border-color);
+    padding: 1rem 1.5rem;
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.btn-close {
+    filter: invert(1);
+}
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.toast {
+    background: var(--bs-dark);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* Scrollbar Personalizado */
@@ -356,6 +493,7 @@ body {
         font-size: 1.1rem;
     }
     
+    /* Ajustes para gráficos en móviles */
     .js-plotly-plot .plotly .legend {
         transform: scale(0.8) !important;
         transform-origin: top center !important;
@@ -389,6 +527,7 @@ body {
         padding: 0.25rem 0.5rem;
     }
     
+    /* Ocultar algunas columnas en tablas en móviles */
     .table-responsive table {
         font-size: 0.8rem;
     }
@@ -407,6 +546,42 @@ body {
     justify-content: center;
     padding: 2rem;
     color: #6c757d;
+}
+
+.loading-state .spinner-border {
+    margin-bottom: 1rem;
+}
+
+/* Estados de Error */
+.error-state {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05));
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.error-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #dc3545;
+}
+
+/* Estados de Éxito */
+.success-state {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.05));
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.success-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #28a745;
 }
 
 /* Categorías de Riesgo */
@@ -450,53 +625,64 @@ body {
     border: 1px solid rgba(232, 62, 140, 0.3);
 }
 
-/* Efectos de hover para filas de tabla */
-.hover-row:hover {
-    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.05)) !important;
-    cursor: pointer;
-    transform: translateX(2px);
-    transition: all 0.2s ease;
+/* Mejoras de Accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .card:hover {
+        transform: none;
+    }
+    
+    .btn:hover {
+        transform: none;
+    }
 }
 
-/* Gradientes para tarjetas de categoría */
-.card-border-success {
-    border-left: 4px solid var(--bs-success) !important;
+/* Modo Alto Contraste */
+@media (prefers-contrast: high) {
+    :root {
+        --bs-border-color: #ffffff;
+        --bs-body-color: #ffffff;
+        --bs-body-bg: #000000;
+    }
+    
+    .card {
+        border-width: 2px;
+    }
+    
+    .form-control, .form-select {
+        border-width: 2px;
+    }
 }
 
-.card-border-warning {
-    border-left: 4px solid var(--bs-warning) !important;
+/* Impresión */
+@media print {
+    .navbar, .btn, .dropdown, .toast-container {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
 }
 
-.card-border-danger {
-    border-left: 4px solid var(--bs-danger) !important;
+/* Optimizaciones de Rendimiento para Gráficos */
+.plot-container {
+    will-change: transform;
 }
 
-.card-border-info {
-    border-left: 4px solid var(--bs-info) !important;
-}
-
-/* Animaciones para alertas importantes */
-@keyframes highlight {
-    0% { background-color: rgba(255, 193, 7, 0.1); }
-    50% { background-color: rgba(255, 193, 7, 0.3); }
-    100% { background-color: rgba(255, 193, 7, 0.1); }
-}
-
-.highlight-alert {
-    animation: highlight 2s infinite;
-}
-
-/* Efectos de transición para carga suave */
-.fade-in {
-    animation: fadeIn 0.5s ease-in;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Estilos para el indicador de Fuerza de Tendencia Maverick */
+/* Estilos específicos para el indicador de Fuerza de Tendencia Maverick */
 .trend-strength-legend {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
@@ -573,13 +759,193 @@ body {
     border: 1px solid rgba(108, 117, 125, 0.3);
 }
 
+/* Estilos específicos para el nuevo indicador de volumen */
+.volume-anomaly-indicator {
+    background: linear-gradient(135deg, rgba(13, 202, 240, 0.1), rgba(13, 202, 240, 0.05));
+    border: 1px solid rgba(13, 202, 240, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+}
+
+.volume-cluster-indicator {
+    background: linear-gradient(135deg, rgba(111, 66, 193, 0.1), rgba(111, 66, 193, 0.05));
+    border: 1px solid rgba(111, 66, 193, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+}
+
+/* Efectos de hover para filas de tabla */
+.hover-row:hover {
+    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.05)) !important;
+    cursor: pointer;
+    transform: translateX(2px);
+    transition: all 0.2s ease;
+}
+
+/* Gradientes para tarjetas de categoría */
+.card-border-success {
+    border-left: 4px solid var(--bs-success) !important;
+}
+
+.card-border-warning {
+    border-left: 4px solid var(--bs-warning) !important;
+}
+
+.card-border-danger {
+    border-left: 4px solid var(--bs-danger) !important;
+}
+
+.card-border-info {
+    border-left: 4px solid var(--bs-info) !important;
+}
+
+/* Animaciones para alertas importantes */
+@keyframes highlight {
+    0% { background-color: rgba(255, 193, 7, 0.1); }
+    50% { background-color: rgba(255, 193, 7, 0.3); }
+    100% { background-color: rgba(255, 193, 7, 0.1); }
+}
+
+.highlight-alert {
+    animation: highlight 2s infinite;
+}
+
+/* Mejoras para tooltips personalizados */
+.custom-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.custom-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background-color: var(--bs-dark);
+    color: var(--bs-body-color);
+    text-align: center;
+    border-radius: 6px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    border: 1px solid var(--bs-border-color);
+    font-size: 0.8rem;
+}
+
+.custom-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Estilos para el modal de detalles de señal */
+.signal-details-modal .modal-content {
+    background: linear-gradient(135deg, var(--bs-dark), var(--bs-darker));
+}
+
+.signal-details-modal .modal-header {
+    border-bottom: 2px solid var(--bs-primary);
+}
+
+/* Efectos de transición para carga suave */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mejoras para botones de acción */
+.btn-action {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-action:hover::before {
+    left: 100%;
+}
+
+/* Estilos para gráficos responsivos */
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .chart-container {
+        height: 300px;
+    }
+}
+
+@media (max-width: 576px) {
+    .chart-container {
+        height: 250px;
+    }
+}
+
 /* Efectos de sombra mejorados */
 .shadow-custom {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
 
+.shadow-custom-lg {
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Gradientes de fondo para secciones importantes */
+.gradient-bg {
+    background: linear-gradient(135deg, var(--bs-darker), var(--bs-dark)) !important;
+}
+
+.gradient-bg-primary {
+    background: linear-gradient(135deg, var(--bs-primary), #0a58ca) !important;
+}
+
+.gradient-bg-success {
+    background: linear-gradient(135deg, var(--bs-success), #146c43) !important;
+}
+
+.gradient-bg-danger {
+    background: linear-gradient(135deg, var(--bs-danger), #b02a37) !important;
+}
+
+/* Estilos para el footer personalizado */
+.footer-custom {
+    background: linear-gradient(135deg, var(--bs-darker), #000000);
+    border-top: 1px solid var(--bs-border-color);
+    padding: 2rem 0;
+    margin-top: 3rem;
+}
+
+/* Efectos de brillo para elementos interactivos */
+.glow-on-hover {
+    transition: all 0.3s ease;
+}
+
+.glow-on-hover:hover {
+    box-shadow: 0 0 15px rgba(13, 110, 253, 0.5);
+}
+
 /* Estilos para el sistema de notificaciones */
-.toast-container {
+.notification-system {
     position: fixed;
     top: 20px;
     right: 20px;
@@ -587,7 +953,7 @@ body {
     max-width: 350px;
 }
 
-.toast {
+.notification {
     background: var(--bs-dark);
     border: 1px solid var(--bs-border-color);
     border-radius: 8px;
@@ -608,52 +974,29 @@ body {
     }
 }
 
-/* Optimizaciones de Rendimiento para Gráficos */
-.plot-container {
-    will-change: transform;
-}
-
-/* Modal */
-.modal-content {
-    background-color: var(--bs-dark);
-    border: 1px solid var(--bs-border-color);
-    border-radius: 12px;
-}
-
-.modal-header {
-    border-bottom: 1px solid var(--bs-border-color);
-    padding: 1rem 1.5rem;
-}
-
-.btn-close {
-    filter: invert(1);
-}
-
-/* Volumen Anómalo */
-.volume-anomaly-indicator {
-    background: linear-gradient(135deg, rgba(13, 202, 240, 0.1), rgba(13, 202, 240, 0.05));
-    border: 1px solid rgba(13, 202, 240, 0.3);
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 0.5rem 0;
-}
-
-.volume-cluster-indicator {
-    background: linear-gradient(135deg, rgba(111, 66, 193, 0.1), rgba(111, 66, 193, 0.05));
-    border: 1px solid rgba(111, 66, 193, 0.3);
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 0.5rem 0;
-}
-
-/* Progress Bars */
-.progress {
-    background-color: var(--bs-border-color);
-    border-radius: 10px;
-    height: 8px;
-}
-
-.progress-bar {
-    border-radius: 10px;
-    transition: width 0.6s ease;
+/* Estilos para el modo de impresión mejorado */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-full-width {
+        width: 100% !important;
+    }
+    
+    .card {
+        break-inside: avoid;
+        box-shadow: none !important;
+        border: 1px solid #000 !important;
+    }
+    
+    .table {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .table-dark {
+        --bs-table-bg: white !important;
+        --bs-table-color: black !important;
+    }
 }
