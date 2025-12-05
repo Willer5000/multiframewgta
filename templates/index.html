@@ -236,7 +236,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico de Volumen con Anomalías -->
+                <!-- Gráfico Volumen con Anomalías -->
                 <div class="card bg-dark border-info mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -249,9 +249,9 @@
                         <div class="mt-2">
                             <small class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Volumen de Compra Atípico | 
-                                <strong>🔴 ROJO:</strong> Volumen de Venta Atípico |
-                                <strong>📊 GRIS:</strong> Volumen Normal
+                                <strong>🟢 VERDE:</strong> Volumen de Compra | 
+                                <strong>🔴 ROJO:</strong> Volumen de Venta |
+                                <strong>🟠 NARANJA:</strong> Anomalías de Volumen
                             </small>
                         </div>
                     </div>
@@ -369,23 +369,6 @@
                     </div>
                 </div>
 
-                <!-- Alertas de Volumen Atípico -->
-                <div class="card bg-dark border-danger mb-4">
-                    <div class="card-header bg-danger bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Alertas Volumen Atípico</h5>
-                    </div>
-                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                        <div id="volume-anomaly-alerts">
-                            <div class="text-center py-2">
-                                <div class="spinner-border spinner-border-sm text-danger" role="status">
-                                    <span class="visually-hidden">Cargando...</span>
-                                </div>
-                                <p class="mt-2 mb-0 small">Monitoreando volumen...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Señales LONG -->
                 <div class="card bg-dark border-success mb-4">
                     <div class="card-header bg-success bg-opacity-25">
@@ -464,7 +447,6 @@
     <script src="{{ url_for('static', filename='script.js') }}"></script>
     
     <script>
-        // Función para actualizar el reloj de Bolivia
         function updateBoliviaClock() {
             fetch('/api/bolivia_time')
                 .then(response => response.json())
@@ -480,7 +462,6 @@
                 });
         }
 
-        // Función para descargar reporte
         function downloadReport() {
             const symbol = document.getElementById('selected-crypto').textContent;
             const interval = document.getElementById('interval-select').value;
@@ -490,10 +471,8 @@
             window.open(url, '_blank');
         }
 
-        // Actualizar el reloj cada segundo
         setInterval(updateBoliviaClock, 1000);
         
-        // Inicializar el reloj al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             updateBoliviaClock();
         });
