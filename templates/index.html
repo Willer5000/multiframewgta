@@ -249,15 +249,15 @@
                         <div class="mt-2">
                             <small class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Volumen compra anómalo | 
-                                <strong>🔴 ROJO:</strong> Volumen venta anómalo |
-                                <strong>📈 AMARILLO:</strong> EMA Volumen 21 periodos
+                                <strong>🟢 VERDE:</strong> Compra anómala | 
+                                <strong>🔴 ROJO:</strong> Venta anómala |
+                                <strong>📊 GRIS:</strong> Volumen normal
                             </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Fuerza de Tendencia Maverick -->
+                <!-- Gráfico Fuerza de Tendencia Maverick -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -270,15 +270,15 @@
                         <div class="mt-2">
                             <small class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Fuerza creciente | 
-                                <strong>🔴 ROJO:</strong> Fuerza decreciente |
-                                <strong>❌ ROJO SÓLIDO:</strong> Zona NO OPERAR
+                                <strong>🟢 VERDE:</strong> Fuerza creciente (Operar) | 
+                                <strong>🔴 ROJO:</strong> Fuerza decreciente (Evitar) |
+                                <strong>❌ X ROJO:</strong> Zona de NO OPERAR
                             </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Indicador de Ballenas -->
+                <!-- Gráfico de Ballenas -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
@@ -288,7 +288,7 @@
                     </div>
                 </div>
 
-                <!-- RSI Modificado Maverick -->
+                <!-- Gráfico RSI Maverick -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">RSI Modificado Maverick (%B)</h5>
@@ -298,7 +298,7 @@
                     </div>
                 </div>
 
-                <!-- RSI Tradicional -->
+                <!-- Gráfico RSI Tradicional -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">RSI Tradicional con Divergencias</h5>
@@ -308,8 +308,8 @@
                     </div>
                 </div>
 
-                <!-- MACD -->
-                <div class="card bg-dark border-secondary">
+                <!-- Gráfico MACD -->
+                <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">MACD con Histograma</h5>
                     </div>
@@ -319,7 +319,7 @@
                 </div>
             </div>
 
-            <!-- Panel Derecho -->
+            <!-- Panel Derecho - Resumen del Mercado -->
             <div class="col-lg-2">
                 <!-- Resumen del Mercado -->
                 <div class="card bg-dark border-secondary mb-4">
@@ -463,8 +463,8 @@
                 });
         }
 
-        // Función para descargar reporte
-        function downloadReport() {
+        // Función para descargar reporte estratégico
+        function downloadStrategicReport() {
             const symbol = document.getElementById('selected-crypto').textContent;
             const interval = document.getElementById('interval-select').value;
             const leverage = document.getElementById('leverage').value;
