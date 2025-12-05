@@ -236,7 +236,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico de Volumen con Anomalías -->
+                <!-- Indicador de Volumen con Anomalías y Clusters -->
                 <div class="card bg-dark border-info mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -249,14 +249,15 @@
                         <div class="mt-2">
                             <small class="text-muted">
                                 <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Compra | <strong>🔴 ROJO:</strong> Venta | 
-                                <strong>📈 Línea Amarilla:</strong> Media Móvil Volumen (21)
+                                <strong>🟢 VERDE:</strong> Volumen compra anómalo | 
+                                <strong>🔴 ROJO:</strong> Volumen venta anómalo |
+                                <strong>📈 AMARILLO:</strong> EMA Volumen 21 periodos
                             </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Gráfico Fuerza de Tendencia Maverick -->
+                <!-- Fuerza de Tendencia Maverick -->
                 <div class="card bg-dark border-warning mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">
@@ -271,13 +272,13 @@
                                 <i class="fas fa-info-circle me-1"></i>
                                 <strong>🟢 VERDE:</strong> Fuerza creciente | 
                                 <strong>🔴 ROJO:</strong> Fuerza decreciente |
-                                <strong>❌ X ROJO:</strong> Zona de NO OPERAR
+                                <strong>❌ ROJO SÓLIDO:</strong> Zona NO OPERAR
                             </small>
                         </div>
                     </div>
                 </div>
 
-                <!-- Gráfico de Ballenas -->
+                <!-- Indicador de Ballenas -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
@@ -287,7 +288,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico RSI Maverick -->
+                <!-- RSI Modificado Maverick -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">RSI Modificado Maverick (%B)</h5>
@@ -297,7 +298,7 @@
                     </div>
                 </div>
 
-                <!-- Gráfico RSI Tradicional -->
+                <!-- RSI Tradicional -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header">
                         <h5 class="mb-0">RSI Tradicional con Divergencias</h5>
@@ -307,8 +308,8 @@
                     </div>
                 </div>
 
-                <!-- Gráfico MACD -->
-                <div class="card bg-dark border-secondary mb-4">
+                <!-- MACD -->
+                <div class="card bg-dark border-secondary">
                     <div class="card-header">
                         <h5 class="mb-0">MACD con Histograma</h5>
                     </div>
@@ -318,7 +319,7 @@
                 </div>
             </div>
 
-            <!-- Panel Derecho - Resumen del Mercado -->
+            <!-- Panel Derecho -->
             <div class="col-lg-2">
                 <!-- Resumen del Mercado -->
                 <div class="card bg-dark border-secondary mb-4">
@@ -363,23 +364,6 @@
                                     <span class="visually-hidden">Cargando...</span>
                                 </div>
                                 <p class="mt-2 mb-0 small">Buscando oportunidades...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Alertas Volumen+EMA21 -->
-                <div class="card bg-dark border-success mb-4">
-                    <div class="card-header bg-success bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-volume-up me-2"></i>Alertas Volumen+EMA21</h5>
-                    </div>
-                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                        <div id="volume-ema-alerts">
-                            <div class="text-center py-2">
-                                <div class="spinner-border spinner-border-sm text-success" role="status">
-                                    <span class="visually-hidden">Cargando...</span>
-                                </div>
-                                <p class="mt-2 mb-0 small">Monitoreando volumen...</p>
                             </div>
                         </div>
                     </div>
@@ -479,8 +463,8 @@
                 });
         }
 
-        // Función para descargar reporte estratégico
-        function downloadStrategicReport() {
+        // Función para descargar reporte
+        function downloadReport() {
             const symbol = document.getElementById('selected-crypto').textContent;
             const interval = document.getElementById('interval-select').value;
             const leverage = document.getElementById('leverage').value;
