@@ -3289,20 +3289,18 @@ def get_bolivia_time():
 
 @app.route('/api/generate_report')
 def generate_report():
-    """Generar reporte técnico completo"""
+    """Generar reporte técnico completo - CORREGIDO"""
     try:
         symbol = request.args.get('symbol', 'BTC-USDT')
         interval = request.args.get('interval', '4h')
         leverage = int(request.args.get('leverage', 15))
         
-        signal_data = generate_signals_improved(symbol, interval)
+        signal_data = indicator.generate_signals_improved(symbol, interval)
         
         if not signal_data or signal_data['current_price'] == 0:
             return jsonify({'error': 'No hay datos para generar el reporte'}), 400
         
-        # Implementación existente del reporte...
-        # ... (código existente del reporte) ...
-fig = plt.figure(figsize=(14, 18))
+        fig = plt.figure(figsize=(14, 18))
         
         # Gráfico 1: Precio y niveles
         ax1 = plt.subplot(9, 1, 1)
@@ -3505,9 +3503,8 @@ fig = plt.figure(figsize=(14, 18))
         return send_file(img_buffer, mimetype='image/png', 
                         as_attachment=True, 
                         download_name=f'report_{symbol}_{interval}_{datetime.now().strftime("%Y%m%d_%H%M")}.png')
-           
-       # return jsonify({'status': 'Reporte generado'})
-            except Exception as e:
+        
+    except Exception as e:
         print(f"Error generando reporte: {e}")
         return jsonify({'error': 'Error generando reporte'}), 500
 
