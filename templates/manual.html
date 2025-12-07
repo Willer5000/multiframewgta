@@ -3,8 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manual MULTI-TIMEFRAME WGTA PRO</title>
+    <title>Manual del Sistema MULTI-TIMEFRAME WGTA PRO</title>
     <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-accent: #60a5fa;
+            --border-color: #475569;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+        }
+        
         * {
             margin: 0;
             padding: 0;
@@ -13,2000 +27,1406 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
             line-height: 1.6;
-            color: #333;
-            background-color: #f5f5f5;
             padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
         
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: white;
-            padding: 40px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            background-color: var(--bg-secondary);
             border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
         }
         
-        header {
+        .header {
             text-align: center;
             margin-bottom: 40px;
             padding-bottom: 20px;
-            border-bottom: 3px solid #2c3e50;
+            border-bottom: 2px solid var(--border-color);
         }
         
-        h1 {
-            color: #2c3e50;
-            font-size: 2.5em;
+        .header h1 {
+            color: var(--text-accent);
+            font-size: 2.5rem;
             margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
         
-        .subtitle {
-            color: #7f8c8d;
-            font-size: 1.2em;
-            font-weight: normal;
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
         }
         
-        h2 {
-            color: #34495e;
-            font-size: 1.8em;
-            margin: 30px 0 15px 0;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #ecf0f1;
+        .return-button {
+            display: inline-block;
+            background-color: var(--info-color);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
         }
         
-        h3 {
-            color: #2c3e50;
-            font-size: 1.4em;
-            margin: 25px 0 10px 0;
-        }
-        
-        h4 {
-            color: #34495e;
-            font-size: 1.2em;
-            margin: 20px 0 10px 0;
-        }
-        
-        p {
-            margin-bottom: 15px;
-            text-align: justify;
+        .return-button:hover {
+            background-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
         }
         
         .section {
             margin-bottom: 40px;
+            padding: 25px;
+            background-color: var(--bg-tertiary);
+            border-radius: 8px;
+            border-left: 4px solid var(--info-color);
+        }
+        
+        .section-title {
+            color: var(--text-accent);
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .subsection {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: rgba(30, 41, 59, 0.5);
+            border-radius: 6px;
+        }
+        
+        .subsection-title {
+            color: var(--text-secondary);
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+        }
+        
+        .strategy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .strategy-card {
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease;
+        }
+        
+        .strategy-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--info-color);
+        }
+        
+        .strategy-name {
+            color: var(--success-color);
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .strategy-timeframes {
+            color: var(--warning-color);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+        
+        .strategy-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+        }
+        
+        .indicator-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .indicator-list li {
+            padding: 5px 0;
+            color: var(--text-secondary);
+            border-bottom: 1px dashed var(--border-color);
+        }
+        
+        .indicator-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .step-by-step {
+            background-color: rgba(15, 23, 42, 0.7);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        
+        .step {
+            margin-bottom: 15px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .step:before {
+            content: counter(step);
+            counter-increment: step;
+            position: absolute;
+            left: 0;
+            top: 0;
+            background-color: var(--info-color);
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .step-by-step {
+            counter-reset: step;
+        }
+        
+        .note {
+            background-color: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--warning-color);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        
+        .note strong {
+            color: var(--warning-color);
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
-            background-color: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background-color: var(--bg-secondary);
+            border-radius: 6px;
+            overflow: hidden;
         }
         
         th {
-            background-color: #2c3e50;
-            color: white;
-            padding: 12px;
+            background-color: var(--bg-tertiary);
+            color: var(--text-accent);
+            padding: 12px 15px;
             text-align: left;
             font-weight: 600;
         }
         
         td {
-            padding: 12px;
-            border-bottom: 1px solid #ecf0f1;
-            vertical-align: top;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
         }
         
-        tr:nth-child(even) {
-            background-color: #f8f9fa;
+        tr:last-child td {
+            border-bottom: none;
         }
         
-        .strategy-table {
-            margin-bottom: 30px;
+        tr:hover {
+            background-color: rgba(51, 65, 85, 0.3);
         }
         
-        .strategy-table th {
-            background-color: #3498db;
-        }
-        
-        .indicator-table th {
-            background-color: #e74c3c;
-        }
-        
-        .timeframe-table th {
-            background-color: #27ae60;
-        }
-        
-        .step-by-step {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border-left: 4px solid #3498db;
-        }
-        
-        .step {
-            margin-bottom: 25px;
-            counter-increment: step-counter;
-            position: relative;
-            padding-left: 60px;
-        }
-        
-        .step::before {
-            content: counter(step-counter);
-            background-color: #3498db;
-            color: white;
-            font-weight: bold;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: absolute;
-            left: 0;
-            top: 0;
-        }
-        
-        .step-title {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 1.1em;
-        }
-        
-        .note {
-            background-color: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 4px;
-        }
-        
-        .warning {
-            background-color: #f8d7da;
-            border-left: 4px solid #dc3545;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 4px;
-        }
-        
-        .info {
-            background-color: #d1ecf1;
-            border-left: 4px solid #17a2b8;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 4px;
-        }
-        
-        .diagram-container {
-            text-align: center;
-            margin: 30px 0;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-        }
-        
-        .diagram {
-            max-width: 100%;
-            height: auto;
-            border: 1px solid #ddd;
-        }
-        
-        .legend {
-            display: flex;
-            flex-wrap: wrap;
+        .timeframe-hierarchy {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin: 20px 0;
+        }
+        
+        .timeframe-card {
+            background-color: var(--bg-tertiary);
             padding: 15px;
-            background-color: #f8f9fa;
             border-radius: 6px;
+            text-align: center;
+            border: 1px solid var(--border-color);
         }
         
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin-right: 20px;
+        .timeframe-label {
+            color: var(--text-accent);
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
         }
         
-        .legend-color {
-            width: 20px;
-            height: 20px;
+        .timeframe-value {
+            color: var(--success-color);
+            font-size: 1rem;
+        }
+        
+        .risk-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
             margin-right: 8px;
-            border-radius: 3px;
+            margin-bottom: 8px;
         }
         
-        .code-block {
-            background-color: #2c3e50;
-            color: #ecf0f1;
-            padding: 15px;
-            border-radius: 6px;
-            font-family: 'Courier New', monospace;
-            margin: 15px 0;
-            overflow-x: auto;
+        .risk-low {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+        
+        .risk-medium {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: var(--warning-color);
+            border: 1px solid var(--warning-color);
+        }
+        
+        .risk-high {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+        
+        .risk-memecoin {
+            background-color: rgba(139, 92, 246, 0.2);
+            color: #8b5cf6;
+            border: 1px solid #8b5cf6;
+        }
+        
+        .signal-long {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        
+        .signal-short {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+        
+        .signal-neutral {
+            color: var(--text-secondary);
+            font-weight: bold;
         }
         
         footer {
-            margin-top: 50px;
-            padding-top: 20px;
-            border-top: 1px solid #ecf0f1;
             text-align: center;
-            color: #7f8c8d;
-            font-size: 0.9em;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
         
         @media (max-width: 768px) {
             .container {
-                padding: 20px;
+                padding: 15px;
             }
             
-            h1 {
-                font-size: 2em;
+            .strategy-grid {
+                grid-template-columns: 1fr;
             }
             
-            h2 {
-                font-size: 1.5em;
+            .section {
+                padding: 15px;
             }
             
-            table {
-                font-size: 0.9em;
-            }
-            
-            th, td {
-                padding: 8px;
+            .header h1 {
+                font-size: 2rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
+        <div class="header">
             <h1>MULTI-TIMEFRAME WGTA PRO</h1>
-            <p class="subtitle">Sistema Avanzado de Trading para Criptomonedas</p>
-            <p>Manual Técnico de Operación - Versión 1.0</p>
-        </header>
-        
+            <p class="subtitle">Sistema Avanzado de Trading con 13 Estrategias Integradas</p>
+            <a href="/" class="return-button">← Volver al Sistema de Trading</a>
+        </div>
+
         <div class="section">
-            <h2>1. Introducción al Sistema</h2>
-            <p>El sistema MULTI-TIMEFRAME WGTA PRO es una plataforma de análisis técnico avanzado diseñada específicamente para el mercado de criptomonedas. El sistema implementa trece estrategias de trading distintas, cada una con su propia lógica de entrada y salida, filtros de confirmación y gestión de riesgo.</p>
+            <h2 class="section-title">1. Introducción al Sistema WGTA PRO</h2>
+            <p>El sistema MULTI-TIMEFRAME WGTA PRO es una plataforma de análisis técnico avanzado diseñada para operar en mercados de criptomonedas. Integra 13 estrategias de trading distintas, cada una optimizada para diferentes condiciones de mercado y temporalidades.</p>
             
-            <p>La arquitectura del sistema se basa en el análisis multi-temporalidad, donde cada operación debe ser confirmada por al menos dos timeframes diferentes. Esta aproximación permite filtrar señales falsas y aumentar la probabilidad de éxito en cada operación.</p>
-            
-            <p>El sistema opera con 40 criptomonedas diferentes, clasificadas en cuatro categorías de riesgo: bajo riesgo (20 criptomonedas), medio riesgo (10 criptomonedas), alto riesgo (7 criptomonedas) y memecoins (3 criptomonedas). Esta clasificación permite adaptar el tamaño de posición y el apalancamiento según el perfil de riesgo de cada activo.</p>
-            
-            <div class="info">
-                <p><strong>Características principales del sistema:</strong></p>
-                <ul style="margin-left: 20px;">
-                    <li>13 estrategias de trading independientes</li>
-                    <li>Análisis multi-temporalidad obligatorio</li>
-                    <li>40 criptomonedas clasificadas por riesgo</li>
-                    <li>Integración con Telegram para alertas automáticas</li>
-                    <li>Indicadores técnicos personalizados</li>
-                    <li>Sistema de gestión de posición automático</li>
+            <div class="subsection">
+                <h3 class="subsection-title">1.1 Filosofía del Sistema</h3>
+                <p>El sistema opera bajo la premisa de que ninguna estrategia individual es efectiva en todas las condiciones de mercado. Por ello, implementa múltiples enfoques que se activan según el contexto del mercado, la temporalidad y las características específicas del activo.</p>
+                
+                <p>La arquitectura del sistema se basa en tres pilares fundamentales:</p>
+                <ul class="indicator-list">
+                    <li><strong>Multi-Temporalidad:</strong> Análisis simultáneo en diferentes marcos temporales para confirmar tendencias</li>
+                    <li><strong>Confirmación Multi-Indicador:</strong> Validación de señales mediante múltiples indicadores técnicos</li>
+                    <li><strong>Gestión Dinámica de Riesgo:</strong> Ajuste automático de parámetros según la volatilidad y condiciones del mercado</li>
                 </ul>
             </div>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">1.2 Símbolos y Clasificación de Riesgo</h3>
+                <p>El sistema monitorea 40 criptomonedas principales, clasificadas en cuatro categorías de riesgo:</p>
+                
+                <div style="margin: 20px 0;">
+                    <span class="risk-badge risk-low">Bajo Riesgo (20)</span>
+                    <span class="risk-badge risk-medium">Medio Riesgo (10)</span>
+                    <span class="risk-badge risk-high">Alto Riesgo (7)</span>
+                    <span class="risk-badge risk-memecoin">Memecoins (3)</span>
+                </div>
+                
+                <p>Las 5 criptomonedas principales para estrategias avanzadas son: BTC-USDT, ETH-USDT, SOL-USDT, ADA-USDT y XRP-USDT.</p>
+            </div>
         </div>
-        
+
         <div class="section">
-            <h2>2. Configuración del Sistema</h2>
+            <h2 class="section-title">2. Estrategia Principal: MULTIFRAME</h2>
+            <p>La estrategia MULTIFRAME es el núcleo del sistema, implementando un análisis multi-temporalidad con confirmación de múltiples indicadores.</p>
             
-            <h3>2.1. Clasificación de Criptomonedas</h3>
-            <p>El sistema clasifica las criptomonedas en cuatro categorías de riesgo para adaptar la gestión de posición:</p>
+            <div class="subsection">
+                <h3 class="subsection-title">2.1 Arquitectura Multi-Temporalidad</h3>
+                <p>El sistema analiza tres temporalidades simultáneamente para cada operación:</p>
+                
+                <div class="timeframe-hierarchy">
+                    <div class="timeframe-card">
+                        <div class="timeframe-label">Temporalidad Mayor</div>
+                        <div class="timeframe-value">Define la tendencia principal</div>
+                    </div>
+                    <div class="timeframe-card">
+                        <div class="timeframe-label">Temporalidad Media</div>
+                        <div class="timeframe-value">Confirma la dirección operativa</div>
+                    </div>
+                    <div class="timeframe-card">
+                        <div class="timeframe-label">Temporalidad Menor</div>
+                        <div class="timeframe-value">Precisa el timing de entrada</div>
+                    </div>
+                </div>
+                
+                <p>La jerarquía temporal varía según el marco de tiempo principal que se esté analizando:</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Temporalidad Principal</th>
+                            <th>Temporalidad Mayor</th>
+                            <th>Temporalidad Media</th>
+                            <th>Temporalidad Menor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>15 minutos</td>
+                            <td>1 hora</td>
+                            <td>30 minutos</td>
+                            <td>5 minutos</td>
+                        </tr>
+                        <tr>
+                            <td>1 hora</td>
+                            <td>4 horas</td>
+                            <td>2 horas</td>
+                            <td>30 minutos</td>
+                        </tr>
+                        <tr>
+                            <td>4 horas</td>
+                            <td>12 horas</td>
+                            <td>8 horas</td>
+                            <td>2 horas</td>
+                        </tr>
+                        <tr>
+                            <td>1 día</td>
+                            <td>1 semana</td>
+                            <td>12 horas</td>
+                            <td>8 horas</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             
-            <table class="strategy-table">
-                <thead>
-                    <tr>
-                        <th>Categoría de Riesgo</th>
-                        <th>Número de Criptomonedas</th>
-                        <th>Ejemplos</th>
-                        <th>Apalancamiento Recomendado</th>
-                        <th>Perfil de Operador</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Bajo Riesgo</strong></td>
-                        <td>20</td>
-                        <td>BTC-USDT, ETH-USDT, BNB-USDT, SOL-USDT</td>
-                        <td>15x - 20x</td>
-                        <td>Conservador</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Medio Riesgo</strong></td>
-                        <td>10</td>
-                        <td>NEAR-USDT, AXS-USDT, EGLD-USDT, HBAR-USDT</td>
-                        <td>10x - 15x</td>
-                        <td>Moderado</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Alto Riesgo</strong></td>
-                        <td>7</td>
-                        <td>APE-USDT, GMT-USDT, SAND-USDT, OP-USDT</td>
-                        <td>5x - 10x</td>
-                        <td>Agresivo</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Memecoins</strong></td>
-                        <td>3</td>
-                        <td>SHIB-USDT, PEPE-USDT, FLOKI-USDT</td>
-                        <td>3x - 5x</td>
-                        <td>Especulativo</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="subsection">
+                <h3 class="subsection-title">2.2 Indicadores de la Estrategia MULTIFRAME</h3>
+                <p>La estrategia MULTIFRAME integra 12 indicadores técnicos ponderados:</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Indicador</th>
+                            <th>Peso en Señal LONG</th>
+                            <th>Peso en Señal SHORT</th>
+                            <th>Función Principal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Multi-Timeframe Obligatorio</td>
+                            <td>30%</td>
+                            <td>30%</td>
+                            <td>Confirmación de tendencia en múltiples TF</td>
+                        </tr>
+                        <tr>
+                            <td>Fuerza Tendencia Maverick</td>
+                            <td>25%</td>
+                            <td>25%</td>
+                            <td>Medir intensidad y dirección de la tendencia</td>
+                        </tr>
+                        <tr>
+                            <td>Bandas de Bollinger</td>
+                            <td>8%</td>
+                            <td>8%</td>
+                            <td>Identificar niveles de sobrecompra/sobreventa</td>
+                        </tr>
+                        <tr>
+                            <td>ADX con Pendiente Positiva</td>
+                            <td>5%</td>
+                            <td>5%</td>
+                            <td>Confirmar fortaleza de la tendencia</td>
+                        </tr>
+                        <tr>
+                            <td>Cruce MA9/MA21</td>
+                            <td>10%</td>
+                            <td>10%</td>
+                            <td>Señal de momentum direccional</td>
+                        </tr>
+                        <tr>
+                            <td>Divergencia RSI Tradicional</td>
+                            <td>5%</td>
+                            <td>5%</td>
+                            <td>Alertar posibles reversiones</td>
+                        </tr>
+                        <tr>
+                            <td>Divergencia RSI Maverick</td>
+                            <td>8%</td>
+                            <td>8%</td>
+                            <td>Confirmación avanzada de divergencias</td>
+                        </tr>
+                        <tr>
+                            <td>Cruce MACD</td>
+                            <td>10%</td>
+                            <td>10%</td>
+                            <td>Señal de momentum con confirmación</td>
+                        </tr>
+                        <tr>
+                            <td>Patrón Chartista</td>
+                            <td>5%</td>
+                            <td>5%</td>
+                            <td>Identificar estructuras de precio</td>
+                        </tr>
+                        <tr>
+                            <td>Ruptura Confirmada</td>
+                            <td>5%</td>
+                            <td>5%</td>
+                            <td>Validar breakouts de niveles clave</td>
+                        </tr>
+                        <tr>
+                            <td>Volumen Anómalo</td>
+                            <td>7%</td>
+                            <td>7%</td>
+                            <td>Confirmar interés institucional</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             
-            <h3>2.2. Jerarquía de Temporalidades</h3>
-            <p>El sistema utiliza una jerarquía de temporalidades predefinida para el análisis multi-timeframe. Cada temporalidad tiene asociada una temporalidad mayor, media y menor que se utilizan para confirmación:</p>
-            
-            <table class="timeframe-table">
-                <thead>
-                    <tr>
-                        <th>Temporalidad Principal</th>
-                        <th>Temporalidad Mayor</th>
-                        <th>Temporalidad Media</th>
-                        <th>Temporalidad Menor</th>
-                        <th>Tipo de Operación</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>15 minutos</td>
-                        <td>1 hora</td>
-                        <td>30 minutos</td>
-                        <td>5 minutos</td>
-                        <td>Scalping</td>
-                    </tr>
-                    <tr>
-                        <td>30 minutos</td>
-                        <td>2 horas</td>
-                        <td>1 hora</td>
-                        <td>15 minutos</td>
-                        <td>Scalping/Intradía</td>
-                    </tr>
-                    <tr>
-                        <td>1 hora</td>
-                        <td>4 horas</td>
-                        <td>2 horas</td>
-                        <td>30 minutos</td>
-                        <td>Intradía</td>
-                    </tr>
-                    <tr>
-                        <td>2 horas</td>
-                        <td>8 horas</td>
-                        <td>4 horas</td>
-                        <td>1 hora</td>
-                        <td>Intradía/Swing</td>
-                    </tr>
-                    <tr>
-                        <td>4 horas</td>
-                        <td>12 horas</td>
-                        <td>8 horas</td>
-                        <td>2 horas</td>
-                        <td>Swing Trading</td>
-                    </tr>
-                    <tr>
-                        <td>8 horas</td>
-                        <td>1 día</td>
-                        <td>12 horas</td>
-                        <td>4 horas</td>
-                        <td>Swing Trading</td>
-                    </tr>
-                    <tr>
-                        <td>12 horas</td>
-                        <td>1 día</td>
-                        <td>8 horas</td>
-                        <td>4 horas</td>
-                        <td>Swing Trading</td>
-                    </tr>
-                    <tr>
-                        <td>1 día</td>
-                        <td>1 semana</td>
-                        <td>12 horas</td>
-                        <td>8 horas</td>
-                        <td>Posicionamiento</td>
-                    </tr>
-                    <tr>
-                        <td>1 semana</td>
-                        <td>1 mes</td>
-                        <td>1 semana</td>
-                        <td>3 días</td>
-                        <td>Inversión</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div class="note">
-                <p><strong>Nota importante:</strong> El sistema verifica automáticamente la tendencia en tres temporalidades diferentes para cada operación. Una señal solo es considerada válida si las tres temporalidades están alineadas en la dirección de la operación propuesta.</p>
+            <div class="subsection">
+                <h3 class="subsection-title">2.3 Proceso Operativo MULTIFRAME</h3>
+                <div class="step-by-step">
+                    <div class="step">
+                        <strong>Paso 1: Análisis Multi-Temporalidad</strong>
+                        <p>El sistema verifica la alineación de tendencias en tres temporalidades. Para señal LONG, requiere que la temporalidad mayor sea ALCISTA o NEUTRAL, la temporalidad media sea ALCISTA, y la temporalidad menor muestre fuerza alcista en el FTMaverick.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 2: Evaluación de Fuerza de Tendencia</strong>
+                        <p>Se analiza el indicador FTMaverick para determinar la intensidad de la tendencia. El sistema evita las "Zonas No-Operar" donde la volatilidad es excesiva o la tendencia es débil.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 3: Validación con Indicadores Secundarios</strong>
+                        <p>Se verifican los 10 indicadores restantes. Cada indicador contribuye con un peso específico al score final de la señal. Se requieren condiciones obligatorias (peso ≥25%) y condiciones complementarias.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 4: Cálculo del Score Final</strong>
+                        <p>El sistema calcula un score de 0 a 100 basado en las condiciones cumplidas. Para señales LONG con precio sobre MA200, se requiere mínimo 65 puntos. Para señales LONG con precio bajo MA200, se requiere mínimo 70 puntos.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 5: Determinación de Niveles de Trading</strong>
+                        <p>Una vez confirmada la señal, el sistema calcula automáticamente: Precio de Entrada, Stop Loss, tres niveles de Take Profit, niveles de Soporte y Resistencia dinámicos.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 6: Gestión de Posición</strong>
+                        <p>El sistema recomienda apalancamiento según la temporalidad: Scalping (15x), Swing (10x), Inversión (5x). Los niveles de Take Profit se distribuyen en proporción 50%-30%-20% del movimiento esperado.</p>
+                    </div>
+                </div>
             </div>
         </div>
-        
+
         <div class="section">
-            <h2>3. Estrategias de Trading Implementadas</h2>
-            <p>El sistema implementa trece estrategias de trading diferentes, cada una con condiciones de entrada específicas y temporalidades permitidas.</p>
+            <h2 class="section-title">3. Las 13 Estrategias Especializadas</h2>
+            <p>Cada estrategia está diseñada para condiciones específicas de mercado y temporalidades.</p>
             
-            <h3>3.1. TREND RIDER (Swing Trading con filtro MA200)</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Temporalidades Permitidas</th>
-                    <td>4 horas, 8 horas, 12 horas, 1 día</td>
-                </tr>
-                <tr>
-                    <th>Condiciones para LONG</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Precio > MA50 > MA200</li>
-                            <li>MACD positivo en temporalidad menor</li>
-                            <li>FTMaverick en señal STRONG_UP o WEAK_UP</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Condiciones para SHORT</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Precio < MA50 < MA200</li>
-                            <li>MACD negativo en temporalidad menor</li>
-                            <li>FTMaverick en señal STRONG_DOWN o WEAK_DOWN</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Lógica de Operación</th>
-                    <td>Esta estrategia se enfoca en seguir tendencias establecidas utilizando la MA200 como filtro direccional principal. Cuando el precio está por encima de la MA200, solo se consideran señales LONG; cuando está por debajo, solo señales SHORT. La entrada se realiza cuando la MA50 cruza en la dirección de la tendencia principal y el MACD confirma el momentum en una temporalidad menor.</td>
-                </tr>
-                <tr>
-                    <th>Gestón de Posición</th>
-                    <td>Stop loss dinámico basado en soportes/resistencias. Take profit en múltiples niveles (generalmente tres niveles). Apalancamiento recomendado: 10x-15x.</td>
-                </tr>
-            </table>
-            
-            <h3>3.2. MOMENTUM DIVERGENCE (Divergencias de momentum intradía)</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Temporalidades Permitidas</th>
-                    <td>1 hora, 2 horas, 4 horas</td>
-                </tr>
-                <tr>
-                    <th>Condiciones para LONG</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Divergencia alcista en RSI Tradicional</li>
-                            <li>Divergencia alcista en RSI Maverick</li>
-                            <li>Clúster de volumen con señal COMPRA</li>
-                            <li>FTMaverick no en zona de no operación</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Condiciones para SHORT</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Divergencia bajista en RSI Tradicional</li>
-                            <li>Divergencia bajista en RSI Maverick</li>
-                            <li>Clúster de volumen con señal VENTA</li>
-                            <li>FTMaverick no en zona de no operación</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Lógica de Operación</th>
-                    <td>Estrategia basada en divergencias entre precio e indicadores de momentum. Una divergencia ocurre cuando el precio hace un nuevo máximo/mínimo pero el indicador no lo confirma. El sistema busca divergencias simultáneas en dos versiones del RSI (tradicional y Maverick) confirmadas por volumen anómalo.</td>
-                </tr>
-                <tr>
-                    <th>Gestión de Posición</th>
-                    <td>Stop loss ajustado al nivel del swing anterior. Take profit basado en retrocesos de Fibonacci. Apalancamiento recomendado: 15x-20x.</td>
-                </tr>
-            </table>
-            
-            <h3>3.3. BOLLINGER SQUEEZE (Breakout tras compresión de volatilidad)</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Temporalidades Permitidas</th>
-                    <td>15 minutos, 30 minutos, 1 hora</td>
-                </tr>
-                <tr>
-                    <th>Condiciones para LONG</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Compresión de Bandas de Bollinger (ancho < 10%)</li>
-                            <li>Breakout por encima de banda superior</li>
-                            <li>Anomalía de volumen con señal COMPRA</li>
-                            <li>ADX > 25 y +DI > -DI</li>
-                            <li>FTMaverick no en zona de no operación</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Condiciones para SHORT</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Compresión de Bandas de Bollinger (ancho < 10%)</li>
-                            <li>Breakout por debajo de banda inferior</li>
-                            <li>Anomalía de volumen con señal VENTA</li>
-                            <li>ADX > 25 y -DI > +DI</li>
-                            <li>FTMaverick no en zona de no operación</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Lógica de Operación</th>
-                    <td>Estrategia de breakout que capitaliza períodos de baja volatilidad seguidos de expansión. Las Bandas de Bollinger se contraen durante períodos de consolidación y luego se expanden con el movimiento direccional. El sistema entra en el breakout confirmado por volumen y dirección del ADX.</td>
-                </tr>
-                <tr>
-                    <th>Gestión de Posición</th>
-                    <td>Stop loss dentro del rango de compresión. Take profit basado en la amplitud de las bandas. Apalancamiento recomendado: 20x-25x para scalping.</td>
-                </tr>
-            </table>
-            
-            <h3>3.4. ADX POWER TREND (Tendencias fuertes con ADX >25)</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Temporalidades Permitidas</th>
-                    <td>2 horas, 4 horas, 8 horas</td>
-                </tr>
-                <tr>
-                    <th>Condiciones para LONG</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>ADX > 25 (tendencia fuerte)</li>
-                            <li>+DI > -DI con diferencia > 5 puntos</li>
-                            <li>Precio > MA21</li>
-                            <li>FTMaverick en señal STRONG_UP o WEAK_UP</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Condiciones para SHORT</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>ADX > 25 (tendencia fuerte)</li>
-                            <li>-DI > +DI con diferencia > 5 puntos</li>
-                            <li>Precio < MA21</li>
-                            <li>FTMaverick en señal STRONG_DOWN o WEAK_DOWN</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Lógica de Operación</th>
-                    <td>Estrategia diseñada para operar en tendencias fuertes identificadas por el ADX. El ADX mide la fuerza de la tendencia sin indicar dirección, por lo que se combina con el DMI para determinar la dirección. El sistema solo opera cuando hay una tendencia claramente establecida (ADX > 25) y el DMI confirma la dirección.</td>
-                </tr>
-                <tr>
-                    <th>Gestión de Posición</th>
-                    <td>Stop loss amplio para permitir fluctuaciones en tendencias fuertes. Take profit escalonado. Apalancamiento recomendado: 10x-15x.</td>
-                </tr>
-            </table>
-            
-            <h3>3.5. MACD HISTOGRAM REVERSAL (Reversión con cambio de histograma MACD)</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Temporalidades Permitidas</th>
-                    <td>30 minutos, 1 hora, 2 horas</td>
-                </tr>
-                <tr>
-                    <th>Condiciones para LONG</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Cambio de histograma MACD de negativo a positivo</li>
-                            <li>Cruce alcista de MA9/MA21</li>
-                            <li>RSI Maverick entre 0.3 y 0.7 (neutral)</li>
-                            <li>FTMaverick en señal STRONG_UP o WEAK_UP</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Condiciones para SHORT</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Cambio de histograma MACD de positivo a negativo</li>
-                            <li>Cruce bajista de MA9/MA21</li>
-                            <li>RSI Maverick entre 0.3 y 0.7 (neutral)</li>
-                            <li>FTMaverick en señal STRONG_DOWN o WEAK_DOWN</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Lógica de Operación</th>
-                    <td>Estrategia de reversión que busca cambios en el momentum medidos por el histograma MACD. El sistema no opera en extremos del RSI para evitar entrar en movimientos sobre extendidos. La confirmación del cruce de medias móviles añade robustez a la señal.</td>
-                </tr>
-                <tr>
-                    <th>Gestión de Posición</th>
-                    <td>Stop loss ajustado cerca del punto de entrada debido a la naturaleza de reversión. Take profit conservador. Apalancamiento recomendado: 15x-20x.</td>
-                </tr>
-            </table>
-            
-            <h3>3.6. VOLUME SPIKE MOMENTUM (Momentum confirmado por volumen)</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Temporalidades Permitidas</th>
-                    <td>15 minutos, 30 minutos, 1 hora</td>
-                </tr>
-                <tr>
-                    <th>Condiciones para LONG</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Clúster de volumen (mínimo 2 anomalías en 5 velas)</li>
-                            <li>Señal de volumen COMPRA</li>
-                            <li>Precio > MA21</li>
-                            <li>RSI Maverick entre 0.3 y 0.7</li>
-                            <li>FTMaverick en señal STRONG_UP o WEAK_UP</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Condiciones para SHORT</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Clúster de volumen (mínimo 2 anomalías en 5 velas)</li>
-                            <li>Señal de volumen VENTA</li>
-                            <li>Precio < MA21</li>
-                            <li>RSI Maverick entre 0.3 y 0.7</li>
-                            <li>FTMaverick en señal STRONG_DOWN o WEAK_DOWN</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Lógica de Operación</th>
-                    <td>Estrategia que prioriza el volumen como confirmador principal de momentum. El sistema busca agrupaciones de velas con volumen anómalo (clústeres) en lugar de velas aisladas. La dirección del precio en relación con la MA21 y el RSI Maverick en zona neutral filtran falsas señales.</td>
-                </tr>
-                <tr>
-                    <th>Gestión de Posición</th>
-                    <td>Stop loss dinámico basado en ATR. Take profit en relación con el volumen observado. Apalancamiento recomendado: 20x-25x para scalping.</td>
-                </tr>
-            </table>
-            
-            <h3>3.7. DOUBLE CONFIRMATION RSI (Confirmación dual RSI clásico y Maverick)</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Temporalidades Permitidas</th>
-                    <td>1 hora, 2 horas, 4 horas</td>
-                </tr>
-                <tr>
-                    <th>Condiciones para LONG</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>RSI Tradicional < 30 (sobreventa)</li>
-                            <li>RSI Maverick < 0.2 (sobreventa)</li>
-                            <li>Precio en banda inferior de Bollinger</li>
-                            <li>FTMaverick en señal STRONG_UP o WEAK_UP</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Condiciones para SHORT</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>RSI Tradicional > 70 (sobrecompra)</li>
-                            <li>RSI Maverick > 0.8 (sobrecompra)</li>
-                            <li>Precio en banda superior de Bollinger</li>
-                            <li>FTMaverick en señal STRONG_DOWN o WEAK_DOWN</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Lógica de Operación</th>
-                    <td>Estrategia de reversión desde extremos que utiliza dos versiones del RSI para confirmación. El sistema requiere que ambos indicadores estén en zona de sobrecompra/sobreventa simultáneamente y que el precio haya alcanzado un extremo de las Bandas de Bollinger.</td>
-                </tr>
-                <tr>
-                    <th>Gestión de Posición</th>
-                    <td>Stop loss fuera del extremo de Bollinger. Take profit en la banda media de Bollinger. Apalancamiento recomendado: 10x-15x.</td>
-                </tr>
-            </table>
-            
-            <h3>3.8. TREND STRENGTH MAVERICK (Señales fuertes del FTMaverick)</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Temporalidades Permitidas</th>
-                    <td>4 horas, 8 horas, 12 horas</td>
-                </tr>
-                <tr>
-                    <th>Condiciones para LONG</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>FTMaverick en señal STRONG_UP (exclusivamente)</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                            <li>Precio > MA50</li>
-                            <li>Ratio volumen > 1.5x MA de volumen</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Condiciones para SHORT</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>FTMaverick en señal STRONG_DOWN (exclusivamente)</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                            <li>Precio < MA50</li>
-                            <li>Ratio volumen > 1.5x MA de volumen</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Lógica de Operación</th>
-                    <td>Estrategia que opera exclusivamente con señales fuertes del indicador personalizado FTMaverick. Solo se consideran las señales STRONG (fuertes), ignorando las señales WEAK (débiles). El volumen actúa como confirmador adicional.</td>
-                </tr>
-                <tr>
-                    <th>Gestión de Posición</th>
-                    <td>Stop loss basado en el ancho de las bandas del FTMaverick. Take profit escalonado según la fuerza de la señal. Apalancamiento recomendado: 8x-12x.</td>
-                </tr>
-            </table>
-            
-            <h3>3.9. WHALE FOLLOWING (Seguimiento de ballenas institucionales)</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Temporalidades Permitidas</th>
-                    <td>12 horas, 1 día</td>
-                </tr>
-                <tr>
-                    <th>Condiciones para LONG</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Señal de ballena compradora confirmada</li>
-                            <li>Fuerza de ballena > 20</li>
-                            <li>ADX > 25</li>
-                            <li>+DI > -DI con diferencia > 5 puntos</li>
-                            <li>Precio > MA200</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Condiciones para SHORT</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Señal de ballena vendedora confirmada</li>
-                            <li>Fuerza de ballena > 20</li>
-                            <li>ADX > 25</li>
-                            <li>-DI > +DI con diferencia > 5 puntos</li>
-                            <li>Precio < MA200</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Lógica de Operación</th>
-                    <td>Estrategia de swing trading que sigue a grandes operadores institucionales ("ballenas"). El sistema detecta acumulación/distribución basada en anomalías de volumen y comportamiento de precio. La dirección del ADX y DMI confirma que las ballenas están operando en la dirección de la tendencia principal.</td>
-                </tr>
-                <tr>
-                    <th>Gestión de Posición</th>
-                    <td>Stop loss amplio debido a la naturaleza de largo plazo. Take profit escalonado en múltiples niveles. Apalancamiento recomendado: 5x-10x.</td>
-                </tr>
-            </table>
-            
-            <h3>3.10. MA CONVERGENCE DIVERGENCE (Alineación perfecta de medias móviles)</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Temporalidades Permitidas</th>
-                    <td>2 horas, 4 horas, 8 horas</td>
-                </tr>
-                <tr>
-                    <th>Condiciones para LONG</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Alineación alcista perfecta: Precio > MA9 > MA21 > MA50</li>
-                            <li>Separación mínima entre medias: 1% del precio</li>
-                            <li>MACD positivo</li>
-                            <li>Histograma MACD positivo</li>
-                            <li>FTMaverick en señal STRONG_UP o WEAK_UP</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Condiciones para SHORT</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Alineación bajista perfecta: Precio < MA9 < MA21 < MA50</li>
-                            <li>Separación mínima entre medias: 1% del precio</li>
-                            <li>MACD negativo</li>
-                            <li>Histograma MACD negativo</li>
-                            <li>FTMaverick en señal STRONG_DOWN o WEAK_DOWN</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Lógica de Operación</th>
-                    <td>Estrategia que busca alineaciones perfectas de medias móviles, donde todas apuntan en la misma dirección con separación adecuada. Esta configuración indica un momentum fuerte y sostenido. El MACD actúa como confirmador del momentum.</td>
-                </tr>
-                <tr>
-                    <th>Gestión de Posición</th>
-                    <td>Stop loss basado en la MA más cercana. Take profit cuando se pierde la alineación perfecta. Apalancamiento recomendado: 15x-20x.</td>
-                </tr>
-            </table>
-            
-            <h3>3.11. RSI MAVERICK EXTREME (Operaciones en extremos del RSI Maverick)</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Temporalidades Permitidas</th>
-                    <td>30 minutos, 1 hora, 2 horas</td>
-                </tr>
-                <tr>
-                    <th>Condiciones para LONG</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>RSI Maverick < 0.15 por mínimo 3 velas consecutivas</li>
-                            <li>Precio tocando banda inferior de Bollinger</li>
-                            <li>FTMaverick en señal STRONG_UP o WEAK_UP</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Condiciones para SHORT</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>RSI Maverick > 0.85 por mínimo 3 velas consecutivas</li>
-                            <li>Precio tocando banda superior de Bollinger</li>
-                            <li>FTMaverick en señal STRONG_DOWN o WEAK_DOWN</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Lógica de Operación</th>
-                    <td>Estrategia de reversión desde extremos que requiere que el RSI Maverick permanezca en zona extrema por múltiples velas, indicando una condición sostenida de sobrecompra/sobreventa. El toque de las Bandas de Bollinger añade confirmación adicional.</td>
-                </tr>
-                <tr>
-                    <th>Gestión de Posición</th>
-                    <td>Stop loss fuera del extremo de Bollinger. Take profit conservador debido a la naturaleza de reversión. Apalancamiento recomendado: 10x-15x.</td>
-                </tr>
-            </table>
-            
-            <h3>3.12. VOLUME PRICE DIVERGENCE (Divergencia precio-volumen)</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Temporalidades Permitidas</th>
-                    <td>1 hora, 2 horas, 4 horas</td>
-                </tr>
-                <tr>
-                    <th>Condiciones para LONG</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Divergencia alcista precio-volumen: precio hace nuevo bajo, volumen decrece</li>
-                            <li>RSI Maverick < 0.5</li>
-                            <li>FTMaverick en señal STRONG_UP o WEAK_UP</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Condiciones para SHORT</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Divergencia bajista precio-volumen: precio hace nuevo alto, volumen decrece</li>
-                            <li>RSI Maverick > 0.5</li>
-                            <li>FTMaverick en señal STRONG_DOWN o WEAK_DOWN</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Lógica de Operación</th>
-                    <td>Estrategia basada en divergencias clásicas entre precio y volumen. Una divergencia alcista ocurre cuando el precio hace un nuevo bajo pero el volumen es menor que en el bajo anterior, indicando debilitamiento de la presión vendedora. Una divergencia bajista ocurre cuando el precio hace un nuevo alto pero el volumen es menor que en el alto anterior, indicando debilitamiento de la presión compradora.</td>
-                </tr>
-                <tr>
-                    <th>Gestión de Posición</th>
-                    <td>Stop loss en el extremo del movimiento. Take profit basado en el rango del movimiento anterior. Apalancamiento recomendado: 15x-20x.</td>
-                </tr>
-            </table>
-            
-            <h3>3.13. VOLUME EMA FTM (Desplome de volumen con filtros FTMaverick)</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Temporalidades Permitidas</th>
-                    <td>15 minutos, 30 minutos, 1 hora, 4 horas, 12 horas, 1 día</td>
-                </tr>
-                <tr>
-                    <th>Condiciones para LONG</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Volumen > 3x MA21 de volumen</li>
-                            <li>Precio > EMA21</li>
-                            <li>FTMaverick en señal STRONG_UP o WEAK_UP</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                            <li>Precio > media de 20 periodos</li>
-                            <li>Confirmación multi-timeframe para temporalidades cortas</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Condiciones para SHORT</th>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Volumen > 3x MA21 de volumen</li>
-                            <li>Precio < EMA21</li>
-                            <li>FTMaverick en señal STRONG_DOWN o WEAK_DOWN</li>
-                            <li>No estar en zona de no operación del FTMaverick</li>
-                            <li>Precio < media de 20 periodos</li>
-                            <li>Confirmación multi-timeframe para temporalidades cortas</li>
-                        </ul>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Lógica de Operación</th>
-                    <td>Estrategia multi-temporalidad que combina spikes de volumen extremos con la tendencia definida por la EMA21. El volumen debe ser al menos 3 veces el promedio, indicando interés institucional o de grandes operadores. El sistema incluye filtros multi-timeframe obligatorios para temporalidades cortas.</td>
-                </tr>
-                <tr>
-                    <th>Gestión de Posición</th>
-                    <td>Stop loss dinámico basado en soportes/resistencias. Take profit escalonado. Apalancamiento recomendado: 15x-20x.</td>
-                </tr>
-            </table>
-            
-            <div class="warning">
-                <p><strong>Advertencia:</strong> Cada estrategia tiene condiciones específicas de entrada y salida. No se deben mezclar reglas entre estrategias. El sistema automáticamente selecciona la estrategia apropiada basada en las condiciones del mercado y la temporalidad analizada.</p>
+            <div class="strategy-grid">
+                <!-- Estrategia 1 -->
+                <div class="strategy-card">
+                    <div class="strategy-name">1. TREND RIDER</div>
+                    <div class="strategy-timeframes">TF: 4h, 8h, 12h, 1D</div>
+                    <p class="strategy-description">Estrategia de swing trading que monta tendencias establecidas confirmadas en múltiples temporalidades.</p>
+                    <ul class="indicator-list">
+                        <li>MA200 en TF Mayor</li>
+                        <li>MA50 en TF Media</li>
+                        <li>MACD en TF Menor</li>
+                        <li>FTMaverick en TF Actual</li>
+                    </ul>
+                </div>
+                
+                <!-- Estrategia 2 -->
+                <div class="strategy-card">
+                    <div class="strategy-name">2. MOMENTUM DIVERGENCE</div>
+                    <div class="strategy-timeframes">TF: 1h, 2h, 4h</div>
+                    <p class="strategy-description">Captura movimientos fuertes mediante divergencias confirmadas entre precio e indicadores.</p>
+                    <ul class="indicator-list">
+                        <li>Divergencia RSI Tradicional</li>
+                        <li>Divergencia RSI Maverick</li>
+                        <li>Clústeres de Volumen</li>
+                        <li>Confirmación FTMaverick</li>
+                    </ul>
+                </div>
+                
+                <!-- Estrategia 3 -->
+                <div class="strategy-card">
+                    <div class="strategy-name">3. BOLLINGER SQUEEZE BREAKOUT</div>
+                    <div class="strategy-timeframes">TF: 15m, 30m, 1h</div>
+                    <p class="strategy-description">Opera rupturas después de periodos de consolidación y baja volatilidad.</p>
+                    <ul class="indicator-list">
+                        <li>Squeeze de Bandas Bollinger</li>
+                        <li>Breakout confirmado</li>
+                        <li>ADX > 25 con pendiente positiva</li>
+                        <li>Volumen anómalo de confirmación</li>
+                    </ul>
+                </div>
+                
+                <!-- Estrategia 4 -->
+                <div class="strategy-card">
+                    <div class="strategy-name">4. ADX POWER TREND</div>
+                    <div class="strategy-timeframes">TF: 2h, 4h, 8h</div>
+                    <p class="strategy-description">Enfocado en tendencias fuertes con alta directional movement.</p>
+                    <ul class="indicator-list">
+                        <li>ADX > 30 y creciente</li>
+                        <li>Cruce +DI/-DI confirmado</li>
+                        <li>Precio > MA21 para LONG</li>
+                        <li>Confirmación FTMaverick</li>
+                    </ul>
+                </div>
+                
+                <!-- Estrategia 5 -->
+                <div class="strategy-card">
+                    <div class="strategy-name">5. MACD HISTOGRAM REVERSAL</div>
+                    <div class="strategy-timeframes">TF: 30m, 1h, 2h</div>
+                    <p class="strategy-description">Detecta reversiones tempranas mediante cambios en el histograma MACD.</p>
+                    <ul class="indicator-list">
+                        <li>Reversión del histograma MACD</li>
+                        <li>Cruce MA9/MA21 confirmado</li>
+                        <li>RSI Maverick en zona neutral</li>
+                        <li>FTMaverick en dirección correcta</li>
+                    </ul>
+                </div>
+                
+                <!-- Estrategia 6 -->
+                <div class="strategy-card">
+                    <div class="strategy-name">6. VOLUME SPIKE MOMENTUM</div>
+                    <div class="strategy-timeframes">TF: 15m, 30m, 1h</div>
+                    <p class="strategy-description">Scalping basado en spikes de volumen con confirmación de precio.</p>
+                    <ul class="indicator-list">
+                        <li>Clúster de volumen (≥2 anomalías/5 velas)</li>
+                        <li>Volumen > 3x promedio</li>
+                        <li>Precio > EMA21 para LONG</li>
+                        <li>RSI Maverick neutral</li>
+                    </ul>
+                </div>
+                
+                <!-- Estrategia 7 -->
+                <div class="strategy-card">
+                    <div class="strategy-name">7. DOUBLE CONFIRMATION RSI</div>
+                    <div class="strategy-timeframes">TF: 1h, 2h, 4h</div>
+                    <p class="strategy-description">Entradas en sobrecompra/sobreventa extrema con doble confirmación RSI.</p>
+                    <ul class="indicator-list">
+                        <li>RSI Tradicional sale de sobreventa/sobrecompra</li>
+                        <li>RSI Maverick sale de zonas extremas</li>
+                        <li>Precio cerca bandas Bollinger</li>
+                        <li>FTMaverick en dirección del rebote</li>
+                    </ul>
+                </div>
+                
+                <!-- Estrategia 8 -->
+                <div class="strategy-card">
+                    <div class="strategy-name">8. TREND STRENGTH MAVERICK</div>
+                    <div class="strategy-timeframes">TF: 4h, 8h, 12h</div>
+                    <p class="strategy-description">Opera solo tendencias fuertes identificadas por el FTMaverick.</p>
+                    <ul class="indicator-list">
+                        <li>FTMaverick: STRONG_UP o STRONG_DOWN</li>
+                        <li>Precio > MA50 para LONG</li>
+                        <li>Volumen > MA Volumen</li>
+                        <li>Evita Zonas No-Operar</li>
+                    </ul>
+                </div>
+                
+                <!-- Estrategia 9 -->
+                <div class="strategy-card">
+                    <div class="strategy-name">9. WHALE FOLLOWING</div>
+                    <div class="strategy-timeframes">TF: 12h, 1D</div>
+                    <p class="strategy-description">Sigue movimientos institucionales detectados mediante análisis de volumen.</p>
+                    <ul class="indicator-list">
+                        <li>Señal ballenas confirmada (>20)</li>
+                        <li>Precio > MA200 para LONG</li>
+                        <li>ADX > 25</li>
+                        <li>Cruce DMI confirmado</li>
+                    </ul>
+                </div>
+                
+                <!-- Estrategia 10 -->
+                <div class="strategy-card">
+                    <div class="strategy-name">10. MA CONVERGENCE DIVERGENCE</div>
+                    <div class="strategy-timeframes">TF: 2h, 4h, 8h</div>
+                    <p class="strategy-description">Opera confluencias y divergencias entre múltiples medias móviles.</p>
+                    <ul class="indicator-list">
+                        <li>Alineación MA9 > MA21 > MA50</li>
+                        <li>Separación >1% entre medias</li>
+                        <li>Histograma MACD positivo/negativo</li>
+                        <li>Confirmación FTMaverick</li>
+                    </ul>
+                </div>
+                
+                <!-- Estrategia 11 -->
+                <div class="strategy-card">
+                    <div class="strategy-name">11. RSI MAVERICK EXTREME</div>
+                    <div class="strategy-timeframes">TF: 30m, 1h, 2h</div>
+                    <p class="strategy-description">Captura movimientos desde niveles extremos del RSI Maverick.</p>
+                    <ul class="indicator-list">
+                        <li>RSI Maverick extremo (3 velas)</li>
+                        <li>Precio cerca bandas Bollinger</li>
+                        <li>FTMaverick en dirección del rebote</li>
+                        <li>Confirmación de volumen</li>
+                    </ul>
+                </div>
+                
+                <!-- Estrategia 12 -->
+                <div class="strategy-card">
+                    <div class="strategy-name">12. VOLUME-PRICE DIVERGENCE</div>
+                    <div class="strategy-timeframes">TF: 1h, 2h, 4h</div>
+                    <p class="strategy-description">Detecta divergencias ocultas entre precio y volumen.</p>
+                    <ul class="indicator-list">
+                        <li>Divergencia precio/volumen</li>
+                        <li>Divergencia RSI Maverick</li>
+                        <li>FTMaverick en dirección correcta</li>
+                        <li>Confirmación multi-temporalidad</li>
+                    </ul>
+                </div>
+                
+                <!-- Estrategia 13 -->
+                <div class="strategy-card">
+                    <div class="strategy-name">13. DESPLOME DE VOLUMEN</div>
+                    <div class="strategy-timeframes">TF: 15m, 30m, 1h, 4h, 12h, 1D</div>
+                    <p class="strategy-description">Estrategia mejorada que opera desplomes de volumen con filtros avanzados.</p>
+                    <ul class="indicator-list">
+                        <li>Volumen > 3x promedio</li>
+                        <li>Clúster volumen (≥3 anomalías/7 velas)</li>
+                        <li>Precio > EMA21 para LONG</li>
+                        <li>Filtro MA200 en 1D</li>
+                        <li>RSI Maverick neutral</li>
+                    </ul>
+                </div>
             </div>
         </div>
-        
+
         <div class="section">
-            <h2>4. Indicadores Técnicos del Sistema</h2>
-            <p>El sistema utiliza una combinación de indicadores técnicos estándar y personalizados. Cada indicador cumple una función específica en el proceso de toma de decisiones.</p>
+            <h2 class="section-title">4. Indicadores Técnicos del Sistema</h2>
             
-            <h3>4.1. Indicadores de Tendencia</h3>
+            <div class="subsection">
+                <h3 class="subsection-title">4.1 FTMaverick (Fuerza de Tendencia Maverick)</h3>
+                <p>Indicador propietario que mide la intensidad y calidad de la tendencia mediante el análisis del ancho de las Bandas de Bollinger y su comportamiento dinámico.</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Señal FTMaverick</th>
+                            <th>Interpretación</th>
+                            <th>Acción Recomendada</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="signal-long">STRONG_UP</span></td>
+                            <td>Tendencia alcista fuerte con alta volatilidad</td>
+                            <td>Operaciones LONG preferentes</td>
+                        </tr>
+                        <tr>
+                            <td><span class="signal-long">WEAK_UP</span></td>
+                            <td>Tendencia alcista débil o en formación</td>
+                            <td>Operaciones LONG con cuidado</td>
+                        </tr>
+                        <tr>
+                            <td><span class="signal-neutral">NEUTRAL</span></td>
+                            <td>Mercado lateral o sin tendencia definida</td>
+                            <td>Evitar operaciones direccionales</td>
+                        </tr>
+                        <tr>
+                            <td><span class="signal-short">WEAK_DOWN</span></td>
+                            <td>Tendencia bajista débil o en formación</td>
+                            <td>Operaciones SHORT con cuidado</td>
+                        </tr>
+                        <tr>
+                            <td><span class="signal-short">STRONG_DOWN</span></td>
+                            <td>Tendencia bajista fuerte con alta volatilidad</td>
+                            <td>Operaciones SHORT preferentes</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="note">
+                    <strong>Zonas No-Operar:</strong> El FTMaverick identifica zonas donde el ancho de las Bandas de Bollinger es excesivo (> percentil 70 histórico) y la fuerza de tendencia es decreciente. En estas zonas, el sistema evita generar señales.
+                </div>
+            </div>
             
-            <h4>4.1.1. Medias Móviles (MA)</h4>
-            <table class="indicator-table">
-                <tr>
-                    <th>Parámetro</th>
-                    <th>Valor</th>
-                    <th>Función en el Sistema</th>
-                    <th>Interpretación</th>
-                </tr>
-                <tr>
-                    <td>MA9</td>
-                    <td>9 periodos</td>
-                    <td>Identificar tendencia de muy corto plazo y cruces rápidos</td>
-                    <td>Movimientos rápidos del precio, sensible a cambios recientes</td>
-                </tr>
-                <tr>
-                    <td>MA21</td>
-                    <td>21 periodos</td>
-                    <td>Tendencia de corto plazo, filtro de dirección básico</td>
-                    <td>Dirección predominante en el corto plazo, usada en múltiples estrategias</td>
-                </tr>
-                <tr>
-                    <td>MA50</td>
-                    <td>50 periodos</td>
-                    <td>Tendencia de medio plazo, confirmador de tendencia</td>
-                    <td>Cuando el precio está por encima, tendencia alcista de medio plazo</td>
-                </tr>
-                <tr>
-                    <td>MA200</td>
-                    <td>200 periodos</td>
-                    <td>Tendencia de largo plazo, filtro direccional principal</td>
-                    <td>Filtro absoluto: precio arriba = solo longs, precio abajo = solo shorts</td>
-                </tr>
-                <tr>
-                    <td>EMA21</td>
-                    <td>21 periodos (exponencial)</td>
-                    <td>Tendencia de corto plazo con mayor peso a datos recientes</td>
-                    <td>Usada en estrategias de volumen donde se necesita respuesta rápida</td>
-                </tr>
-            </table>
+            <div class="subsection">
+                <h3 class="subsection-title">4.2 RSI Maverick</h3>
+                <p>Versión modificada del RSI tradicional que utiliza Bandas de Bollinger en lugar de niveles fijos de sobrecompra/sobreventa. Se calcula como la posición del precio actual dentro del rango definido por las Bandas de Bollinger.</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Valor RSI Maverick</th>
+                            <th>Interpretación</th>
+                            <th>Nivel Equivalente RSI Tradicional</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>0.0 - 0.15</td>
+                            <td>Sobreventa Extrema</td>
+                            <td>0 - 15</td>
+                        </tr>
+                        <tr>
+                            <td>0.15 - 0.30</td>
+                            <td>Sobreventa</td>
+                            <td>15 - 30</td>
+                        </tr>
+                        <tr>
+                            <td>0.30 - 0.70</td>
+                            <td>Zona Neutral</td>
+                            <td>30 - 70</td>
+                        </tr>
+                        <tr>
+                            <td>0.70 - 0.85</td>
+                            <td>Sobrecompra</td>
+                            <td>70 - 85</td>
+                        </tr>
+                        <tr>
+                            <td>0.85 - 1.00</td>
+                            <td>Sobrecompra Extrema</td>
+                            <td>85 - 100</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             
-            <h4>4.1.2. Average Directional Index (ADX)</h4>
-            <table class="indicator-table">
-                <tr>
-                    <th>Parámetro</th>
-                    <th>Valor</th>
-                    <th>Función en el Sistema</th>
-                    <th>Interpretación</th>
-                </tr>
-                <tr>
-                    <td>ADX</td>
-                    <td>14 periodos</td>
-                    <td>Medir fuerza de la tendencia independientemente de dirección</td>
-                    <td>Valor > 25: tendencia fuerte. Valor < 20: mercado lateral</td>
-                </tr>
-                <tr>
-                    <td>+DI</td>
-                    <td>14 periodos</td>
-                    <td>Dirección de tendencia alcista</td>
-                    <td>Cuando +DI > -DI: presión compradora dominante</td>
-                </tr>
-                <tr>
-                    <td>-DI</td>
-                    <td>14 periodos</td>
-                    <td>Dirección de tendencia bajista</td>
-                    <td>Cuando -DI > +DI: presión vendedora dominante</td>
-                </tr>
-                <tr>
-                    <td>Diferencia DI</td>
-                    <td>Mínimo 5 puntos</td>
-                    <td>Confirmar dirección de tendencia</td>
-                    <td>Diferencia > 5: tendencia clara y sostenida</td>
-                </tr>
-            </table>
+            <div class="subsection">
+                <h3 class="subsection-title">4.3 Indicador de Ballenas (Whale Signals)</h3>
+                <p>Detecta actividad institucional mediante análisis de volumen y comportamiento de precio. Identifica "bombeos" (acumulación) y "descargas" (distribución) institucionales.</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Componente</th>
+                            <th>Cálculo</th>
+                            <th>Umbral de Señal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Whale Pump</td>
+                            <td>Volumen anómalo con precio haciendo mínimo local</td>
+                            <td>> 20 (escala 0-100)</td>
+                        </tr>
+                        <tr>
+                            <td>Whale Dump</td>
+                            <td>Volumen anómalo con precio haciendo máximo local</td>
+                            <td>> 20 (escala 0-100)</td>
+                        </tr>
+                        <tr>
+                            <td>Confirmed Buy</td>
+                            <td>Whale Pump + precio cerca soporte + volumen confirmatorio</td>
+                            <td>True/False</td>
+                        </tr>
+                        <tr>
+                            <td>Confirmed Sell</td>
+                            <td>Whale Dump + precio cerca resistencia + volumen confirmatorio</td>
+                            <td>True/False</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             
-            <h3>4.2. Indicadores de Momentum</h3>
+            <div class="subsection">
+                <h3 class="subsection-title">4.4 Detección de Divergencias</h3>
+                <p>El sistema implementa dos tipos de detección de divergencias:</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tipo Divergencia</th>
+                            <th>Indicador Base</th>
+                            <th>Lookback</th>
+                            <th>Extensión de Señal</th>
+                            <th>Sensibilidad</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Tradicional</td>
+                            <td>RSI 14 periodos</td>
+                            <td>14 velas</td>
+                            <td>7 velas</td>
+                            <td>Media</td>
+                        </tr>
+                        <tr>
+                            <td>Maverick</td>
+                            <td>RSI Maverick</td>
+                            <td>14 velas</td>
+                            <td>4 velas</td>
+                            <td>Alta</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <p><strong>Divergencia Alcista:</strong> Precio hace nuevo mínimo pero el indicador hace mínimo más alto.</p>
+                <p><strong>Divergencia Bajista:</strong> Precio hace nuevo máximo pero el indicador hace máximo más bajo.</p>
+            </div>
             
-            <h4>4.2.1. Relative Strength Index (RSI) Tradicional</h4>
-            <table class="indicator-table">
-                <tr>
-                    <th>Parámetro</th>
-                    <th>Valor</th>
-                    <th>Función en el Sistema</th>
-                    <th>Interpretación</th>
-                </tr>
-                <tr>
-                    <td>RSI Tradicional</td>
-                    <td>14 periodos</td>
-                    <td>Identificar condiciones de sobrecompra/sobreventa</td>
-                    <td>RSI > 70: sobrecompra. RSI < 30: sobreventa</td>
-                </tr>
-                <tr>
-                    <td>Divergencias RSI</td>
-                    <td>14 periodos lookback</td>
-                    <td>Detectar debilitamiento del momentum</td>
-                    <td>Divergencia alcista: precio bajo nuevo, RSI bajo más alto</td>
-                </tr>
-                <tr>
-                    <td>Extensión de señal</td>
-                    <td>7 velas</td>
-                    <td>Mantener señal activa por múltiples períodos</td>
-                    <td>Una vez detectada, la señal permanece activa 7 velas</td>
-                </tr>
-            </table>
-            
-            <h4>4.2.2. RSI Maverick (Personalizado)</h4>
-            <table class="indicator-table">
-                <tr>
-                    <th>Parámetro</th>
-                    <th>Valor</th>
-                    <th>Función en el Sistema</th>
-                    <th>Interpretación</th>
-                </tr>
-                <tr>
-                    <td>RSI Maverick</td>
-                    <td>20 periodos, multiplicador 2.0</td>
-                    <td>Versión modificada basada en posición dentro de Bandas de Bollinger</td>
-                    <td>0.0 a 1.0. < 0.2: sobreventa, > 0.8: sobrecompra</td>
-                </tr>
-                <tr>
-                    <td>Divergencias Maverick</td>
-                    <td>14 periodos lookback</td>
-                    <td>Detectar debilitamiento del momentum (versión mejorada)</td>
-                    <td>Más sensible que RSI tradicional a cambios sutiles</td>
-                </tr>
-                <tr>
-                    <td>Extensión de señal</td>
-                    <td>4 velas</td>
-                    <td>Mantener señal activa por períodos más cortos</td>
-                    <td>Señal más rápida pero de menor duración que RSI tradicional</td>
-                </tr>
-            </table>
-            
-            <h4>4.2.3. Moving Average Convergence Divergence (MACD)</h4>
-            <table class="indicator-table">
-                <tr>
-                    <th>Parámetro</th>
-                    <th>Valor</th>
-                    <th>Función en el Sistema</th>
-                    <th>Interpretación</th>
-                </tr>
-                <tr>
-                    <td>MACD</td>
-                    <td>12, 26, 9 (fast, slow, signal)</td>
-                    <td>Identificar cambios en el momentum y cruces de tendencia</td>
-                    <td>MACD > señal: momentum alcista. MACD < señal: momentum bajista</td>
-                </tr>
-                <tr>
-                    <td>Histograma MACD</td>
-                    <td>Diferencia MACD - señal</td>
-                    <td>Medir fuerza y aceleración del momentum</td>
-                    <td>Histograma creciente: momentum acelerando. Decreciente: momentum desacelerando</td>
-                </tr>
-                <tr>
-                    <td>Cruces MACD</td>
-                    <td>Cambio de dirección</td>
-                    <td>Señales de entrada/salida en múltiples estrategias</td>
-                    <td>Cruce alcista: MACD cruza arriba señal. Cruce bajista: MACD cruza abajo señal</td>
-                </tr>
-            </table>
-            
-            <h3>4.3. Indicadores de Volatilidad</h3>
-            
-            <h4>4.3.1. Bandas de Bollinger</h4>
-            <table class="indicator-table">
-                <tr>
-                    <th>Parámetro</th>
-                    <th>Valor</th>
-                    <th>Función en el Sistema</th>
-                    <th>Interpretación</th>
-                </tr>
-                <tr>
-                    <td>Banda Superior</td>
-                    <td>MA20 + (2 × desviación estándar)</td>
-                    <td>Nivel de resistencia dinámico y condición de sobrecompra</td>
-                    <td>Precio cerca de banda superior: posible sobrecompra</td>
-                </tr>
-                <tr>
-                    <td>Banda Media</td>
-                    <td>MA20 simple</td>
-                    <td>Línea de equilibrio y tendencia de medio plazo</td>
-                    <td>Precio por encima: tendencia alcista. Por debajo: tendencia bajista</td>
-                </tr>
-                <tr>
-                    <td>Banda Inferior</td>
-                    <td>MA20 - (2 × desviación estándar)</td>
-                    <td>Nivel de soporte dinámico y condición de sobreventa</td>
-                    <td>Precio cerca de banda inferior: posible sobreventa</td>
-                </tr>
-                <tr>
-                    <td>Ancho de Bandas</td>
-                    <td>(Superior - Inferior) / Media</td>
-                    <td>Medir volatilidad del mercado</td>
-                    <td>Ancho creciente: volatilidad aumentando. Ancho decreciente: volatilidad disminuyendo</td>
-                </tr>
-                <tr>
-                    <td>Compresión</td>
-                    <td>Ancho < 10%</td>
-                    <td>Identificar períodos de baja volatilidad previos a breakout</td>
-                    <td>Compresión seguida de expansión: movimiento direccional fuerte</td>
-                </tr>
-            </table>
-            
-            <h4>4.3.2. Average True Range (ATR)</h4>
-            <table class="indicator-table">
-                <tr>
-                    <th>Parámetro</th>
-                    <th>Valor</th>
-                    <th>Función en el Sistema</th>
-                    <th>Interpretación</th>
-                </tr>
-                <tr>
-                    <td>ATR</td>
-                    <td>14 periodos</td>
-                    <td>Medir volatilidad para ajustar stops y posición size</td>
-                    <td>ATR alto: mercado volátil, stops más amplios. ATR bajo: mercado tranquilo, stops más ajustados</td>
-                </tr>
-                <tr>
-                    <td>ATR Porcentual</td>
-                    <td>ATR / precio actual</td>
-                    <td>Volatilidad relativa al precio</td>
-                    <td>Permite comparar volatilidad entre activos con precios diferentes</td>
-                </tr>
-            </table>
-            
-            <h3>4.4. Indicadores de Volumen</h3>
-            
-            <h4>4.4.1. Anomalías de Volumen</h4>
-            <table class="indicator-table">
-                <tr>
-                    <th>Parámetro</th>
-                    <th>Valor</th>
-                    <th>Función en el Sistema</th>
-                    <th>Interpretación</th>
-                </tr>
-                <tr>
-                    <td>Volumen MA</td>
-                    <td>20 periodos</td>
-                    <td>Establecer línea base de volumen normal</td>
-                    <td>Volumen por encima de MA: interés anormal. Por debajo: interés bajo</td>
-                </tr>
-                <tr>
-                    <td>Ratio Volumen</td>
-                    <td>Volumen actual / MA volumen</td>
-                    <td>Cuantificar desviación del volumen normal</td>
-                    <td>Ratio > 1: volumen superior al promedio. Ratio > 2: volumen significativamente alto</td>
-                </tr>
-                <tr>
-                    <td>Anomalía de Volumen</td>
-                    <td>Ratio > 1 + (2 × desviación estándar)</td>
-                    <td>Detectar spikes de volumen estadísticamente significativos</td>
-                    <td>Anomalía detectada: volumen extremadamente alto, posible movimiento institucional</td>
-                </tr>
-                <tr>
-                    <td>Clúster de Volumen</td>
-                    <td>≥2 anomalías en 5 periodos</td>
-                    <td>Identificar acumulación/distribución sostenida</td>
-                    <td>Clúster detectado: interés sostenido, no spike aislado</td>
-                </tr>
-                <tr>
-                    <td>Señal de Volumen</td>
-                    <td>COMPRA/VENTA/NEUTRAL</td>
-                    <td>Determinar dirección del volumen anómalo</td>
-                    <td>COMPRA: volumen alto con precio subiendo. VENTA: volumen alto con precio bajando</td>
-                </tr>
-            </table>
-            
-            <h4>4.4.2. Indicador de Ballenas (Whale Signals)</h4>
-            <table class="indicator-table">
-                <tr>
-                    <th>Parámetro</th>
-                    <th>Valor</th>
-                    <th>Función en el Sistema</th>
-                    <th>Interpretación</th>
-                </tr>
-                <tr>
-                    <td>Whale Pump</td>
-                    <td>Sensibilidad 1.7, multiplicador 1.5</td>
-                    <td>Detectar acumulación institucional (compra de ballenas)</td>
-                    <td>Valor > 20: actividad compradora significativa de grandes operadores</td>
-                </tr>
-                <tr>
-                    <td>Whale Dump</td>
-                    <td>Sensibilidad 1.7, multiplicador 1.5</td>
-                    <td>Detectar distribución institucional (venta de ballenas)</td>
-                    <td>Valor > 20: actividad vendedora significativa de grandes operadores</td>
-                </tr>
-                <tr>
-                    <td>Compra Confirmada</td>
-                    <td>Whale Pump > threshold en soporte</td>
-                    <td>Confirmar señal de ballena con nivel técnico</td>
-                    <td>Señal de ballena en nivel de soporte: compra institucional en precio favorable</td>
-                </tr>
-                <tr>
-                    <td>Venta Confirmada</td>
-                    <td>Whale Dump > threshold en resistencia</td>
-                    <td>Confirmar señal de ballena con nivel técnico</td>
-                    <td>Señal de ballena en nivel de resistencia: venta institucional en precio favorable</td>
-                </tr>
-            </table>
-            
-            <h3>4.5. Indicadores Personalizados</h3>
-            
-            <h4>4.5.1. FTMaverick (Trend Strength Maverick)</h4>
-            <table class="indicator-table">
-                <tr>
-                    <th>Parámetro</th>
-                    <th>Valor</th>
-                    <th>Función en el Sistema</th>
-                    <th>Interpretación</th>
-                </tr>
-                <tr>
-                    <td>Basis</td>
-                    <td>MA20</td>
-                    <td>Línea central de referencia</td>
-                    <td>Similar a banda media de Bollinger pero con cálculo específico</td>
-                </tr>
-                <tr>
-                    <td>Desviación</td>
-                    <td>Desviación estándar 20 periodos</td>
-                    <td>Medir dispersión del precio</td>
-                    <td>Desviación alta: alta volatilidad. Desviación baja: baja volatilidad</td>
-                </tr>
-                <tr>
-                    <td>Banda Superior</td>
-                    <td>Basis + (2 × desviación)</td>
-                    <td>Límite superior de oscilación normal</td>
-                    <td>Similar a banda superior de Bollinger pero con interpretación diferente</td>
-                </tr>
-                <tr>
-                    <td>Banda Inferior</td>
-                    <td>Basis - (2 × desviación)</td>
-                    <td>Límite inferior de oscilación normal</td>
-                    <td>Similar a banda inferior de Bollinger pero con interpretación diferente</td>
-                </tr>
-                <tr>
-                    <td>Ancho BB%</td>
-                    <td>(Superior - Inferior) / Basis × 100</td>
-                    <td>Volatilidad relativa en porcentaje</td>
-                    <td>Ancho alto: alta volatilidad relativa. Ancho bajo: baja volatilidad relativa</td>
-                </tr>
-                <tr>
-                    <td>Fuerza de Tendencia</td>
-                    <td>Derivada del ancho BB%</td>
-                    <td>Medir fuerza y dirección de la tendencia</td>
-                    <td>Valor positivo: tendencia alcista. Valor negativo: tendencia bajista</td>
-                </tr>
-                <tr>
-                    <td>Señales de Fuerza</td>
-                    <td>STRONG_UP, WEAK_UP, NEUTRAL, WEAK_DOWN, STRONG_DOWN</td>
-                    <td>Clasificar fuerza y dirección de tendencia</td>
-                    <td>STRONG: tendencia fuerte. WEAK: tendencia débil. NEUTRAL: sin tendencia clara</td>
-                </tr>
-                <tr>
-                    <td>Umbral Alto</td>
-                    <td>Percentil 70 histórico</td>
-                    <td>Determinar cuándo la volatilidad es anormalmente alta</td>
-                    <td>Por encima del umbral: volatilidad extremadamente alta, posible cambio de tendencia</td>
-                </tr>
-                <tr>
-                    <td>Zonas de No Operación</td>
-                    <td>Ancho > umbral y fuerza decreciente</td>
-                    <td>Identificar condiciones de riesgo elevado</td>
-                    <td>Zona de no operación: evitar entradas por alta probabilidad de reversión</td>
-                </tr>
-            </table>
-            
-            <div class="info">
-                <p><strong>Nota sobre indicadores personalizados:</strong> El FTMaverick y el RSI Maverick son indicadores desarrollados específicamente para este sistema. Su lógica interna está optimizada para el mercado de criptomonedas y considera características específicas como alta volatilidad, operación 24/7 y comportamiento de retail vs institucional.</p>
+            <div class="subsection">
+                <h3 class="subsection-title">4.5 Sistema de Volumen Anómalo</h3>
+                <p>Detecta anomalías de volumen mediante análisis estadístico:</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Componente</th>
+                            <th>Definición</th>
+                            <th>Umbral</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Anomalía de Volumen</td>
+                            <td>Volumen > Media + (2 × Desviación Estándar)</td>
+                            <td>2σ</td>
+                        </tr>
+                        <tr>
+                            <td>Clúster de Volumen</td>
+                            <td>≥2 anomalías en 5 periodos (≥3 en 7 para Desplome)</td>
+                            <td>2/5 o 3/7</td>
+                        </tr>
+                        <tr>
+                            <td>Señal de Volumen</td>
+                            <td>Determinación COMPRA/VENTA basada en dirección del precio</td>
+                            <td>Cambio precio > 0</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-        
+
         <div class="section">
-            <h2>5. Proceso de Operación Paso a Paso</h2>
+            <h2 class="section-title">5. Proceso Operativo Paso a Paso</h2>
             
-            <div class="step-by-step">
-                <div class="step">
-                    <div class="step-title">Paso 1: Configuración Inicial del Sistema</div>
-                    <p>Antes de iniciar cualquier operación, configure los parámetros del sistema según su perfil de riesgo y capital disponible. Determine qué categorías de criptomonedas operará (bajo, medio, alto riesgo, memecoins) y ajuste el apalancamiento correspondiente. Establezca las temporalidades que se alineen con su estilo de trading (scalping, intradía, swing). Verifique que la integración con Telegram esté funcionando correctamente para recibir alertas automáticas.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">Paso 2: Análisis Multi-Temporalidad</div>
-                    <p>Para cada criptomoneda de interés, analice tres temporalidades diferentes según la jerarquía predefinida del sistema. Por ejemplo, si está considerando operar en temporalidad de 4 horas, debe analizar también la temporalidad mayor (12 horas) y la temporalidad menor (2 horas). Verifique que la tendencia esté alineada en las tres temporalidades. Para señales LONG, las tres temporalidades deben mostrar tendencia alcista o neutral-alcista. Para señales SHORT, las tres temporalidades deben mostrar tendencia bajista o neutral-bajista.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">Paso 3: Evaluación de Condiciones MA200</div>
-                    <p>Determine la posición del precio en relación con la MA200 en la temporalidad mayor. Si el precio está por encima de la MA200, solo considere señales LONG. Si el precio está por debajo de la MA200, solo considere señales SHORT. Este es un filtro direccional absoluto que no debe ignorarse. La MA200 actúa como línea divisoria entre mercados alcistas y bajistas de largo plazo.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">Paso 4: Selección de Estrategia</div>
-                    <p>Basado en la temporalidad de operación y las condiciones del mercado, seleccione la estrategia apropiada. Cada estrategia tiene temporalidades permitidas específicas. Por ejemplo, para scalping en temporalidades de 15-30 minutos, las estrategias disponibles son BOLLINGER_SQUEEZE, VOLUME_SPIKE_MOMENTUM y VOLUME_EMA_FTM. Para swing trading en temporalidades de 4-12 horas, las estrategias disponibles son TREND_RIDER, ADX_POWER_TREND y MA_CONVERGENCE_DIVERGENCE.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">Paso 5: Verificación de Condiciones Específicas</div>
-                    <p>Para la estrategia seleccionada, verifique meticulosamente cada una de las condiciones de entrada. El sistema requiere que todas las condiciones para una señal sean cumplidas simultáneamente. No opere si falta alguna condición, incluso si las demás parecen muy fuertes. Cada condición tiene una función específica en la validación de la señal y la gestión del riesgo.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">Paso 6: Cálculo de Niveles de Trading</div>
-                    <p>Una vez confirmada la señal, calcule los niveles de entrada, stop loss y take profit según la metodología de la estrategia. Para la mayoría de estrategias, la entrada se sitúa en niveles de soporte/resistencia dinámicos, el stop loss se coloca por debajo del soporte (LONG) o por encima de la resistencia (SHORT), y los take profits se establecen en múltiples niveles basados en la estructura del mercado.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">Paso 7: Gestión de Tamaño de Posición</div>
-                    <p>Calcule el tamaño de posición basado en el capital de riesgo, la distancia al stop loss y el apalancamiento apropiado para la categoría de riesgo de la criptomoneda. Para criptomonedas de bajo riesgo (BTC, ETH), puede utilizar apalancamiento de 15-20x. Para criptomonedas de alto riesgo o memecoins, reduzca el apalancamiento a 3-10x. Nunca arriesgue más del 1-2% del capital total por operación.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">Paso 8: Ejecución de la Operación</div>
-                    <p>Ejecute la operación en el nivel de entrada calculado. Coloque el stop loss y los take profits inmediatamente después de la entrada. No modifique el stop loss inicial excepto para trailarlo en dirección favorable después de que el precio se haya movido significativamente a su favor. Utilice órdenes OCO (One Cancels Other) cuando sea posible para gestionar automáticamente múltiples take profits.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">Paso 9: Monitoreo Activo</div>
-                    <p>Monitoree la operación activamente, especialmente durante los primeros periodos después de la entrada. Para operaciones de scalping, el monitoreo debe ser constante. Para operaciones de swing, revise al menos cada 4-8 horas. Esté atento a cambios en las condiciones que invalidarían la señal original. Si el mercado invalida la lógica de entrada, considere salir anticipadamente incluso antes de que se alcance el stop loss.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">Paso 10: Salida de la Operación</div>
-                    <p>Salga de la operación cuando se alcance cualquiera de los take profits o el stop loss. Evite salidas emocionales basadas en miedo o codicia. Si la operación alcanza el primer take profit, considere mover el stop loss al punto de entrada para asegurar ganancias. Para operaciones con múltiples take profits, deje una parte de la posición corriendo hacia los take profits posteriores con stop loss ajustado.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">Paso 11: Registro y Análisis Post-Operación</div>
-                    <p>Después de cada operación, registre todos los detalles: estrategia utilizada, condiciones de entrada, niveles de trading, resultado, y observaciones. Analice periódicamente su desempeño por estrategia, por criptomoneda y por temporalidad. Identifique patrones de éxito y áreas de mejora. Ajuste sus parámetros y selección de estrategias basado en el análisis objetivo de resultados.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">Paso 12: Re-evaluación Continua</div>
-                    <p>El mercado de criptomonedas evoluciona constantemente. Re-evalúe periódicamente la efectividad de cada estrategia y ajuste los parámetros si es necesario. Manténgase informado sobre cambios fundamentales en las criptomonedas que opera. El sistema es una herramienta, pero la discreción del operador en la selección de qué operar y cuándo operar sigue siendo crucial.</p>
+            <div class="subsection">
+                <h3 class="subsection-title">5.1 Configuración Inicial del Sistema</h3>
+                <div class="step-by-step">
+                    <div class="step">
+                        <strong>Paso 1: Selección de Temporalidad</strong>
+                        <p>Determine su estilo de trading: Scalping (15m-1h), Swing Trading (2h-8h), o Inversión (12h-1W). Cada temporalidad activa diferentes estrategias.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 2: Configuración de Parámetros</strong>
+                        <p>Establezca los parámetros según la volatilidad del mercado: Período ADX (default 14), Umbral ADX (default 25), Período Soportes/Resistencias (default 50).</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 3: Selección de Símbolos</strong>
+                        <p>Elija los símbolos a monitorear según su perfil de riesgo. El sistema recomienda comenzar con las 5 criptomonedas principales para estrategias avanzadas.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 4: Configuración de Apalancamiento</strong>
+                        <p>Establezca el apalancamiento según la temporalidad: 15x para scalping, 10x para swing, 5x para inversión. El sistema ajusta automáticamente el stop loss según el apalancamiento.</p>
+                    </div>
                 </div>
             </div>
             
-            <div class="warning">
-                <p><strong>Advertencia sobre la ejecución manual:</strong> Aunque el sistema proporciona señales automáticas a través de Telegram, la ejecución final de cada operación debe ser realizada manualmente por el trader. Verifique siempre las condiciones del mercado antes de ejecutar, incluso cuando reciba una señal automática. Las condiciones del mercado pueden cambiar rápidamente y una señal válida en el momento del análisis puede dejar de serlo en el momento de la ejecución.</p>
+            <div class="subsection">
+                <h3 class="subsection-title">5.2 Proceso de Análisis Diario</h3>
+                <div class="step-by-step">
+                    <div class="step">
+                        <strong>Paso 1: Análisis Multi-Temporalidad</strong>
+                        <p>Revise la alineación de tendencias en temporalidad mayor (tendencia), media (dirección operativa), y menor (timing). Utilice el dashboard del sistema para visualizar las tres temporalidades simultáneamente.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 2: Evaluación de FTMaverick</strong>
+                        <p>Verifique el estado del FTMaverick en la temporalidad operativa. Asegúrese de no estar en una "Zona No-Operar" y que la fuerza de tendencia esté alineada con su operación planeada.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 3: Revisión de Alertas del Sistema</strong>
+                        <p>Consulte las alertas generadas por las 13 estrategias. Filtre por temporalidad y score mínimo (recomendado: ≥70 para operaciones principales).</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 4: Confirmación con Indicadores Secundarios</strong>
+                        <p>Valide la señal con: ADX > 25 (para tendencias), RSI Maverick en zona apropiada, volumen sobre su media móvil, y alineación de medias móviles.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 5: Análisis de Soportes y Resistencias</strong>
+                        <p>Revise los niveles dinámicos calculados por el sistema. Para LONG, la entrada debe estar cerca de un soporte. Para SHORT, cerca de una resistencia.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">5.3 Ejecución de Operaciones</h3>
+                <div class="step-by-step">
+                    <div class="step">
+                        <strong>Paso 1: Determinación del Tamaño de Posición</strong>
+                        <p>Calcule el tamaño de posición basado en: Capital riesgo (1-2%), distancia al stop loss, y apalancamiento seleccionado. El sistema proporciona el ATR y porcentaje ATR para ayudar en este cálculo.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 2: Colocación de Órdenes</strong>
+                        <p>Coloque orden de entrada en el nivel sugerido por el sistema. Utilice órdenes limit para mejores precios de entrada. Coloque stop loss en el nivel calculado.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 3: Gestión de Take Profits</strong>
+                        <p>Coloque múltiples take profits en los niveles sugeridos: TP1 (50% posición), TP2 (30% posición), TP3 (20% posición). Ajuste el stop loss a break even cuando el precio alcance TP1.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 4: Monitoreo en Tiempo Real</strong>
+                        <p>Monitoree la operación usando el dashboard del sistema. Preste atención a cambios en el FTMaverick y señales de salida generadas por el sistema.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Paso 5: Salida de la Operación</strong>
+                        <p>Salga de la operación cuando: 1) Se alcancen todos los take profits, 2) El stop loss sea activado, 3) El sistema genere señal contraria con score ≥70, 4) El FTMaverick entre en "Zona No-Operar".</p>
+                    </div>
+                </div>
             </div>
         </div>
-        
+
         <div class="section">
-            <h2>6. Integración con Telegram</h2>
+            <h2 class="section-title">6. Gestión de Riesgo y Money Management</h2>
             
-            <h3>6.1. Configuración de Alertas Automáticas</h3>
-            <p>El sistema está integrado con Telegram para enviar alertas automáticas de trading. Las alertas se generan cuando se cumplen todas las condiciones de alguna de las trece estrategias para cualquiera de las cinco criptomonedas principales (BTC-USDT, ETH-USDT, SOL-USDT, XRP-USDT, ADA-USDT).</p>
-            
-            <table class="strategy-table">
-                <tr>
-                    <th>Tipo de Alerta</th>
-                    <th>Contenido</th>
-                    <th>Frecuencia</th>
-                    <th>Acción Requerida</th>
-                </tr>
-                <tr>
-                    <td>Alerta de Entrada</td>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Símbolo y temporalidad</li>
-                            <li>Estrategia detectada</li>
-                            <li>Señal (LONG/SHORT)</li>
-                            <li>Precio actual y entrada sugerida</li>
-                            <li>Stop loss y take profit</li>
-                            <li>Condiciones cumplidas</li>
-                            <li>Gráfico de análisis</li>
-                        </ul>
-                    </td>
-                    <td>Cuando se detecta señal</td>
-                    <td>Evaluar y ejecutar manualmente</td>
-                </tr>
-                <tr>
-                    <td>Alerta de Confirmación</td>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Confirmación multi-timeframe</li>
-                            <li>Volumen anómalo</li>
-                            <li>Fortaleza de señal</li>
-                        </ul>
-                    </td>
-                    <td>30-60 minutos después de entrada</td>
-                    <td>Verificar validez continua</td>
-                </tr>
-                <tr>
-                    <td>Alerta de Salida</td>
-                    <td>
-                        <ul style="margin-left: 20px;">
-                            <li>Símbolo y posición</li>
-                            <li>Razón de salida</li>
-                            <li>Resultado de operación</li>
-                            <li>Estadísticas de desempeño</li>
-                        </ul>
-                    </td>
-                    <td>Al alcanzar TP o SL</td>
-                    <td>Cerrar posición manualmente</td>
-                </tr>
-            </table>
-            
-            <h3>6.2. Procesamiento de Alertas</h3>
-            <p>Cuando reciba una alerta de Telegram, siga este proceso de evaluación:</p>
-            
-            <div class="step-by-step">
-                <div class="step">
-                    <div class="step-title">1. Verificación Inmediata</div>
-                    <p>Al recibir la alerta, verifique inmediatamente el gráfico en su plataforma de trading. Confirme que las condiciones mostradas en la alerta coinciden con lo que ve en tiempo real. Tenga en cuenta que puede haber un retraso de 1-2 minutos entre el análisis del sistema y la recepción de la alerta.</p>
-                </div>
+            <div class="subsection">
+                <h3 class="subsection-title">6.1 Sistema de Gestión de Riesgo Integrado</h3>
                 
-                <div class="step">
-                    <div class="step-title">2. Análisis de Contexto de Mercado</div>
-                    <p>Evalúe el contexto general del mercado. ¿Hay noticias importantes? ¿El mercado en general está en tendencia o lateral? ¿Hay eventos macroeconómicos próximos? Una señal técnica perfecta puede fallar si el contexto fundamental es adverso.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">3. Confirmación de Condiciones</div>
-                    <p>Verifique manualmente cada una de las condiciones de la estrategia. Aunque el sistema ya las ha verificado, condiciones del mercado pueden haber cambiado en los minutos transcurridos. Especialmente verifique el volumen actual y la posición del precio en relación con los niveles clave.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">4. Decisión de Ejecución</div>
-                    <p>Tome la decisión final de ejecutar o no la operación. Si todas las condiciones se mantienen y el contexto es favorable, proceda con la ejecución. Si alguna condición ha cambiado o tiene dudas, espere a la siguiente señal. No se sienta obligado a operar cada alerta.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">5. Ejecución y Monitoreo</div>
-                    <p>Ejecute la operación según los niveles proporcionados. Establezca las órdenes de stop loss y take profit inmediatamente. Monitoree la operación más frecuentemente durante la primera hora después de la entrada, ya que este período es crítico para el éxito de la operación.</p>
-                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Componente</th>
+                            <th>Parámetro</th>
+                            <th>Valor Recomendado</th>
+                            <th>Función</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Stop Loss Dinámico</td>
+                            <td>Distancia basada en ATR</td>
+                            <td>2 × ATR</td>
+                            <td>Protección adaptativa a la volatilidad</td>
+                        </tr>
+                        <tr>
+                            <td>Take Profit Escalonado</td>
+                            <td>3 niveles proporcionales</td>
+                            <td>50%-30%-20%</td>
+                            <td>Maximizar ganancias y reducir riesgo</td>
+                        </tr>
+                        <tr>
+                            <td>Apalancamiento Variable</td>
+                            <td>Según temporalidad</td>
+                            <td>5x-15x</td>
+                            <td>Ajuste automático al timeframe</td>
+                        </tr>
+                        <tr>
+                            <td>Filtro MA200</td>
+                            <td>Posición precio/MA200</td>
+                            <td>Arriba/Abajo</td>
+                            <td>Confirmación tendencia principal</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             
-            <div class="note">
-                <p><strong>Nota sobre frecuencia de alertas:</strong> El sistema está configurado para verificar condiciones cada 1-10 minutos dependiendo de la temporalidad. Sin embargo, las alertas se envían solo cuando se detecta una nueva señal que cumple todas las condiciones. En mercados tranquilos, puede recibir pocas alertas. En mercados volátiles con múltiples oportunidades, puede recibir varias alertas en corto tiempo. Sea selectivo en cuáles operar.</p>
+            <div class="subsection">
+                <h3 class="subsection-title">6.2 Cálculo de Tamaño de Posición</h3>
+                <p>Fórmula para calcular el tamaño de posición:</p>
+                
+                <div class="note">
+                    <strong>Tamaño Posición = (Capital × %Riesgo) / (Distancia Stop Loss × Apalancamiento)</strong>
+                </div>
+                
+                <p><strong>Ejemplo:</strong> Capital $10,000, Riesgo 2%, Distancia SL $100, Apalancamiento 10x</p>
+                <p><strong>Cálculo:</strong> (10,000 × 0.02) / (100 × 10) = $200 / $1,000 = 0.2 contratos</p>
+                
+                <p>El sistema proporciona automáticamente la distancia al stop loss en dólares y como porcentaje del precio, facilitando este cálculo.</p>
+            </div>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">6.3 Score Mínimo por Condiciones de Mercado</h3>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Condición Mercado</th>
+                            <th>Precio vs MA200</th>
+                            <th>Score Mínimo LONG</th>
+                            <th>Score Mínimo SHORT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Tendencia Alcista</td>
+                            <td>Precio > MA200</td>
+                            <td>65</td>
+                            <td>70</td>
+                        </tr>
+                        <tr>
+                            <td>Tendencia Bajista</td>
+                            <td>Precio < MA200</td>
+                            <td>70</td>
+                            <td>65</td>
+                        </tr>
+                        <tr>
+                            <td>Mercado Lateral</td>
+                            <td>Precio ≈ MA200</td>
+                            <td>75</td>
+                            <td>75</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <p>El score se calcula como la suma ponderada de las condiciones cumplidas. Cada condición tiene un peso específico según su importancia en la estrategia.</p>
             </div>
         </div>
-        
+
         <div class="section">
-            <h2>7. Gestión de Riesgo y Posición</h2>
+            <h2 class="section-title">7. Interpretación de Señales y Alertas</h2>
             
-            <h3>7.1. Cálculo de Tamaño de Posición</h3>
-            <p>El tamaño de posición debe calcularse para cada operación individual considerando el capital total, el porcentaje de riesgo y la distancia al stop loss.</p>
-            
-            <p><strong>Fórmula de tamaño de posición:</strong></p>
-            <div class="code-block">
-                Tamaño de Posición = (Capital × %Riesgo) / (Precio de Entrada - Precio de Stop Loss)
+            <div class="subsection">
+                <h3 class="subsection-title">7.1 Estructura de una Señal Completa</h3>
+                <p>Cada señal generada por el sistema contiene los siguientes componentes:</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Componente</th>
+                            <th>Descripción</th>
+                            <th>Formato</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Símbolo</td>
+                            <td>Par de trading (ej: BTC-USDT)</td>
+                            <td>TEXTO</td>
+                        </tr>
+                        <tr>
+                            <td>Temporalidad</td>
+                            <td>Marco temporal de la señal</td>
+                            <td>15m, 1h, 4h, etc.</td>
+                        </tr>
+                        <tr>
+                            <td>Señal</td>
+                            <td>Dirección de la operación</td>
+                            <td>LONG, SHORT, NEUTRAL</td>
+                        </tr>
+                        <tr>
+                            <td>Score</td>
+                            <td>Fuerza de la señal (0-100)</td>
+                            <td>NUMÉRICO</td>
+                        </tr>
+                        <tr>
+                            <td>Precio Actual</td>
+                            <td>Precio de mercado actual</td>
+                            <td>NUMÉRICO</td>
+                        </tr>
+                        <tr>
+                            <td>Precio Entrada</td>
+                            <td>Nivel recomendado de entrada</td>
+                            <td>NUMÉRICO</td>
+                        </tr>
+                        <tr>
+                            <td>Stop Loss</td>
+                            <td>Nivel de protección</td>
+                            <td>NUMÉRICO</td>
+                        </tr>
+                        <tr>
+                            <td>Take Profits</td>
+                            <td>Niveles de toma de ganancias</td>
+                            <td>ARRAY [TP1, TP2, TP3]</td>
+                        </tr>
+                        <tr>
+                            <td>Soportes</td>
+                            <td>Niveles de soporte dinámicos</td>
+                            <td>ARRAY [S1, S2, S3]</td>
+                        </tr>
+                        <tr>
+                            <td>Resistencias</td>
+                            <td>Niveles de resistencia dinámicos</td>
+                            <td>ARRAY [R1, R2, R3]</td>
+                        </tr>
+                        <tr>
+                            <td>ATR</td>
+                            <td>Average True Range actual</td>
+                            <td>NUMÉRICO</td>
+                        </tr>
+                        <tr>
+                            <td>%ATR</td>
+                            <td>ATR como porcentaje del precio</td>
+                            <td>PORCENTAJE</td>
+                        </tr>
+                        <tr>
+                            <td>Condiciones Cumplidas</td>
+                            <td>Lista de condiciones que validan la señal</td>
+                            <td>ARRAY DE TEXTO</td>
+                        </tr>
+                        <tr>
+                            <td>Estrategia</td>
+                            <td>Nombre de la estrategia generadora</td>
+                            <td>TEXTO</td>
+                        </tr>
+                        <tr>
+                            <td>Filtros Aplicados</td>
+                            <td>Filtros específicos de la estrategia</td>
+                            <td>ARRAY DE TEXTO</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             
-            <p><strong>Ejemplo práctico:</strong></p>
-            <ul style="margin-left: 20px; margin-bottom: 15px;">
-                <li>Capital total: $10,000</li>
-                <li>Porcentaje de riesgo por operación: 1%</li>
-                <li>Capital de riesgo: $10,000 × 1% = $100</li>
-                <li>Precio de entrada: $50,000 (BTC)</li>
-                <li>Precio de stop loss: $48,500</li>
-                <li>Distancia al stop loss: $50,000 - $48,500 = $1,500</li>
-                <li>Tamaño de posición: $100 / $1,500 = 0.0667 BTC</li>
-            </ul>
-            
-            <h3>7.2. Ajuste por Apalancamiento</h3>
-            <p>Una vez calculado el tamaño de posición base, ajuste por el apalancamiento apropiado según la categoría de riesgo de la criptomoneda:</p>
-            
-            <table class="strategy-table">
-                <tr>
-                    <th>Categoría de Riesgo</th>
-                    <th>Apalancamiento Recomendado</th>
-                    <th>Tamaño de Posición Ajustado</th>
-                    <th>Consideraciones</th>
-                </tr>
-                <tr>
-                    <td>Bajo Riesgo</td>
-                    <td>15x - 20x</td>
-                    <td>Posición base × 15-20</td>
-                    <td>Máxima exposición con riesgo controlado</td>
-                </tr>
-                <tr>
-                    <td>Medio Riesgo</td>
-                    <td>10x - 15x</td>
-                    <td>Posición base × 10-15</td>
-                    <td>Balance entre riesgo y retorno</td>
-                </tr>
-                <tr>
-                    <td>Alto Riesgo</td>
-                    <td>5x - 10x</td>
-                    <td>Posición base × 5-10</td>
-                    <td>Exposición limitada por alta volatilidad</td>
-                </tr>
-                <tr>
-                    <td>Memecoins</td>
-                    <td>3x - 5x</td>
-                    <td>Posición base × 3-5</td>
-                    <td>Exposición mínima por riesgo extremo</td>
-                </tr>
-            </table>
-            
-            <h3>7.3. Stop Loss Dinámico</h3>
-            <p>El sistema calcula stop loss dinámicos basados en múltiples factores:</p>
-            
-            <table class="indicator-table">
-                <tr>
-                    <th>Método de Cálculo</th>
-                    <th>Aplicación</th>
-                    <th>Fórmula</th>
-                    <th>Cuándo Usar</th>
-                </tr>
-                <tr>
-                    <td>Soporte/Resistencia</td>
-                    <td>Mayoría de estrategias</td>
-                    <td>SL = Soporte más cercano - (ATR × 0.5)</td>
-                    <td>Mercados con estructura clara</td>
-                </tr>
-                <tr>
-                    <td>ATR Multiplicador</td>
-                    <td>Mercados volátiles</td>
-                    <td>SL = Entrada ± (ATR × 2)</td>
-                    <td>Cuando los niveles S/R no son claros</td>
-                </tr>
-                <tr>
-                    <td>Porcentaje Fijo</td>
-                    <td>Estrategias de reversión</td>
-                    <td>SL = Entrada × 0.95 (LONG) o × 1.05 (SHORT)</td>
-                    <td>Operaciones de corto plazo con objetivos pequeños</td>
-                </tr>
-                <tr>
-                    <td>Bollinger Bands</td>
-                    <td>Estrategias de breakout</td>
-                    <td>SL = Banda opuesta al breakout</td>
-                    <td>Operaciones de compresión/expansión</td>
-                </tr>
-            </table>
-            
-            <h3>7.4. Take Profit Múltiple</h3>
-            <p>El sistema generalmente establece tres niveles de take profit para cada operación:</p>
-            
-            <table class="indicator-table">
-                <tr>
-                    <th>Nivel TP</th>
-                    <th>% de Posición</th>
-                    <th>Objetivo de Precio</th>
-                    <th>Razón</th>
-                </tr>
-                <tr>
-                    <td>TP1</td>
-                    <td>30-50%</td>
-                    <td>Objetivo cercano (1:1 risk-reward)</td>
-                    <td>Asegurar ganancias rápidas, cubrir comisiones</td>
-                </tr>
-                <tr>
-                    <td>TP2</td>
-                    <td>30-40%</td>
-                    <td>Objetivo medio (1.5:1 a 2:1)</td>
-                    <td>Maximizar ganancias en movimiento principal</td>
-                </tr>
-                <tr>
-                    <td>TP3</td>
-                    <td>20-30%</td>
-                    <td>Objetivo lejano (2:1 a 3:1+)</td>
-                    <td>Capturar extensiones de tendencia</td>
-                </tr>
-            </table>
-            
-            <div class="info">
-                <p><strong>Gestión de TP escalonado:</strong> Cuando se alcanza TP1, mueva el stop loss de la posición restante al punto de entrada. Cuando se alcanza TP2, mueva el stop loss al nivel de TP1. Deje TP3 correr con stop loss en TP2 o utilice trailing stop.</p>
+            <div class="subsection">
+                <h3 class="subsection-title">7.2 Jerarquía de Señales por Score</h3>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Rango de Score</th>
+                            <th>Clasificación</th>
+                            <th>Acción Recomendada</th>
+                            <th>Color en Dashboard</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>90 - 100</td>
+                            <td>Señal Fuerte</td>
+                            <td>Operación prioritaria</td>
+                            <td>Verde intenso</td>
+                        </tr>
+                        <tr>
+                            <td>80 - 89</td>
+                            <td>Señal Media-Fuerte</td>
+                            <td>Operación estándar</td>
+                            <td>Verde</td>
+                        </tr>
+                        <tr>
+                            <td>70 - 79</td>
+                            <td>Señal Media</td>
+                            <td>Operación con cuidado</td>
+                            <td>Verde claro</td>
+                        </tr>
+                        <tr>
+                            <td>65 - 69</td>
+                            <td>Señal Débil</td>
+                            <td>Solo con confirmación adicional</td>
+                            <td>Amarillo</td>
+                        </tr>
+                        <tr>
+                            <td>0 - 64</td>
+                            <td>Sin Señal</td>
+                            <td>No operar</td>
+                            <td>Rojo/Gris</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
             
-            <h3>7.5. Correlación entre Posiciones</h3>
-            <p>El sistema monitorea la correlación entre las criptomonedas en cartera para evitar exposición excesiva a un mismo factor de riesgo:</p>
-            
-            <table class="strategy-table">
-                <tr>
-                    <th>Nivel de Correlación</th>
-                    <th>Acción del Sistema</th>
-                    <th>Exposición Máxima</th>
-                    <th>Ejemplo</th>
-                </tr>
-                <tr>
-                    <td>Alta (> 0.7)</td>
-                    <td>Limitar nuevas posiciones en activos correlacionados</td>
-                    <td>2 posiciones máximas</td>
-                    <td>BTC y ETH (correlación típica 0.8-0.9)</td>
-                </tr>
-                <tr>
-                    <td>Media (0.3 - 0.7)</td>
-                    <td>Reducir tamaño de posición adicional</td>
-                    <td>3-4 posiciones máximas</td>
-                    <td>ETH y altcoins grandes</td>
-                </tr>
-                <tr>
-                    <td>Baja (< 0.3)</td>
-                    <td>Sin restricciones específicas</td>
-                    <td>Basado en riesgo individual</td>
-                    <td>BTC y memecoins</td>
-                </tr>
-            </table>
-            
-            <div class="warning">
-                <p><strong>Advertencia sobre gestión de riesgo:</strong> El apalancamiento amplifica tanto ganancias como pérdidas. Nunca utilice apalancamiento que no comprenda completamente. Comience con apalancamiento bajo (5x-10x) incluso en criptomonedas de bajo riesgo hasta que esté completamente familiarizado con el comportamiento del sistema y del mercado.</p>
+            <div class="subsection">
+                <h3 class="subsection-title">7.3 Alertas de Telegram</h3>
+                <p>El sistema envía alertas automáticas por Telegram con la siguiente estructura:</p>
+                
+                <div class="note">
+                    <strong>Ejemplo Alerta LONG:</strong><br>
+                    🚨 TREND RIDER | LONG | BTC-USDT | 4h<br>
+                    Entrada: $45,200.00 | Score: 87.5<br>
+                    Filtros: Cruce MACD TF Menor, Precio > MA50 TF Media, Precio > MA200 TF Mayor, FTMaverick: STRONG_UP<br>
+                    Recomendación: Swing Trading.
+                </div>
+                
+                <p>Cada alerta incluye gráfico adjunto con análisis técnico completo de la señal.</p>
             </div>
         </div>
-        
+
         <div class="section">
-            <h2>8. Consideraciones Específicas por Temporalidad</h2>
+            <h2 class="section-title">8. Dashboard y Herramientas de Análisis</h2>
             
-            <h3>8.1. Scalping (15min - 1h)</h3>
-            <table class="timeframe-table">
-                <tr>
-                    <th>Aspecto</th>
-                    <th>Consideración</th>
-                    <th>Estrategias Recomendadas</th>
-                    <th>Gestón de Posición</th>
-                </tr>
-                <tr>
-                    <td>Horario de Operación</td>
-                    <td>4:00 - 16:00 hora Bolivia (mercados más activos)</td>
-                    <td>BOLLINGER_SQUEEZE, VOLUME_SPIKE_MOMENTUM</td>
-                    <td>Posiciones pequeñas, alta frecuencia</td>
-                </tr>
-                <tr>
-                    <td>Duración Promedio</td>
-                    <td>15 minutos - 2 horas</td>
-                    <td>VOLUME_EMA_FTM, MACD_HISTOGRAM_REVERSAL</td>
-                    <td>Salidas rápidas, objetivos pequeños</td>
-                </tr>
-                <tr>
-                    <td>Confirmación Multi-TF</td>
-                    <td>Obligatoria pero más flexible</td>
-                    <td>Todas las de temporalidades cortas</td>
-                    <td>Stop loss ajustados, TP cercanos</td>
-                </tr>
-                <tr>
-                    <td>Volumen Requerido</td>
-                    <td>Alto, con spikes claros</td>
-                    <td>Estrategias con filtro de volumen</td>
-                    <td>Entrar en confirmación de volumen</td>
-                </tr>
-            </table>
-            
-            <h3>8.2. Intradía (1h - 4h)</h3>
-            <table class="timeframe-table">
-                <tr>
-                    <th>Aspecto</th>
-                    <th>Consideración</th>
-                    <th>Estrategias Recomendadas</th>
-                    <th>Gestión de Posición</th>
-                </tr>
-                <tr>
-                    <td>Horario de Operación</td>
-                    <td>Cualquier hora, evitar noticias mayores</td>
-                    <td>ADX_POWER_TREND, MOMENTUM_DIVERGENCE</td>
-                    <td>Posiciones moderadas, 2-4 operaciones/día</td>
-                </tr>
-                <tr>
-                    <td>Duración Promedio</td>
-                    <td>2 - 8 horas</td>
-                    <td>MA_CONVERGENCE_DIVERGENCE, RSI_MAVERICK_EXTREME</td>
-                    <td>TP escalonado, SL más amplio</td>
-                </tr>
-                <tr>
-                    <td>Confirmación Multi-TF</td>
-                    <td>Obligatoria y estricta</td>
-                    <td>Todas las de temporalidades medias</td>
-                    <td>SL basado en estructura, no ATR</td>
-                </tr>
-                <tr>
-                    <td>Análisis Fundamental</td>
-                    <td>Considerar noticias intraday</td>
-                    <td>Estrategias menos sensibles a noticias</td>
-                    <td>Reducir tamaño ante noticias</td>
-                </tr>
-            </table>
-            
-            <h3>8.3. Swing Trading (4h - 1D)</h3>
-            <table class="timeframe-table">
-                <tr>
-                    <th>Aspecto</th>
-                    <th>Consideración</th>
-                    <th>Estrategias Recomendadas</th>
-                    <th>Gestión de Posición</th>
-                </tr>
-                <tr>
-                    <td>Horario de Operación</td>
-                    <td>Análisis 1-2 veces/día, ejecución precisa</td>
-                    <td>TREND_RIDER, TREND_STRENGTH_MAVERICK</td>
-                    <td>Posiciones más grandes, menor frecuencia</td>
-                </tr>
-                <tr>
-                    <td>Duración Promedio</td>
-                    <td>1 - 5 días</td>
-                    <td>WHALE_FOLLOWING, DOUBLE_CONFIRMATION_RSI</td>
-                    <td>TP amplio, SL amplio pero definido</td>
-                </tr>
-                <tr>
-                    <td>Confirmación Multi-TF</td>
-                    <td>Obligatoria, con énfasis en TF mayor</td>
-                    <td>Todas las de temporalidades largas</td>
-                    <td>SL estructural, TP en múltiples niveles</td>
-                </tr>
-                <tr>
-                    <td>Análisis Fundamental</td>
-                    <td>Esencial, considerar panorama completo</td>
-                    <td>Estrategias de seguimiento de tendencia</td>
-                    <td>Ajustar por eventos calendario</td>
-                </tr>
-            </table>
-            
-            <h3>8.4. Posicionamiento (1D - 1W)</h3>
-            <table class="timeframe-table">
-                <tr>
-                    <th>Aspecto</th>
-                    <th>Consideración</th>
-                    <th>Estrategias Recomendadas</th>
-                    <th>Gestión de Posición</th>
-                </tr>
-                <tr>
-                    <td>Horario de Operación</td>
-                    <td>Análisis diario o semanal</td>
-                    <td>TREND_RIDER, WHALE_FOLLOWING</td>
-                    <td>Posiciones grandes, muy baja frecuencia</td>
-                </tr>
-                <tr>
-                    <td>Duración Promedio</td>
-                    <td>Semanas a meses</td>
-                    <td>VOLUME_EMA_FTM en 1D</td>
-                    <td>TP muy amplio, SL muy amplio</td>
-                </tr>
-                <tr>
-                    <td>Confirmación Multi-TF</td>
-                    <td>Enfocada en TF semanal y mensual</td>
-                    <td>Estrategias de largo plazo</td>
-                    <td>SL estructural mayor, TP por objetivos</td>
-                </tr>
-                <tr>
-                    <td>Análisis Fundamental</td>
-                    <td>Dominante sobre técnico</td>
-                    <td>Combinar con análisis fundamental</td>
-                    <td>Ajustar por ciclo de mercado</td>
-                </tr>
-            </table>
-        </div>
-        
-        <div class="section">
-            <h2>9. Mantenimiento y Actualización del Sistema</h2>
-            
-            <h3>9.1. Verificaciones Diarias</h3>
-            <p>Realice las siguientes verificaciones diariamente antes de comenzar a operar:</p>
-            
-            <table class="strategy-table">
-                <tr>
-                    <th>Verificación</th>
-                    <th>Procedimiento</th>
-                    <th>Frecuencia</th>
-                    <th>Acción si Fallo</th>
-                </tr>
-                <tr>
-                    <td>Conexión API KuCoin</td>
-                    <td>Verificar que se obtengan datos actualizados de al menos 3 criptomonedas</td>
-                    <td>Diaria</td>
-                    <td>Reiniciar sistema, verificar credenciales API</td>
-                </tr>
-                <tr>
-                    <td>Conexión Telegram</td>
-                    <td>Enviar mensaje de prueba y verificar recepción</td>
-                    <td>Diaria</td>
-                    <td>Revisar token y chat ID, reiniciar bot</td>
-                </tr>
-                <tr>
-                    <td>Indicadores Técnicos</td>
-                    <td>Verificar cálculo correcto de al menos 5 indicadores en BTC 4h</td>
-                    <td>Diaria</td>
-                    <td>Reiniciar sistema, verificar fórmulas</td>
-                </tr>
-                <tr>
-                    <td>Cache del Sistema</td>
-                    <td>Limpiar cache antiguo (> 1 hora) para datos frescos</td>
-                    <td>Diaria</td>
-                    <td>Ejecutar limpieza manual de cache</td>
-                </tr>
-                <tr>
-                    <td>Logs de Error</td>
-                    <td>Revisar logs en busca de errores recurrentes</td>
-                    <td>Diaria</td>
-                    <td>Corregir errores identificados</td>
-                </tr>
-            </table>
-            
-            <h3>9.2. Mantenimiento Semanal</h3>
-            <p>Realice las siguientes tareas de mantenimiento semanalmente:</p>
-            
-            <div class="step-by-step">
-                <div class="step">
-                    <div class="step-title">1. Análisis de Desempeño</div>
-                    <p>Revise el desempeño de cada estrategia en la semana anterior. Identifique qué estrategias funcionaron mejor y en qué condiciones de mercado. Ajuste la prioridad de estrategias basado en desempeño reciente.</p>
-                </div>
+            <div class="subsection">
+                <h3 class="subsection-title">8.1 Componentes del Dashboard Principal</h3>
                 
-                <div class="step">
-                    <div class="step-title">2. Actualización de Parámetros</div>
-                    <p>Re-calibre parámetros de indicadores si el comportamiento del mercado ha cambiado significativamente. Esto incluye períodos de medias móviles, niveles de sobrecompra/sobreventa, y umbrales de volumen.</p>
-                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Sección</th>
+                            <th>Contenido</th>
+                            <th>Frecuencia Actualización</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Señales Activas</td>
+                            <td>Listado de señales con score ≥65</td>
+                            <td>30 segundos</td>
+                        </tr>
+                        <tr>
+                            <td>Gráfico Principal</td>
+                            <td>Análisis técnico completo con indicadores</td>
+                            <td>1 minuto</td>
+                        </tr>
+                        <tr>
+                            <td>Scatter Plot</td>
+                            <td>Presión compra/venta por símbolo</td>
+                            <td>5 minutos</td>
+                        </tr>
+                        <tr>
+                            <td>Alertas Recientes</td>
+                            <td>Histórico de alertas generadas</td>
+                            <td>Tiempo real</td>
+                        </tr>
+                        <tr>
+                            <td>Estadísticas</td>
+                            <td>Métricas de rendimiento del sistema</td>
+                            <td>15 minutos</td>
+                        </tr>
+                        <tr>
+                            <td>Configuración</td>
+                            <td>Panel de control de parámetros</td>
+                            <td>On-demand</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">8.2 Gráfico de Análisis Técnico</h3>
+                <p>El gráfico principal muestra 8 subgráficos organizados verticalmente:</p>
                 
-                <div class="step">
-                    <div class="step-title">3. Revisión de Clasificación de Riesgo</div>
-                    <p>Actualice la clasificación de riesgo de las criptomonedas si su comportamiento de mercado ha cambiado. Una criptomoneda puede pasar de riesgo medio a alto si su volatilidad ha aumentado significativamente.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">4. Backup del Sistema</div>
-                    <p>Realice backup completo de la configuración del sistema, parámetros personalizados, y datos históricos de desempeño. Guarde en ubicación segura fuera del servidor principal.</p>
-                </div>
-                
-                <div class="step">
-                    <div class="step-title">5. Limpieza de Datos</div>
-                    <p>Elimine datos históricos antiguos (> 30 días) que ya no son necesarios para el análisis actual pero mantenga datos de desempeño para análisis a largo plazo.</p>
+                <div class="step-by-step">
+                    <div class="step">
+                        <strong>Subgráfico 1: Precio y Niveles</strong>
+                        <p>Velas japonesas con: Precio entrada, Stop loss, Take profits, Soportes/Resistencias, EMA21, MA50, MA200.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Subgráfico 2: Señales de Ballenas</strong>
+                        <p>Barras de Whale Pump (verde) y Whale Dump (rojo) con marcadores de señales confirmadas.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Subgráfico 3: ADX y DMI</strong>
+                        <p>ADX (negro), +DI (verde), -DI (rojo) con línea de umbral en 25.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Subgráfico 4: RSI Tradicional</strong>
+                        <p>RSI 14 periodos con zonas de sobrecompra (70) y sobreventa (30).</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Subgráfico 5: RSI Maverick</strong>
+                        <p>RSI Maverick con zonas de sobrecompra (0.8) y sobreventa (0.2).</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Subgráfico 6: MACD</strong>
+                        <p>Línea MACD, línea señal e histograma con colores según dirección.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Subgráfico 7: Volumen y Anomalías</strong>
+                        <p>Barras de volumen coloreadas según señal, MA volumen, marcadores de anomalías.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <strong>Subgráfico 8: FTMaverick</strong>
+                        <p>Fuerza de tendencia con colores según dirección, umbrales alto/bajo, zonas no-operar.</p>
+                    </div>
                 </div>
             </div>
             
-            <h3>9.3. Actualizaciones del Sistema</h3>
-            <p>El sistema debe actualizarse periódicamente para mantenerse efectivo en condiciones de mercado cambiantes:</p>
-            
-            <table class="strategy-table">
-                <tr>
-                    <th>Tipo de Actualización</th>
-                    <th>Frecuencia</th>
-                    <th>Procedimiento</th>
-                    <th>Pruebas Requeridas</th>
-                </tr>
-                <tr>
-                    <td>Parámetros de Indicadores</td>
-                    <td>Mensual</td>
-                    <td>Ajuste basado en análisis de volatilidad reciente</td>
-                    <td>Backtest con datos de último mes</td>
-                </tr>
-                <tr>
-                    <td>Nuevas Estrategias</td>
-                    <td>Trimestral</td>
-                    <td>Desarrollo e implementación de nuevas lógicas</td>
-                    <td>Backtest extensivo + prueba en demo 2 semanas</td>
-                </tr>
-                <tr>
-                    <td>Integraciones API</td>
-                    <td>Según necesidad</td>
-                    <td>Actualización cuando exchanges cambian API</td>
-                    <td>Prueba de conexión + datos</td>
-                </tr>
-                <tr>
-                    <td>Mejoras de Performance</td>
-                    <td>Semestral</td>
-                    <td>Optimización de código y procesos</td>
-                    <td>Prueba de carga y velocidad</td>
-                </tr>
-                <tr>
-                    <td>Actualización de Seguridad</td>
-                    <td>Inmediata</td>
-                    <td>Parcheo de vulnerabilidades identificadas</td>
-                    <td>Pruebas de penetración básicas</td>
-                </tr>
-            </table>
-            
-            <div class="note">
-                <p><strong>Nota sobre actualizaciones:</strong> Nunca actualice el sistema durante horas de trading activo. Programe actualizaciones para momentos de baja actividad de mercado (fines de semana tradicionales, aunque los mercados de criptomonedas operan 24/7, hay momentos de menor volumen). Siempre pruebe actualizaciones en un entorno de demostración antes de implementar en producción.</p>
+            <div class="subsection">
+                <h3 class="subsection-title">8.3 Scatter Plot de Presión de Mercado</h3>
+                <p>Visualización de la presión compra/venta por símbolo:</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Eje</th>
+                            <th>Representación</th>
+                            <th>Cálculo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Eje X (Presión Compra)</td>
+                            <td>0-100, mayor = más presión compradora</td>
+                            <td>Whale Pump + +DI + RSI Maverick + ADX + Volumen</td>
+                        </tr>
+                        <tr>
+                            <td>Eje Y (Presión Venta)</td>
+                            <td>0-100, mayor = más presión vendedora</td>
+                            <td>Whale Dump + -DI + (1-RSI Maverick) + ADX + Volumen</td>
+                        </tr>
+                        <tr>
+                            <td>Tamaño Burbuja</td>
+                            <td>Score de la señal</td>
+                            <td>0-100</td>
+                        </tr>
+                        <tr>
+                            <td>Color Burbuja</td>
+                            <td>Categoría de riesgo</td>
+                            <td>Bajo/Medio/Alto/Memecoin</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-        
-        <div class="section">
-            <h2>10. Resolución de Problemas Comunes</h2>
-            
-            <h3>10.1. Problemas de Conexión</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Problema</th>
-                    <th>Síntomas</th>
-                    <th>Causas Probables</th>
-                    <th>Solución</th>
-                </tr>
-                <tr>
-                    <td>Sin datos de KuCoin</td>
-                    <td>Gráficos vacíos, errores al generar señales</td>
-                    <td>API key expirada, límite de requests, problemas de red</td>
-                    <td>Verificar y renovar API key, revisar logs de error, esperar y reintentar</td>
-                </tr>
-                <tr>
-                    <td>Alertas Telegram no enviadas</td>
-                    <td>Señales generadas pero no recibidas en Telegram</td>
-                    <td>Token inválido, chat ID incorrecto, bot bloqueado</td>
-                    <td>Verificar token y chat ID, desbloquear bot si es necesario</td>
-                </tr>
-                <tr>
-                    <td>Latencia alta</td>
-                    <td>Señales con retraso significativo</td>
-                    <td>Problemas de servidor, carga alta, conexión lenta</td>
-                    <td>Reiniciar sistema, optimizar código, mejorar infraestructura</td>
-                </tr>
-            </table>
-            
-            <h3>10.2. Problemas de Análisis</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Problema</th>
-                    <th>Síntomas</th>
-                    <th>Causas Probables</th>
-                    <th>Solución</th>
-                </tr>
-                <tr>
-                    <td>Indicadores incorrectos</td>
-                    <td>Cálculos no coinciden con otras plataformas</td>
-                    <td>Fórmulas mal implementadas, datos incompletos</td>
-                    <td>Verificar fórmulas, asegurar datos completos</td>
-                </tr>
-                <tr>
-                    <td>Señales inconsistentes</td>
-                    <td>Misma condición genera señales diferentes</td>
-                    <td>Cache corrupto, condiciones borderline</td>
-                    <td>Limpiar cache, ajustar umbrales de condiciones</td>
-                </tr>
-                <tr>
-                    <td>Falsas señales frecuentes</td>
-                    <td>Muchas señales pero pocas rentables</td>
-                    <td>Condiciones muy laxas, mercado lateral</td>
-                    <td>Ajustar umbrales, añadir filtros adicionales</td>
-                </tr>
-            </table>
-            
-            <h3>10.3. Problemas de Performance</h3>
-            <table class="strategy-table">
-                <tr>
-                    <th>Problema</th>
-                    <th>Síntomas</th>
-                    <th>Causas Probables</th>
-                    <th>Solución</th>
-                </tr>
-                <tr>
-                    <td>Alto uso de CPU/RAM</td>
-                    <td>Sistema lento, respuestas tardías</td>
-                    <td>Procesos ineficientes, memory leaks</td>
-                    <td>Optimizar código, reiniciar periódicamente</td>
-                </tr>
-                <tr>
-                    <td>Señales perdidas</td>
-                    <td>Condiciones cumplidas pero no generan alertas</td>
-                    <td>Intervalos de verificación muy amplios</td>
-                    <td>Reducir intervalo de verificación</td>
-                </tr>
-                <tr>
-                    <td>Datos desactualizados</td>
-                    <td>Análisis con datos antiguos</td>
-                    <td>Cache no se actualiza, problemas de conexión</td>
-                    <td>Forzar actualización de cache, verificar conexión</td>
-                </tr>
-            </table>
-            
-            <div class="info">
-                <p><strong>Proceso de diagnóstico:</strong> Cuando encuentre un problema, primero verifique los logs del sistema para mensajes de error específicos. Luego, intente reproducir el problema en un entorno controlado. Finalmente, aplique la solución más específica posible en lugar de soluciones generales que puedan introducir nuevos problemas.</p>
-            </div>
-        </div>
-        
+
+        <a href="/" class="return-button" style="display: block; text-align: center; margin: 40px auto;">← Volver al Sistema de Trading</a>
+
         <footer>
-            <p>© 2025 MULTI-TIMEFRAME WGTA PRO - Sistema Avanzado de Trading para Criptomonedas</p>
-            <p>Manual Técnico de Operación - Versión 1.0 - Última actualización: Diciembre 2025</p>
-            <p>Este documento es confidencial y propiedad intelectual de Willer Gianni Torrico Arispe. No compartir sin autorización.</p>
+            <p>Sistema MULTI-TIMEFRAME WGTA PRO - Manual de Operaciones</p>
+            <p>© 2024 Sistema de Trading Avanzado. Para uso exclusivo del operador autorizado.</p>
         </footer>
     </div>
 </body>
