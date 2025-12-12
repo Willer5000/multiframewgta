@@ -98,7 +98,7 @@ STRATEGY_TIMEFRAMES = {
     'Trend Strength Maverick': ['4h', '8h', '12h'],
     'Whale Following': ['12h', '1D'],
     'MA Convergence Divergence': ['2h', '4h', '8h'],
-    'RSI Maverick Extreme': ['30m', '1h', '2h'],
+    'RSI Maverick Extreme': ['30m', '1h', '2h', '4h'],  # CAMBIO 2: Añadido '4h'
     'Volume-Price Divergence': ['1h', '2h', '4h'],
     'Desplome de Volumen': ['15m', '30m', '1h', '4h', '12h', '1D']
 }
@@ -119,14 +119,21 @@ class TradingIndicator:
         return datetime.now(self.bolivia_tz)
     
     def is_scalping_time(self):
-        """Verificar si es horario de scalping"""
+        """Verificar si es horario de scalping - CAMBIO 1: 24/7 excepto sábados"""
         now = self.get_bolivia_time()
-        if now.weekday() >= 5:
+        # CAMBIO 1: Solo restringir sábados, operar 24/7 resto de días
+        # Código original comentado:
+        # if now.weekday() >= 5:
+        #     return False
+        # return 4 <= now.hour < 16
+        
+        # Código nuevo: Solo sábados no se opera
+        if now.weekday() == 5:  # 5 = sábado
             return False
-        return 4 <= now.hour < 16
+        return True  # Operar 24/7 de domingo a viernes
 
     def calculate_remaining_time(self, interval, current_time):
-        """Calcular tiempo restante para el cierre de la vela"""
+        """Calcular tiempo restante para el cierre de la vela - CAMBIO 3: % modificados"""
         interval_seconds = {
             '15m': 900, '30m': 1800, '1h': 3600, '2h': 7200,
             '4h': 14400, '8h': 28800, '12h': 43200, '1D': 86400, '1W': 604800
@@ -138,10 +145,16 @@ class TradingIndicator:
             percent = 50
         elif interval in ['1h', '2h']:
             percent = 50
+        # CAMBIO 3: Modificado de 25% a 75% para swing
+        # elif interval in ['4h', '8h', '12h', '1D']:
+        #     percent = 25
         elif interval in ['4h', '8h', '12h', '1D']:
-            percent = 25
+            percent = 75  # Cambio: de 25% a 75% (confirmación ideal)
+        # CAMBIO 3: Modificado de 10% a 90% para largo plazo
+        # elif interval == '1W':
+        #     percent = 10
         elif interval == '1W':
-            percent = 10
+            percent = 90  # Cambio: de 10% a 90% (confirmación tardía)
         else:
             percent = 50
         
@@ -1748,6 +1761,11 @@ class TradingIndicator:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Bollinger Squeeze Breakout']:
             return None
+        # CAMBIO 1: Eliminar restricción horaria para 15m, 30m
+        # Código original comentado:
+        # if interval in ['15m', '30m'] and not self.is_scalping_time():
+        #     return None
+        # Código nuevo: Solo verificar sábados
         if interval in ['15m', '30m'] and not self.is_scalping_time():
             return None
         
@@ -2213,6 +2231,11 @@ class TradingIndicator:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Volume Spike Momentum']:
             return None
+        # CAMBIO 1: Eliminar restricción horaria para 15m, 30m
+        # Código original comentado:
+        # if interval in ['15m', '30m'] and not self.is_scalping_time():
+        #     return None
+        # Código nuevo: Solo verificar sábados
         if interval in ['15m', '30m'] and not self.is_scalping_time():
             return None
         
@@ -3008,7 +3031,7 @@ class TradingIndicator:
     # ESTRATEGIA: RSI MAVERICK EXTREME
     # ==============================================
     def check_rsi_maverick_extreme_signal(self, symbol, interval):
-        """Estrategia RSI Maverick Extreme para intraday"""
+        """Estrategia RSI Maverick Extreme para intraday - CAMBIO 2: Añadido 4h"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['RSI Maverick Extreme']:
@@ -3328,6 +3351,11 @@ class TradingIndicator:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Desplome de Volumen']:
             return None
+        # CAMBIO 1: Eliminar restricción horaria para 15m, 30m
+        # Código original comentado:
+        # if interval in ['15m', '30m'] and not self.is_scalping_time():
+        #     return None
+        # Código nuevo: Solo verificar sábados
         if interval in ['15m', '30m'] and not self.is_scalping_time():
             return None
         
@@ -3591,6 +3619,11 @@ class TradingIndicator:
                     
                     # Estrategia 3: Bollinger Squeeze Breakout
                     if interval in STRATEGY_TIMEFRAMES['Bollinger Squeeze Breakout']:
+                        # CAMBIO 1: Eliminar restricción horaria
+                        # Código original comentado:
+                        # if interval in ['15m', '30m'] and not self.is_scalping_time():
+                        #     continue
+                        # Código nuevo: Solo verificar sábados
                         if interval in ['15m', '30m'] and not self.is_scalping_time():
                             continue
                         signal = self.check_bollinger_squeeze_signal(symbol, interval)
@@ -3611,6 +3644,11 @@ class TradingIndicator:
                     
                     # Estrategia 6: Volume Spike Momentum
                     if interval in STRATEGY_TIMEFRAMES['Volume Spike Momentum']:
+                        # CAMBIO 1: Eliminar restricción horaria
+                        # Código original comentado:
+                        # if interval in ['15m', '30m'] and not self.is_scalping_time():
+                        #     continue
+                        # Código nuevo: Solo verificar sábados
                         if interval in ['15m', '30m'] and not self.is_scalping_time():
                             continue
                         signal = self.check_volume_spike_momentum_signal(symbol, interval)
@@ -3641,7 +3679,7 @@ class TradingIndicator:
                         if signal:
                             all_signals.append(signal)
                     
-                    # Estrategia 11: RSI Maverick Extreme
+                    # Estrategia 11: RSI Maverick Extreme - CAMBIO 2: Ahora incluye 4h
                     if interval in STRATEGY_TIMEFRAMES['RSI Maverick Extreme']:
                         signal = self.check_rsi_maverick_extreme_signal(symbol, interval)
                         if signal:
@@ -3655,6 +3693,11 @@ class TradingIndicator:
                     
                     # Estrategia 13: Desplome de Volumen (mejorada)
                     if interval in STRATEGY_TIMEFRAMES['Desplome de Volumen']:
+                        # CAMBIO 1: Eliminar restricción horaria
+                        # Código original comentado:
+                        # if interval in ['15m', '30m'] and not self.is_scalping_time():
+                        #     continue
+                        # Código nuevo: Solo verificar sábados
                         if interval in ['15m', '30m'] and not self.is_scalping_time():
                             continue
                         signal = self.check_desplome_volumen_signal(symbol, interval)
@@ -3962,6 +4005,11 @@ class TradingIndicator:
         current_time = self.get_bolivia_time()
         
         for interval in telegram_intervals:
+            # CAMBIO 1: Eliminar restricción horaria para 15m, 30m
+            # Código original comentado:
+            # if interval in ['15m', '30m'] and not self.is_scalping_time():
+            #     continue
+            # Código nuevo: Solo verificar sábados
             if interval in ['15m', '30m'] and not self.is_scalping_time():
                 continue
                 
