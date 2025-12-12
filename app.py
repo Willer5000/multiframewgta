@@ -26,8 +26,8 @@ app = Flask(__name__)
 TELEGRAM_BOT_TOKEN = "8007748376:AAHIW8n9b-BtA378g4gF-0-D2mOhn495Q0g"
 TELEGRAM_CHAT_ID = "-1003229814161"
 
-# 5 criptomonedas principales para estrategias avanzadas
-TOP_CRYPTO_SYMBOLS = ["BTC-USDT", "ETH-USDT", "SOL-USDT", "ADA-USDT", "XRP-USDT"]
+# 5 criptomonedas principales para estrategias avanzadas + XAUT
+TOP_CRYPTO_SYMBOLS = ["BTC-USDT", "ETH-USDT", "SOL-USDT", "ADA-USDT", "XRP-USDT", "XAUT-USDT"]
 
 # Configuración optimizada - 40 criptomonedas top
 CRYPTO_SYMBOLS = [
@@ -71,7 +71,7 @@ CRYPTO_RISK_CLASSIFICATION = {
 }
 
 # Top 10 para estrategia de volumen (reducido a 5 principales)
-TOP10_LOW_RISK = ["BTC-USDT", "ETH-USDT", "SOL-USDT", "ADA-USDT", "XRP-USDT"]
+TOP10_LOW_RISK = ["BTC-USDT", "ETH-USDT", "SOL-USDT", "ADA-USDT", "XRP-USDT", "XAUT-USDT"]
 
 # Mapeo de temporalidades para análisis multi-timeframe
 TIMEFRAME_HIERARCHY = {
