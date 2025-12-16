@@ -113,6 +113,7 @@ class TradingIndicator:
         self.sent_exit_signals = set()
         self.volume_ema_signals = {}
         self.strategy_signals = {}
+        self.last_strategy_check = {}
         
     def get_bolivia_time(self):
         """Obtener hora actual de Bolivia"""
@@ -122,18 +123,12 @@ class TradingIndicator:
         """Verificar si es horario de scalping - CAMBIO 1: 24/7 excepto sábados"""
         now = self.get_bolivia_time()
         # CAMBIO 1: Solo restringir sábados, operar 24/7 resto de días
-        # Código original comentado:
-        # if now.weekday() >= 5:
-        #     return False
-        # return 4 <= now.hour < 16
-        
-        # Código nuevo: Solo sábados no se opera
         if now.weekday() == 5:  # 5 = sábado
             return False
         return True  # Operar 24/7 de domingo a viernes
 
     def calculate_remaining_time(self, interval, current_time):
-        """Calcular tiempo restante para el cierre de la vela - CAMBIO 3: % modificados"""
+        """Calcular tiempo restante para el cierre de la vela - MODIFICADO PARA ESTRATEGIAS"""
         interval_seconds = {
             '15m': 900, '30m': 1800, '1h': 3600, '2h': 7200,
             '4h': 14400, '8h': 28800, '12h': 43200, '1D': 86400, '1W': 604800
@@ -141,25 +136,64 @@ class TradingIndicator:
         
         seconds = interval_seconds.get(interval, 3600)
         
-        if interval in ['15m', '30m']:
-            percent = 50
-        elif interval in ['1h', '2h']:
-            percent = 50
-        # CAMBIO 3: Modificado de 25% a 75% para swing
-        # elif interval in ['4h', '8h', '12h', '1D']:
-        #     percent = 25
-        elif interval in ['4h', '8h', '12h', '1D']:
-            percent = 75  # Cambio: de 25% a 75% (confirmación ideal)
-        # CAMBIO 3: Modificado de 10% a 90% para largo plazo
-        # elif interval == '1W':
-        #     percent = 10
-        elif interval == '1W':
-            percent = 90  # Cambio: de 10% a 90% (confirmación tardía)
-        else:
-            percent = 50
+        # Definir porcentajes de alerta por intervalo para estrategias
+        alert_percentages = {
+            '30m': 98.33,  # 1 minuto antes (29/30*100)
+            '1h': 98.33,   # 2 minutos antes (58/60*100)
+            '4h': 99.44,   # 4 minutos antes (236/240*100)
+            '12h': 99.72,  # 6 minutos antes (426/432*100)
+            '1D': 99.86,   # 7 minutos antes (857/864*100)
+            '1W': 99.90    # 10 minutos antes (6030/6048*100)
+        }
+        
+        # Usar porcentaje específico para estrategias si existe, de lo contrario usar 50%
+        percent = alert_percentages.get(interval, 50)
         
         seconds_passed = current_time.timestamp() % seconds
         return seconds_passed >= (seconds * percent / 100)
+
+    def should_check_strategy_interval(self, interval):
+        """Verificar si se debe revisar este intervalo para estrategias"""
+        current_time = self.get_bolivia_time()
+        
+        # Definir porcentajes de alerta por intervalo para estrategias
+        alert_percentages = {
+            '30m': 98.33,  # 1 minuto antes (29/30*100)
+            '1h': 98.33,   # 2 minutos antes (58/60*100)
+            '4h': 99.44,   # 4 minutos antes (236/240*100)
+            '12h': 99.72,  # 6 minutos antes (426/432*100)
+            '1D': 99.86,   # 7 minutos antes (857/864*100)
+            '1W': 99.90    # 10 minutos antes (6030/6048*100)
+        }
+        
+        if interval not in alert_percentages:
+            return False
+            
+        interval_seconds = {
+            '30m': 1800, '1h': 3600, '4h': 14400, 
+            '12h': 43200, '1D': 86400, '1W': 604800
+        }
+        
+        seconds = interval_seconds.get(interval, 3600)
+        percent = alert_percentages[interval]
+        
+        seconds_passed = current_time.timestamp() % seconds
+        is_alert_time = seconds_passed >= (seconds * percent / 100)
+        
+        # Verificar si ya revisamos este intervalo en este ciclo
+        interval_key = f"{interval}_{int(current_time.timestamp() // seconds)}"
+        
+        if is_alert_time and interval_key not in self.last_strategy_check:
+            self.last_strategy_check[interval_key] = current_time
+            return True
+            
+        # Limpiar entradas antiguas (más de 1 hora)
+        old_keys = [k for k, v in self.last_strategy_check.items() 
+                   if (current_time - v).seconds > 3600]
+        for k in old_keys:
+            del self.last_strategy_check[k]
+            
+        return False
 
     def get_kucoin_data(self, symbol, interval, limit=100):
         """Obtener datos de KuCoin con manejo robusto de errores"""
@@ -1761,11 +1795,6 @@ class TradingIndicator:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Bollinger Squeeze Breakout']:
             return None
-        # CAMBIO 1: Eliminar restricción horaria para 15m, 30m
-        # Código original comentado:
-        # if interval in ['15m', '30m'] and not self.is_scalping_time():
-        #     return None
-        # Código nuevo: Solo verificar sábados
         if interval in ['15m', '30m'] and not self.is_scalping_time():
             return None
         
@@ -2231,11 +2260,6 @@ class TradingIndicator:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Volume Spike Momentum']:
             return None
-        # CAMBIO 1: Eliminar restricción horaria para 15m, 30m
-        # Código original comentado:
-        # if interval in ['15m', '30m'] and not self.is_scalping_time():
-        #     return None
-        # Código nuevo: Solo verificar sábados
         if interval in ['15m', '30m'] and not self.is_scalping_time():
             return None
         
@@ -3351,11 +3375,6 @@ class TradingIndicator:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Desplome de Volumen']:
             return None
-        # CAMBIO 1: Eliminar restricción horaria para 15m, 30m
-        # Código original comentado:
-        # if interval in ['15m', '30m'] and not self.is_scalping_time():
-        #     return None
-        # Código nuevo: Solo verificar sábados
         if interval in ['15m', '30m'] and not self.is_scalping_time():
             return None
         
@@ -3592,16 +3611,17 @@ class TradingIndicator:
         """Generar señales para todas las estrategias y símbolos"""
         all_signals = []
         
-        # Intervalos a verificar
-        intervals_to_check = ['15m', '30m', '1h', '2h', '4h', '8h', '12h', '1D', '1W']
+        # Intervalos a verificar para estrategias (solo los que tienen alertas específicas)
+        strategy_intervals = ['30m', '1h', '4h', '12h', '1D', '1W']
         
         current_time = self.get_bolivia_time()
         
-        for interval in intervals_to_check:
-            # Verificar si es momento de revisar este intervalo
-            should_check = self.calculate_remaining_time(interval, current_time)
-            if not should_check:
+        for interval in strategy_intervals:
+            # Verificar si es momento de revisar este intervalo para estrategias
+            if not self.should_check_strategy_interval(interval):
                 continue
+            
+            print(f"Revisando estrategias para intervalo {interval}...")
             
             for symbol in TOP_CRYPTO_SYMBOLS:
                 try:
@@ -3619,11 +3639,6 @@ class TradingIndicator:
                     
                     # Estrategia 3: Bollinger Squeeze Breakout
                     if interval in STRATEGY_TIMEFRAMES['Bollinger Squeeze Breakout']:
-                        # CAMBIO 1: Eliminar restricción horaria
-                        # Código original comentado:
-                        # if interval in ['15m', '30m'] and not self.is_scalping_time():
-                        #     continue
-                        # Código nuevo: Solo verificar sábados
                         if interval in ['15m', '30m'] and not self.is_scalping_time():
                             continue
                         signal = self.check_bollinger_squeeze_signal(symbol, interval)
@@ -3644,11 +3659,6 @@ class TradingIndicator:
                     
                     # Estrategia 6: Volume Spike Momentum
                     if interval in STRATEGY_TIMEFRAMES['Volume Spike Momentum']:
-                        # CAMBIO 1: Eliminar restricción horaria
-                        # Código original comentado:
-                        # if interval in ['15m', '30m'] and not self.is_scalping_time():
-                        #     continue
-                        # Código nuevo: Solo verificar sábados
                         if interval in ['15m', '30m'] and not self.is_scalping_time():
                             continue
                         signal = self.check_volume_spike_momentum_signal(symbol, interval)
@@ -3679,7 +3689,7 @@ class TradingIndicator:
                         if signal:
                             all_signals.append(signal)
                     
-                    # Estrategia 11: RSI Maverick Extreme - CAMBIO 2: Ahora incluye 4h
+                    # Estrategia 11: RSI Maverick Extreme
                     if interval in STRATEGY_TIMEFRAMES['RSI Maverick Extreme']:
                         signal = self.check_rsi_maverick_extreme_signal(symbol, interval)
                         if signal:
@@ -3693,11 +3703,6 @@ class TradingIndicator:
                     
                     # Estrategia 13: Desplome de Volumen (mejorada)
                     if interval in STRATEGY_TIMEFRAMES['Desplome de Volumen']:
-                        # CAMBIO 1: Eliminar restricción horaria
-                        # Código original comentado:
-                        # if interval in ['15m', '30m'] and not self.is_scalping_time():
-                        #     continue
-                        # Código nuevo: Solo verificar sábados
                         if interval in ['15m', '30m'] and not self.is_scalping_time():
                             continue
                         signal = self.check_desplome_volumen_signal(symbol, interval)
@@ -4005,11 +4010,6 @@ class TradingIndicator:
         current_time = self.get_bolivia_time()
         
         for interval in telegram_intervals:
-            # CAMBIO 1: Eliminar restricción horaria para 15m, 30m
-            # Código original comentado:
-            # if interval in ['15m', '30m'] and not self.is_scalping_time():
-            #     continue
-            # Código nuevo: Solo verificar sábados
             if interval in ['15m', '30m'] and not self.is_scalping_time():
                 continue
                 
@@ -4165,33 +4165,30 @@ def background_strategy_checker():
     """Verificador de estrategias en segundo plano"""
     print("Background strategy checker iniciado...")
     
-    # Tiempos de espera por intervalo (segundos)
-    interval_wait_times = {
-        '15m': 60,
-        '30m': 120,
-        '1h': 300,
-        '2h': 420,
-        '4h': 420,
-        '8h': 600,
-        '12h': 900,
-        '1D': 3600,
-        '1W': 10000
+    # Intervalos para estrategias con tiempos de espera específicos
+    strategy_intervals = {
+        '30m': 60,      # 1 minuto antes
+        '1h': 120,      # 2 minutos antes  
+        '4h': 240,      # 4 minutos antes
+        '12h': 360,     # 6 minutos antes
+        '1D': 420,      # 7 minutos antes
+        '1W': 600       # 10 minutos antes
     }
     
     # Última verificación por intervalo
-    last_checks = {interval: datetime.now() for interval in interval_wait_times.keys()}
+    last_checks = {interval: datetime.now() for interval in strategy_intervals.keys()}
     
     while True:
         try:
             current_time = datetime.now()
             
-            for interval, wait_time in interval_wait_times.items():
+            for interval, wait_time in strategy_intervals.items():
                 # Verificar si es tiempo de revisar este intervalo
                 if (current_time - last_checks[interval]).seconds >= wait_time:
                     print(f"Verificando estrategias para intervalo {interval}...")
                     
-                    # Verificar si es momento de la vela para este intervalo
-                    if indicator.calculate_remaining_time(interval, current_time):
+                    # Verificar si es momento específico de alerta para este intervalo
+                    if indicator.should_check_strategy_interval(interval):
                         # Generar señales para todas las estrategias
                         signals = indicator.generate_strategy_signals()
                         
