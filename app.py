@@ -114,9 +114,6 @@ class TradingIndicator:
         self.volume_ema_signals = {}
         self.strategy_signals = {}
         
-        # NUEVO: Diccionario para memoria de confirmación
-        self.confirmation_memory = {}
-        
     def get_bolivia_time(self):
         """Obtener hora actual de Bolivia"""
         return datetime.now(self.bolivia_tz)
@@ -124,13 +121,13 @@ class TradingIndicator:
     def is_scalping_time(self):
         """Verificar si es horario de scalping - 24/7 excepto sábados"""
         now = self.get_bolivia_time()
-        # Solo sábados no se opera
+        # Solo restringir sábados, operar 24/7 resto de días
         if now.weekday() == 5:  # 5 = sábado
             return False
         return True  # Operar 24/7 de domingo a viernes
 
-    def calculate_remaining_time(self, interval, current_time, custom_percent=None):
-        """Calcular tiempo restante para el cierre de la vela - MODIFICADO"""
+    def calculate_remaining_time(self, interval, current_time):
+        """Calcular tiempo restante para el cierre de la vela - CON LOS NUEVOS PORCENTAJES"""
         interval_seconds = {
             '15m': 900, '30m': 1800, '1h': 3600, '2h': 7200,
             '4h': 14400, '8h': 28800, '12h': 43200, '1D': 86400, '1W': 604800
@@ -138,157 +135,28 @@ class TradingIndicator:
         
         seconds = interval_seconds.get(interval, 3600)
         
-        if custom_percent is not None:
-            percent = custom_percent
-        elif interval in ['15m', '30m']:
-            percent = 50
-        elif interval in ['1h', '2h']:
-            percent = 50
-        elif interval in ['4h', '8h', '12h', '1D']:
-            percent = 75  # Cambio: de 25% a 75% (confirmación ideal)
+        # NUEVOS PORCENTAJES DE FORMACIÓN DE VELA
+        if interval in ['15m', '30m']:
+            percent = 50  # Mantener 50%
+        elif interval == '1h':
+            percent = 75  # Cambiado de 50% a 75%
+        elif interval == '2h':
+            percent = 75  # Cambiado de 50% a 75%
+        elif interval == '4h':
+            percent = 85  # Cambiado de 75% a 85%
+        elif interval == '8h':
+            percent = 90  # Cambiado de 75% a 90%
+        elif interval == '12h':
+            percent = 90  # Cambiado de 75% a 90%
+        elif interval == '1D':
+            percent = 95  # Cambiado de 75% a 95%
         elif interval == '1W':
-            percent = 90  # Cambio: de 10% a 90% (confirmación tardía)
+            percent = 99  # Cambiado de 90% a 99%
         else:
             percent = 50
         
         seconds_passed = current_time.timestamp() % seconds
         return seconds_passed >= (seconds * percent / 100)
-
-    # NUEVO: Función para obtener porcentajes de alerta específicos
-    def get_alert_percentage(self, interval):
-        """Obtener el porcentaje exacto para emitir alertas"""
-        alert_percentages = {
-            '15m': 98.33,  # 14m 45s (15s antes)
-            '30m': 98.33,  # 29m 30s (30s antes)
-            '1h': 98.33,   # 58m 48s (1m 12s antes)
-            '2h': 98.33,   # 1h 57m 36s (2m 24s antes)
-            '4h': 99.44,   # 3h 58m (2m antes)
-            '8h': 99.44,   # 7h 56m (4m antes)
-            '12h': 99.72,  # 11h 58m (2m antes)
-            '1D': 99.86,   # 23h 57m (3m antes)
-            '1W': 99.90    # 6d 23h 30m (30m antes)
-        }
-        return alert_percentages.get(interval, 98.33)
-
-    # NUEVO: Función para verificar si estamos en primera mitad de la vela
-    def is_first_half(self, interval, current_time):
-        """Verificar si estamos en la primera mitad de la vela operativa"""
-        interval_seconds = {
-            '15m': 900, '30m': 1800, '1h': 3600, '2h': 7200,
-            '4h': 14400, '8h': 28800, '12h': 43200, '1D': 86400, '1W': 604800
-        }
-        
-        seconds = interval_seconds.get(interval, 3600)
-        seconds_passed = current_time.timestamp() % seconds
-        
-        return seconds_passed < (seconds * 0.5)
-
-    # NUEVO: Función para obtener memoria de confirmación
-    def get_confirmation_memory(self, symbol, interval, strategy):
-        """Obtener estado de memoria de confirmación"""
-        key = f"{symbol}_{interval}_{strategy}"
-        return self.confirmation_memory.get(key, {
-            'confirmed': False,
-            'signal_type': None,
-            'first_half_confirmed': False,
-            'timestamp': None
-        })
-
-    # NUEVO: Función para actualizar memoria de confirmación
-    def update_confirmation_memory(self, symbol, interval, strategy, confirmed, signal_type):
-        """Actualizar memoria de confirmación"""
-        key = f"{symbol}_{interval}_{strategy}"
-        
-        current_time = self.get_bolivia_time()
-        is_first_half = self.is_first_half(interval, current_time)
-        
-        if is_first_half:
-            # Primera mitad: podemos establecer confirmación inicial
-            self.confirmation_memory[key] = {
-                'confirmed': confirmed,
-                'signal_type': signal_type,
-                'first_half_confirmed': confirmed,
-                'timestamp': current_time
-            }
-            print(f"Memoria actualizada (primera mitad) - {key}: {confirmed} ({signal_type})")
-        else:
-            # Segunda mitad: solo actualizar si ya había confirmación en primera mitad
-            memory = self.confirmation_memory.get(key, {
-                'confirmed': False,
-                'signal_type': None,
-                'first_half_confirmed': False,
-                'timestamp': None
-            })
-            
-            if memory['first_half_confirmed']:
-                # Solo mantener confirmación si no hay reversión
-                current_memory = memory.copy()
-                current_memory['confirmed'] = confirmed and (memory['signal_type'] == signal_type)
-                current_memory['timestamp'] = current_time
-                self.confirmation_memory[key] = current_memory
-                print(f"Memoria actualizada (segunda mitad) - {key}: {current_memory['confirmed']} ({signal_type})")
-
-    # NUEVO: Función para verificar confirmación con memoria
-    def check_confirmation_with_memory(self, symbol, interval, strategy, current_condition, signal_type):
-        """Verificar confirmación usando memoria de estado"""
-        current_time = self.get_bolivia_time()
-        is_first_half = self.is_first_half(interval, current_time)
-        
-        # Obtener memoria actual
-        memory = self.get_confirmation_memory(symbol, interval, strategy)
-        
-        if is_first_half:
-            # Primera mitad: actualizar memoria basada en condición actual
-            if current_condition:
-                self.update_confirmation_memory(symbol, interval, strategy, True, signal_type)
-                return True
-            else:
-                self.update_confirmation_memory(symbol, interval, strategy, False, None)
-                return False
-        else:
-            # Segunda mitad: verificar si hay reversión
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if memory['first_half_confirmed'] and memory['signal_type'] == signal_type:
-                if not current_condition:
-                    # Reversión detectada: invalidar confirmación
-                    self.update_confirmation_memory(symbol, interval, strategy, False, None)
-                    print(f"Reversión detectada - {symbol} {interval} {strategy}")
-                    return False
-                
-                # Si es momento de alerta, verificar confirmación final
-                if is_alert_time:
-                    final_confirmed = memory['confirmed'] and (memory['signal_type'] == signal_type)
-                    print(f"Verificación final en alerta - {symbol} {interval} {strategy}: {final_confirmed}")
-                    return final_confirmed
-                else:
-                    # Todavía no es momento de alerta, mantener estado actual
-                    return current_condition and (memory['signal_type'] == signal_type)
-            else:
-                # No hubo confirmación en primera mitad
-                return False
-
-    # NUEVO: Función para limpiar memoria expirada
-    def clean_expired_memory(self):
-        """Limpiar memoria de confirmación expirada"""
-        current_time = self.get_bolivia_time()
-        expired_keys = []
-        
-        for key, memory in self.confirmation_memory.items():
-            if memory['timestamp']:
-                # Considerar expirado después de 2 veces la duración del intervalo
-                interval_str = key.split('_')[1]
-                interval_seconds = {
-                    '15m': 900, '30m': 1800, '1h': 3600, '2h': 7200,
-                    '4h': 14400, '8h': 28800, '12h': 43200, '1D': 86400, '1W': 604800
-                }.get(interval_str, 3600)
-                
-                if (current_time - memory['timestamp']).total_seconds() > (interval_seconds * 2):
-                    expired_keys.append(key)
-        
-        for key in expired_keys:
-            del self.confirmation_memory[key]
 
     def get_kucoin_data(self, symbol, interval, limit=100):
         """Obtener datos de KuCoin con manejo robusto de errores"""
@@ -753,7 +621,7 @@ class TradingIndicator:
             return {'mayor': 'NEUTRAL', 'media': 'NEUTRAL', 'menor': 'NEUTRAL'}
 
     def check_multi_timeframe_obligatory(self, symbol, interval, signal_type):
-        """Verificar condiciones multi-timeframe obligatorias - MODIFICADO CON MEMORIA"""
+        """Verificar condiciones multi-timeframe obligatorias - CORREGIDO"""
         try:
             if interval in ['12h', '1D', '1W']:
                 return True
@@ -762,18 +630,6 @@ class TradingIndicator:
             if not hierarchy:
                 return False
             
-            # Verificar memoria de confirmación primero
-            current_time = self.get_bolivia_time()
-            is_alert_time = self.calculate_remaining_time(interval, current_time, self.get_alert_percentage(interval))
-            
-            if is_alert_time:
-                # En momento de alerta, verificar memoria
-                memory = self.get_confirmation_memory(symbol, interval, f"multiframe_{signal_type}")
-                if memory['first_half_confirmed'] and memory['signal_type'] == signal_type:
-                    print(f"Confirmación desde memoria: {symbol} {interval} {signal_type}")
-                    return memory['confirmed']
-            
-            # Análisis tradicional (para primera mitad o si no hay memoria)
             tf_analysis = self.check_multi_timeframe_trend(symbol, interval)
             
             if signal_type == 'LONG':
@@ -789,7 +645,7 @@ class TradingIndicator:
                     menor_ok = True
                     menor_no_trade = True
                 
-                current_condition = mayor_ok and media_ok and menor_ok and menor_no_trade
+                return mayor_ok and media_ok and menor_ok and menor_no_trade
                 
             elif signal_type == 'SHORT':
                 mayor_ok = tf_analysis.get('mayor', 'NEUTRAL') in ['BEARISH', 'NEUTRAL']
@@ -804,17 +660,9 @@ class TradingIndicator:
                     menor_ok = True
                     menor_no_trade = True
                 
-                current_condition = mayor_ok and media_ok and menor_ok and menor_no_trade
-            else:
-                current_condition = False
+                return mayor_ok and media_ok and menor_ok and menor_no_trade
             
-            # Actualizar memoria de confirmación
-            confirmed = self.check_confirmation_with_memory(
-                symbol, interval, f"multiframe_{signal_type}", 
-                current_condition, signal_type
-            )
-            
-            return confirmed
+            return False
             
         except Exception as e:
             print(f"Error verificando condiciones multi-timeframe obligatorias: {e}")
@@ -940,7 +788,7 @@ class TradingIndicator:
                 indicator[i] < np.max(indicator_window[:-1])):
                 bearish_div[i] = True
         
-        # Extender señal por 4 velas para RSI Maverick
+        # Extender señal por 4 velas para RSI Maverick y 7 para RSI Tradicional
         extended_bullish = bullish_div.copy()
         extended_bearish = bearish_div.copy()
         
@@ -1138,13 +986,13 @@ class TradingIndicator:
         return patterns
 
     def calculate_volume_anomaly(self, volume, close, period=20, std_multiplier=2):
-        """Calcular anomalías de volumen"""
+        """Calcular anomalías de volumen - NUEVA ESTRATEGIA"""
         try:
             n = len(volume)
             volume_anomaly = np.zeros(n, dtype=bool)
             volume_clusters = np.zeros(n, dtype=bool)
             volume_ratio = np.zeros(n)
-            volume_signal = ['NEUTRAL'] * n
+            volume_signal = ['NEUTRAL'] * n  # COMPRA, VENTA, NEUTRAL
             
             for i in range(period, n):
                 # Media móvil de volumen
@@ -1176,7 +1024,7 @@ class TradingIndicator:
                 # Detectar clusters (múltiples anomalías en 5 periodos)
                 if i >= 5:
                     recent_anomalies = volume_anomaly[max(0, i-4):i+1]
-                    if np.sum(recent_anomalies) >= 2:
+                    if np.sum(recent_anomalies) >= 2:  # Al menos 2 anomalías en 5 periodos
                         volume_clusters[i] = True
             
             return {
@@ -1254,9 +1102,9 @@ class TradingIndicator:
         adx_slope_positive = np.zeros(n, dtype=bool)
         
         for i in range(period, n):
-            if adx[i] > 25:
+            if adx[i] > 25:  # ADX por encima del nivel
                 slope = (adx[i] - adx[i-period]) / period
-                if slope > 0:
+                if slope > 0:  # Pendiente positiva
                     adx_slope_positive[i] = True
         
         return adx_slope_positive.tolist()
@@ -1322,7 +1170,7 @@ class TradingIndicator:
                     'volume_anomaly': 7
                 }
             }
-        else:
+        else:  # 1W
             weights = {
                 'long': {
                     'trend_strength': 55,
@@ -1355,6 +1203,7 @@ class TradingIndicator:
             'short': {}
         }
         
+        # Inicializar condiciones
         for signal_type in ['long', 'short']:
             for key, weight in weights[signal_type].items():
                 conditions[signal_type][key] = {
@@ -1369,6 +1218,7 @@ class TradingIndicator:
         if current_idx < 0 or current_idx >= len(data['close']):
             return conditions
         
+        # Obtener valores actuales
         current_price = data['close'][current_idx]
         ma_9 = data['ma_9'][current_idx] if current_idx < len(data['ma_9']) else 0
         ma_21 = data['ma_21'][current_idx] if current_idx < len(data['ma_21']) else 0
@@ -1390,14 +1240,17 @@ class TradingIndicator:
         
         conditions['long']['bollinger_bands']['value'] = data.get('bollinger_conditions_long', False)
         
+        # ADX con pendiente positiva
         conditions['long']['adx_dmi']['value'] = (
             data['adx_slope_positive'][current_idx] if current_idx < len(data.get('adx_slope_positive', [])) else False
         )
         
+        # Cruce de medias 9 y 21
         conditions['long']['ma_cross']['value'] = (
             data['ma_cross_bullish'][current_idx] if current_idx < len(data.get('ma_cross_bullish', [])) else False
         )
         
+        # Cruce de DMI
         conditions['long']['adx_dmi']['value'] = conditions['long']['adx_dmi']['value'] or (
             data['di_cross_bullish'][current_idx] if current_idx < len(data.get('di_cross_bullish', [])) else False
         )
@@ -1411,6 +1264,7 @@ class TradingIndicator:
             data['rsi_maverick_bullish_divergence'][current_idx]
         )
         
+        # Cruce MACD
         conditions['long']['macd']['value'] = (
             data['macd_cross_bullish'][current_idx] if current_idx < len(data.get('macd_cross_bullish', [])) else False
         )
@@ -1444,14 +1298,17 @@ class TradingIndicator:
         )
         conditions['short']['bollinger_bands']['value'] = data.get('bollinger_conditions_short', False)
         
+        # ADX con pendiente positiva para SHORT también
         conditions['short']['adx_dmi']['value'] = (
             data['adx_slope_positive'][current_idx] if current_idx < len(data.get('adx_slope_positive', [])) else False
         )
         
+        # Cruce de medias 9 y 21 (bajista)
         conditions['short']['ma_cross']['value'] = (
             data['ma_cross_bearish'][current_idx] if current_idx < len(data.get('ma_cross_bearish', [])) else False
         )
         
+        # Cruce de DMI (bajista)
         conditions['short']['adx_dmi']['value'] = conditions['short']['adx_dmi']['value'] or (
             data['di_cross_bearish'][current_idx] if current_idx < len(data.get('di_cross_bearish', [])) else False
         )
@@ -1465,6 +1322,7 @@ class TradingIndicator:
             data['rsi_maverick_bearish_divergence'][current_idx]
         )
         
+        # Cruce MACD (bajista)
         conditions['short']['macd']['value'] = (
             data['macd_cross_bearish'][current_idx] if current_idx < len(data.get('macd_cross_bearish', [])) else False
         )
@@ -1513,18 +1371,20 @@ class TradingIndicator:
         return "Patrón Chartista"
 
     def calculate_signal_score(self, conditions, signal_type, ma200_condition):
-        """Calcular puntuación de señal basada en condiciones ponderadas"""
+        """Calcular puntuación de señal basada en condiciones ponderadas - CORREGIDO"""
         total_weight = 0
         achieved_weight = 0
         fulfilled_conditions = []
         
         signal_conditions = conditions.get(signal_type, {})
         
+        # Verificar condiciones obligatorias según temporalidad
         obligatory_conditions = []
         for key, condition in signal_conditions.items():
-            if condition['weight'] >= 25:
+            if condition['weight'] >= 25:  # Condiciones con peso >= 25 son obligatorias
                 obligatory_conditions.append(key)
         
+        # Verificar que todas las condiciones obligatorias se cumplan
         all_obligatory_met = all(signal_conditions[cond]['value'] for cond in obligatory_conditions)
         
         if not all_obligatory_met:
@@ -1541,9 +1401,10 @@ class TradingIndicator:
         
         base_score = (achieved_weight / total_weight * 100)
         
+        # Score mínimo ajustado según posición de MA200
         if signal_type == 'long':
             min_score = 65 if ma200_condition == 'above' else 70
-        else:
+        else:  # short
             min_score = 65 if ma200_condition == 'below' else 70
         
         final_score = base_score if base_score >= min_score else 0
@@ -1551,28 +1412,16 @@ class TradingIndicator:
         return min(final_score, 100), fulfilled_conditions
 
     # ==============================================
-    # ESTRATEGIA: TREND RIDER (MODIFICADA CON MEMORIA)
+    # ESTRATEGIA: TREND RIDER
     # ==============================================
     def check_trend_rider_signal(self, symbol, interval):
-        """Estrategia Trend Rider para swing trading - MODIFICADA CON MEMORIA"""
+        """Estrategia Trend Rider para swing trading"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Trend Rider']:
             return None
         
         try:
-            # Verificar momento de alerta
-            current_time = self.get_bolivia_time()
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if not is_alert_time:
-                # Si no es momento de alerta, verificar memoria pero no emitir señal
-                memory = self.get_confirmation_memory(symbol, interval, 'TrendRider')
-                if memory['first_half_confirmed']:
-                    print(f"Trend Rider - Memoria activa: {symbol} {interval} {memory['signal_type']}")
-                return None
-            
             # Obtener datos de temporalidad actual
             df = self.get_kucoin_data(symbol, interval, 100)
             if df is None or len(df) < 50:
@@ -1612,37 +1461,24 @@ class TradingIndicator:
             if ftm_data['no_trade_zones'][-1]:
                 return None
             
-            # Determinar señal potencial
-            signal_type = None
-            if (current_price > mayor_ma200[-1] and
-                current_price > media_ma50[-1] and
+            # Condiciones para LONG
+            if (current_price > mayor_ma200[-1] and  # Precio > MA200 en temporalidad mayor
+                current_price > media_ma50[-1] and    # Precio > MA50 en temporalidad media
+                macd[-1] > signal[-1] and             # MACD > señal en temporalidad menor
+                macd[-2] <= signal[-2] and            # Cruce reciente
                 ftm_data['strength_signals'][-1] in ['STRONG_UP', 'WEAK_UP']):
                 
                 signal_type = 'LONG'
                 
-            elif (current_price < mayor_ma200[-1] and
-                  current_price < media_ma50[-1] and
+            # Condiciones para SHORT
+            elif (current_price < mayor_ma200[-1] and  # Precio < MA200 en temporalidad mayor
+                  current_price < media_ma50[-1] and    # Precio < MA50 en temporalidad media
+                  macd[-1] < signal[-1] and             # MACD < señal en temporalidad menor
+                  macd[-2] >= signal[-2] and            # Cruce reciente
                   ftm_data['strength_signals'][-1] in ['STRONG_DOWN', 'WEAK_DOWN']):
                 
                 signal_type = 'SHORT'
-            
-            if signal_type is None:
-                return None
-            
-            # Verificar condición de temporalidad menor con memoria
-            menor_condition = False
-            if signal_type == 'LONG':
-                menor_condition = (macd[-1] > signal[-1] and macd[-2] <= signal[-2])
             else:
-                menor_condition = (macd[-1] < signal[-1] and macd[-2] >= signal[-2])
-            
-            # Usar memoria de confirmación
-            confirmed = self.check_confirmation_with_memory(
-                symbol, interval, 'TrendRider', menor_condition, signal_type
-            )
-            
-            if not confirmed:
-                print(f"Trend Rider - No confirmado por memoria: {symbol} {interval} {signal_type}")
                 return None
             
             # Calcular niveles
@@ -1672,31 +1508,31 @@ class TradingIndicator:
                 'strategy': 'TREND RIDER',
                 'chart': chart_buffer,
                 'filters': [
-                    'Cruce MACD Temporalidad Menor (con memoria)',
+                    'Cruce MACD Temporalidad Menor',
                     f'Precio {" > " if signal_type == "LONG" else " < "} de MA50 Temporalidad Media',
                     f'Precio {" > " if signal_type == "LONG" else " < "} MA200 Temporalidad Mayor',
-                    f'FTMaverick: {ftm_data["strength_signals"][-1]}',
-                    f'Memoria de confirmación: ACTIVA'
+                    f'FTMaverick: {ftm_data["strength_signals"][-1]}'
                 ]
             }
             
-            print(f"Trend Rider - Señal emitida: {symbol} {interval} {signal_type}")
             return signal_data
             
         except Exception as e:
             print(f"Error en check_trend_rider_signal para {symbol} {interval}: {e}")
             return None
-
+    
     def generate_trend_rider_chart(self, symbol, interval, df, menor_df, mayor_ma200, media_ma50, 
                                   macd, signal, ftm_data, signal_type):
         """Generar gráfico para Trend Rider"""
         try:
             fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 14))
             
+            # Gráfico 1: Precio con MA200 y MA50 (últimas 50 velas)
             dates = df['timestamp'].iloc[-50:].values
             closes = df['close'].iloc[-50:].values
             dates_matplotlib = mdates.date2num(dates)
             
+            # Velas japonesas
             for i in range(len(dates_matplotlib)):
                 open_price = df['open'].iloc[-50+i]
                 close_price = df['close'].iloc[-50+i]
@@ -1707,6 +1543,7 @@ class TradingIndicator:
                 ax1.plot([dates_matplotlib[i], dates_matplotlib[i]], [low_price, high_price], color='black', linewidth=1)
                 ax1.plot([dates_matplotlib[i], dates_matplotlib[i]], [open_price, close_price], color=color, linewidth=3)
             
+            # MA200 y MA50
             ax1.plot(dates_matplotlib[-len(media_ma50[-50:]):], media_ma50[-50:], 'blue', linewidth=2, label='MA50')
             ax1.plot(dates_matplotlib[-len(mayor_ma200[-50:]):], mayor_ma200[-50:], 'purple', linewidth=2, label='MA200')
             
@@ -1714,6 +1551,7 @@ class TradingIndicator:
             ax1.legend()
             ax1.grid(True, alpha=0.3)
             
+            # Gráfico 2: MACD (temporalidad menor)
             menor_dates = mdates.date2num(menor_df['timestamp'].iloc[-50:].values)
             ax2.plot(menor_dates[-len(macd[-50:]):], macd[-50:], 'blue', linewidth=1, label='MACD')
             ax2.plot(menor_dates[-len(signal[-50:]):], signal[-50:], 'red', linewidth=1, label='Señal')
@@ -1722,6 +1560,7 @@ class TradingIndicator:
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             
+            # Gráfico 3: FTMaverick
             trend_strength = ftm_data['trend_strength'][-50:]
             colors = ftm_data['colors'][-50:]
             for i in range(len(dates_matplotlib)):
@@ -1731,6 +1570,7 @@ class TradingIndicator:
             ax3.set_ylabel('Fuerza Tendencia')
             ax3.grid(True, alpha=0.3)
             
+            # Gráfico 4: Histograma MACD
             histogram = macd[-50:] - signal[-50:]
             colors_hist = ['green' if x > 0 else 'red' for x in histogram]
             ax4.bar(menor_dates[-len(histogram):], histogram, color=colors_hist, alpha=0.6)
@@ -1749,29 +1589,18 @@ class TradingIndicator:
         except Exception as e:
             print(f"Error generando gráfico Trend Rider: {e}")
             return None
-
+    
     # ==============================================
-    # ESTRATEGIA: MOMENTUM DIVERGENCE (MODIFICADA CON MEMORIA)
+    # ESTRATEGIA: MOMENTUM DIVERGENCE
     # ==============================================
     def check_momentum_divergence_signal(self, symbol, interval):
-        """Estrategia Momentum Divergence para intraday - MODIFICADA CON MEMORIA"""
+        """Estrategia Momentum Divergence para intraday"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Momentum Divergence']:
             return None
         
         try:
-            # Verificar momento de alerta
-            current_time = self.get_bolivia_time()
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if not is_alert_time:
-                memory = self.get_confirmation_memory(symbol, interval, 'MomentumDivergence')
-                if memory['first_half_confirmed']:
-                    print(f"Momentum Divergence - Memoria activa: {symbol} {interval} {memory['signal_type']}")
-                return None
-            
             df = self.get_kucoin_data(symbol, interval, 100)
             if df is None or len(df) < 50:
                 return None
@@ -1797,36 +1626,20 @@ class TradingIndicator:
             if ftm_data['no_trade_zones'][-1]:
                 return None
             
-            # Determinar señal potencial
-            signal_type = None
+            # Condiciones para LONG
             if (rsi_bullish[-1] and rsi_maverick_bullish[-1] and
                 volume_data['volume_clusters'][-1] and volume_data['volume_signal'][-1] == 'COMPRA' and
                 ftm_data['strength_signals'][-1] in ['STRONG_UP', 'WEAK_UP']):
                 
                 signal_type = 'LONG'
                 
+            # Condiciones para SHORT
             elif (rsi_bearish[-1] and rsi_maverick_bearish[-1] and
                   volume_data['volume_clusters'][-1] and volume_data['volume_signal'][-1] == 'VENTA' and
                   ftm_data['strength_signals'][-1] in ['STRONG_DOWN', 'WEAK_DOWN']):
                 
                 signal_type = 'SHORT'
-            
-            if signal_type is None:
-                return None
-            
-            # Verificar condición completa con memoria
-            current_condition = (
-                (rsi_bullish[-1] and rsi_maverick_bullish[-1] and signal_type == 'LONG') or
-                (rsi_bearish[-1] and rsi_maverick_bearish[-1] and signal_type == 'SHORT')
-            )
-            
-            # Usar memoria de confirmación
-            confirmed = self.check_confirmation_with_memory(
-                symbol, interval, 'MomentumDivergence', current_condition, signal_type
-            )
-            
-            if not confirmed:
-                print(f"Momentum Divergence - No confirmado por memoria: {symbol} {interval} {signal_type}")
+            else:
                 return None
             
             # Calcular niveles
@@ -1853,24 +1666,23 @@ class TradingIndicator:
                     'Divergencia RSI Tradicional confirmada',
                     'Divergencia RSI Maverick confirmada',
                     'Clúster de volumen confirmado',
-                    f'FTMaverick: {ftm_data["strength_signals"][-1]}',
-                    f'Memoria de confirmación: ACTIVA'
+                    f'FTMaverick: {ftm_data["strength_signals"][-1]}'
                 ]
             }
             
-            print(f"Momentum Divergence - Señal emitida: {symbol} {interval} {signal_type}")
             return signal_data
             
         except Exception as e:
             print(f"Error en check_momentum_divergence_signal para {symbol} {interval}: {e}")
             return None
-
+    
     def generate_momentum_divergence_chart(self, symbol, interval, df, rsi_traditional, rsi_maverick, 
                                           volume_data, ftm_data, signal_type):
         """Generar gráfico para Momentum Divergence"""
         try:
             fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 14))
             
+            # Gráfico 1: Precio
             dates = df['timestamp'].iloc[-50:].values
             closes = df['close'].iloc[-50:].values
             dates_matplotlib = mdates.date2num(dates)
@@ -1888,6 +1700,7 @@ class TradingIndicator:
             ax1.set_title(f'Momentum Divergence - {symbol} - {interval} - Señal {signal_type}')
             ax1.grid(True, alpha=0.3)
             
+            # Gráfico 2: RSI Tradicional
             ax2.plot(dates_matplotlib, rsi_traditional[-50:], 'cyan', linewidth=2, label='RSI Tradicional')
             ax2.axhline(y=80, color='red', linestyle='--', alpha=0.7)
             ax2.axhline(y=20, color='green', linestyle='--', alpha=0.7)
@@ -1896,6 +1709,7 @@ class TradingIndicator:
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             
+            # Gráfico 3: RSI Maverick
             ax3.plot(dates_matplotlib, rsi_maverick[-50:], 'blue', linewidth=2, label='RSI Maverick')
             ax3.axhline(y=0.8, color='red', linestyle='--', alpha=0.7)
             ax3.axhline(y=0.2, color='green', linestyle='--', alpha=0.7)
@@ -1904,6 +1718,7 @@ class TradingIndicator:
             ax3.legend()
             ax3.grid(True, alpha=0.3)
             
+            # Gráfico 4: Volumen y FTMaverick
             volume = df['volume'].iloc[-50:].values
             colors_vol = []
             for i, signal in enumerate(volume_data['volume_signal'][-50:]):
@@ -1912,6 +1727,7 @@ class TradingIndicator:
             ax4.bar(dates_matplotlib, volume, color=colors_vol, alpha=0.6, label='Volumen')
             ax4.plot(dates_matplotlib, volume_data['volume_ma'][-50:], 'orange', linewidth=1, label='MA Volumen')
             
+            # Marcar clusters
             cluster_indices = [i for i, cluster in enumerate(volume_data['volume_clusters'][-50:]) if cluster]
             if cluster_indices:
                 for idx in cluster_indices:
@@ -1932,29 +1748,21 @@ class TradingIndicator:
         except Exception as e:
             print(f"Error generando gráfico Momentum Divergence: {e}")
             return None
-
+    
     # ==============================================
-    # ESTRATEGIA: BOLLINGER SQUEEZE BREAKOUT (MODIFICADA CON MEMORIA)
+    # ESTRATEGIA: BOLLINGER SQUEEZE BREAKOUT
     # ==============================================
     def check_bollinger_squeeze_signal(self, symbol, interval):
-        """Estrategia Bollinger Squeeze Breakout para scalping/intraday - MODIFICADA CON MEMORIA"""
+        """Estrategia Bollinger Squeeze Breakout para scalping/intraday"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Bollinger Squeeze Breakout']:
             return None
+        # Solo verificar sábados
+        if interval in ['15m', '30m'] and not self.is_scalping_time():
+            return None
         
         try:
-            # Verificar momento de alerta
-            current_time = self.get_bolivia_time()
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if not is_alert_time:
-                memory = self.get_confirmation_memory(symbol, interval, 'BollingerSqueeze')
-                if memory['first_half_confirmed']:
-                    print(f"Bollinger Squeeze - Memoria activa: {symbol} {interval} {memory['signal_type']}")
-                return None
-            
             df = self.get_kucoin_data(symbol, interval, 100)
             if df is None or len(df) < 50:
                 return None
@@ -1983,8 +1791,7 @@ class TradingIndicator:
             avg_bb_width = np.mean(bb_width[-20:])
             squeeze = bb_width[-1] < avg_bb_width * 0.7
             
-            # Determinar señal potencial
-            signal_type = None
+            # Condiciones para LONG
             if (squeeze and close[-1] > bb_upper[-1] and
                 volume_data['volume_anomaly'][-1] and volume_data['volume_signal'][-1] == 'COMPRA' and
                 adx[-1] > 25 and plus_di[-1] > minus_di[-1] and
@@ -1992,29 +1799,14 @@ class TradingIndicator:
                 
                 signal_type = 'LONG'
                 
+            # Condiciones para SHORT
             elif (squeeze and close[-1] < bb_lower[-1] and
                   volume_data['volume_anomaly'][-1] and volume_data['volume_signal'][-1] == 'VENTA' and
                   adx[-1] > 25 and minus_di[-1] > plus_di[-1] and
                   ftm_data['strength_signals'][-1] in ['STRONG_DOWN', 'WEAK_DOWN']):
                 
                 signal_type = 'SHORT'
-            
-            if signal_type is None:
-                return None
-            
-            # Verificar condición de breakout con memoria
-            current_condition = (
-                (squeeze and close[-1] > bb_upper[-1] and signal_type == 'LONG') or
-                (squeeze and close[-1] < bb_lower[-1] and signal_type == 'SHORT')
-            )
-            
-            # Usar memoria de confirmación
-            confirmed = self.check_confirmation_with_memory(
-                symbol, interval, 'BollingerSqueeze', current_condition, signal_type
-            )
-            
-            if not confirmed:
-                print(f"Bollinger Squeeze - No confirmado por memoria: {symbol} {interval} {signal_type}")
+            else:
                 return None
             
             # Calcular niveles
@@ -2042,24 +1834,23 @@ class TradingIndicator:
                     f'Breakout {"superior" if signal_type == "LONG" else "inferior"}',
                     f'ADX > 25: {adx[-1]:.1f}',
                     f'Volumen anómalo confirmado',
-                    f'FTMaverick: {ftm_data["strength_signals"][-1]}',
-                    f'Memoria de confirmación: ACTIVA'
+                    f'FTMaverick: {ftm_data["strength_signals"][-1]}'
                 ]
             }
             
-            print(f"Bollinger Squeeze - Señal emitida: {symbol} {interval} {signal_type}")
             return signal_data
             
         except Exception as e:
             print(f"Error en check_bollinger_squeeze_signal para {symbol} {interval}: {e}")
             return None
-
+    
     def generate_bollinger_squeeze_chart(self, symbol, interval, df, bb_upper, bb_middle, bb_lower,
                                         adx, plus_di, minus_di, ftm_data, signal_type):
         """Generar gráfico para Bollinger Squeeze"""
         try:
             fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 12))
             
+            # Gráfico 1: Precio con Bollinger Bands
             dates = df['timestamp'].iloc[-50:].values
             closes = df['close'].iloc[-50:].values
             dates_matplotlib = mdates.date2num(dates)
@@ -2074,6 +1865,7 @@ class TradingIndicator:
                 ax1.plot([dates_matplotlib[i], dates_matplotlib[i]], [low_price, high_price], color='black', linewidth=1)
                 ax1.plot([dates_matplotlib[i], dates_matplotlib[i]], [open_price, close_price], color=color, linewidth=3)
             
+            # Bollinger Bands
             ax1.plot(dates_matplotlib, bb_upper[-50:], 'orange', alpha=0.7, linewidth=1, label='BB Superior')
             ax1.plot(dates_matplotlib, bb_middle[-50:], 'orange', alpha=0.5, linewidth=1, label='BB Media')
             ax1.plot(dates_matplotlib, bb_lower[-50:], 'orange', alpha=0.7, linewidth=1, label='BB Inferior')
@@ -2083,6 +1875,7 @@ class TradingIndicator:
             ax1.legend()
             ax1.grid(True, alpha=0.3)
             
+            # Gráfico 2: ADX y DMI
             ax2.plot(dates_matplotlib, adx[-50:], 'black', linewidth=2, label='ADX')
             ax2.plot(dates_matplotlib, plus_di[-50:], 'green', linewidth=1, label='+DI')
             ax2.plot(dates_matplotlib, minus_di[-50:], 'red', linewidth=1, label='-DI')
@@ -2091,6 +1884,7 @@ class TradingIndicator:
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             
+            # Gráfico 3: FTMaverick
             trend_strength = ftm_data['trend_strength'][-50:]
             colors = ftm_data['colors'][-50:]
             for i in range(len(dates_matplotlib)):
@@ -2111,29 +1905,18 @@ class TradingIndicator:
         except Exception as e:
             print(f"Error generando gráfico Bollinger Squeeze: {e}")
             return None
-
+    
     # ==============================================
-    # ESTRATEGIA: ADX POWER TREND (MODIFICADA CON MEMORIA)
+    # ESTRATEGIA: ADX POWER TREND
     # ==============================================
     def check_adx_power_trend_signal(self, symbol, interval):
-        """Estrategia ADX Power Trend para swing trading - MODIFICADA CON MEMORIA"""
+        """Estrategia ADX Power Trend para swing trading"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['ADX Power Trend']:
             return None
         
         try:
-            # Verificar momento de alerta
-            current_time = self.get_bolivia_time()
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if not is_alert_time:
-                memory = self.get_confirmation_memory(symbol, interval, 'ADXPowerTrend')
-                if memory['first_half_confirmed']:
-                    print(f"ADX Power Trend - Memoria activa: {symbol} {interval} {memory['signal_type']}")
-                return None
-            
             df = self.get_kucoin_data(symbol, interval, 100)
             if df is None or len(df) < 50:
                 return None
@@ -2156,38 +1939,22 @@ class TradingIndicator:
             # Detectar cruce DMI
             di_cross_bullish, di_cross_bearish = self.check_di_crossover(plus_di, minus_di)
             
-            # Determinar señal potencial
-            signal_type = None
-            if (adx[-1] > 30 and adx[-1] > adx[-2] and
-                di_cross_bullish[-1] and
-                close[-1] > ma21[-1] and
+            # Condiciones para LONG
+            if (adx[-1] > 30 and adx[-1] > adx[-2] and  # ADX >30 y creciente
+                di_cross_bullish[-1] and                 # +DI cruza -DI
+                close[-1] > ma21[-1] and                 # Precio > MA21
                 ftm_data['strength_signals'][-1] in ['STRONG_UP', 'WEAK_UP']):
                 
                 signal_type = 'LONG'
                 
-            elif (adx[-1] > 30 and adx[-1] > adx[-2] and
-                  di_cross_bearish[-1] and
-                  close[-1] < ma21[-1] and
+            # Condiciones para SHORT
+            elif (adx[-1] > 30 and adx[-1] > adx[-2] and  # ADX >30 y creciente
+                  di_cross_bearish[-1] and                 # -DI cruza +DI
+                  close[-1] < ma21[-1] and                 # Precio < MA21
                   ftm_data['strength_signals'][-1] in ['STRONG_DOWN', 'WEAK_DOWN']):
                 
                 signal_type = 'SHORT'
-            
-            if signal_type is None:
-                return None
-            
-            # Verificar condición de cruce DMI con memoria
-            current_condition = (
-                (di_cross_bullish[-1] and signal_type == 'LONG') or
-                (di_cross_bearish[-1] and signal_type == 'SHORT')
-            )
-            
-            # Usar memoria de confirmación
-            confirmed = self.check_confirmation_with_memory(
-                symbol, interval, 'ADXPowerTrend', current_condition, signal_type
-            )
-            
-            if not confirmed:
-                print(f"ADX Power Trend - No confirmado por memoria: {symbol} {interval} {signal_type}")
+            else:
                 return None
             
             # Calcular niveles
@@ -2214,23 +1981,22 @@ class TradingIndicator:
                     f'ADX > 30 y creciente: {adx[-1]:.1f}',
                     f'{"+DI > -DI" if signal_type == "LONG" else "-DI > +DI"} cruce confirmado',
                     f'Precio {" > " if signal_type == "LONG" else " < "} MA21',
-                    f'FTMaverick: {ftm_data["strength_signals"][-1]}',
-                    f'Memoria de confirmación: ACTIVA'
+                    f'FTMaverick: {ftm_data["strength_signals"][-1]}'
                 ]
             }
             
-            print(f"ADX Power Trend - Señal emitida: {symbol} {interval} {signal_type}")
             return signal_data
             
         except Exception as e:
             print(f"Error en check_adx_power_trend_signal para {symbol} {interval}: {e}")
             return None
-
+    
     def generate_adx_power_chart(self, symbol, interval, df, adx, plus_di, minus_di, ma21, ftm_data, signal_type):
         """Generar gráfico para ADX Power Trend"""
         try:
             fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 12))
             
+            # Gráfico 1: Precio con MA21
             dates = df['timestamp'].iloc[-50:].values
             closes = df['close'].iloc[-50:].values
             dates_matplotlib = mdates.date2num(dates)
@@ -2245,12 +2011,14 @@ class TradingIndicator:
                 ax1.plot([dates_matplotlib[i], dates_matplotlib[i]], [low_price, high_price], color='black', linewidth=1)
                 ax1.plot([dates_matplotlib[i], dates_matplotlib[i]], [open_price, close_price], color=color, linewidth=3)
             
+            # MA21
             ax1.plot(dates_matplotlib, ma21[-50:], 'blue', linewidth=2, label='MA21')
             
             ax1.set_title(f'ADX Power Trend - {symbol} - {interval} - Señal {signal_type}')
             ax1.legend()
             ax1.grid(True, alpha=0.3)
             
+            # Gráfico 2: ADX y DMI
             ax2.plot(dates_matplotlib, adx[-50:], 'black', linewidth=2, label='ADX')
             ax2.plot(dates_matplotlib, plus_di[-50:], 'green', linewidth=1, label='+DI')
             ax2.plot(dates_matplotlib, minus_di[-50:], 'red', linewidth=1, label='-DI')
@@ -2259,6 +2027,7 @@ class TradingIndicator:
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             
+            # Gráfico 3: FTMaverick
             trend_strength = ftm_data['trend_strength'][-50:]
             colors = ftm_data['colors'][-50:]
             for i in range(len(dates_matplotlib)):
@@ -2279,29 +2048,18 @@ class TradingIndicator:
         except Exception as e:
             print(f"Error generando gráfico ADX Power Trend: {e}")
             return None
-
+    
     # ==============================================
-    # ESTRATEGIA: MACD HISTOGRAM REVERSAL (MODIFICADA CON MEMORIA)
+    # ESTRATEGIA: MACD HISTOGRAM REVERSAL
     # ==============================================
     def check_macd_histogram_reversal_signal(self, symbol, interval):
-        """Estrategia MACD Histogram Reversal para intraday - MODIFICADA CON MEMORIA"""
+        """Estrategia MACD Histogram Reversal para intraday"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['MACD Histogram Reversal']:
             return None
         
         try:
-            # Verificar momento de alerta
-            current_time = self.get_bolivia_time()
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if not is_alert_time:
-                memory = self.get_confirmation_memory(symbol, interval, 'MACDHistogramReversal')
-                if memory['first_half_confirmed']:
-                    print(f"MACD Histogram Reversal - Memoria activa: {symbol} {interval} {memory['signal_type']}")
-                return None
-            
             df = self.get_kucoin_data(symbol, interval, 100)
             if df is None or len(df) < 50:
                 return None
@@ -2330,8 +2088,7 @@ class TradingIndicator:
             # Cruce MA9/MA21
             ma_cross_bullish, ma_cross_bearish = self.check_ma_crossover(ma9, ma21)
             
-            # Determinar señal potencial
-            signal_type = None
+            # Condiciones para LONG
             if (hist_reversal_bullish and
                 ma_cross_bullish[-1] and
                 0.3 < rsi_maverick[-1] < 0.7 and
@@ -2339,29 +2096,14 @@ class TradingIndicator:
                 
                 signal_type = 'LONG'
                 
+            # Condiciones para SHORT
             elif (hist_reversal_bearish and
                   ma_cross_bearish[-1] and
                   0.3 < rsi_maverick[-1] < 0.7 and
                   ftm_data['strength_signals'][-1] in ['STRONG_DOWN', 'WEAK_DOWN']):
                 
                 signal_type = 'SHORT'
-            
-            if signal_type is None:
-                return None
-            
-            # Verificar condición de reversión con memoria
-            current_condition = (
-                (hist_reversal_bullish and signal_type == 'LONG') or
-                (hist_reversal_bearish and signal_type == 'SHORT')
-            )
-            
-            # Usar memoria de confirmación
-            confirmed = self.check_confirmation_with_memory(
-                symbol, interval, 'MACDHistogramReversal', current_condition, signal_type
-            )
-            
-            if not confirmed:
-                print(f"MACD Histogram Reversal - No confirmado por memoria: {symbol} {interval} {signal_type}")
+            else:
                 return None
             
             # Calcular niveles
@@ -2390,24 +2132,23 @@ class TradingIndicator:
                     f'Reversión histograma MACD confirmada',
                     f'Cruce MA9/MA21 en dirección {signal_type}',
                     f'RSI Maverick neutral: {rsi_maverick[-1]:.2f}',
-                    f'FTMaverick: {ftm_data["strength_signals"][-1]}',
-                    f'Memoria de confirmación: ACTIVA'
+                    f'FTMaverick: {ftm_data["strength_signals"][-1]}'
                 ]
             }
             
-            print(f"MACD Histogram Reversal - Señal emitida: {symbol} {interval} {signal_type}")
             return signal_data
             
         except Exception as e:
             print(f"Error en check_macd_histogram_reversal_signal para {symbol} {interval}: {e}")
             return None
-
+    
     def generate_macd_histogram_chart(self, symbol, interval, df, macd, signal, histogram, 
                                      ma9, ma21, rsi_maverick, ftm_data, signal_type):
         """Generar gráfico para MACD Histogram Reversal"""
         try:
             fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(14, 10))
             
+            # Gráfico 1: Precio con MA9 y MA21
             dates = df['timestamp'].iloc[-50:].values
             closes = df['close'].iloc[-50:].values
             dates_matplotlib = mdates.date2num(dates)
@@ -2429,6 +2170,7 @@ class TradingIndicator:
             ax1.legend()
             ax1.grid(True, alpha=0.3)
             
+            # Gráfico 2: MACD
             ax2.plot(dates_matplotlib, macd[-50:], 'blue', linewidth=1, label='MACD')
             ax2.plot(dates_matplotlib, signal[-50:], 'red', linewidth=1, label='Señal')
             ax2.axhline(y=0, color='gray', linestyle='-', alpha=0.5)
@@ -2436,17 +2178,20 @@ class TradingIndicator:
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             
+            # Gráfico 3: Histograma MACD
             colors_hist = ['green' if x > 0 else 'red' for x in histogram[-50:]]
             ax3.bar(dates_matplotlib, histogram[-50:], color=colors_hist, alpha=0.6)
             ax3.axhline(y=0, color='gray', linestyle='-', alpha=0.5)
             ax3.set_ylabel('MACD Histogram')
             ax3.grid(True, alpha=0.3)
             
+            # Gráfico 4: RSI Maverick y FTMaverick
             ax4.plot(dates_matplotlib, rsi_maverick[-50:], 'blue', linewidth=1, label='RSI Maverick')
             ax4.axhline(y=0.8, color='red', linestyle='--', alpha=0.3)
             ax4.axhline(y=0.2, color='green', linestyle='--', alpha=0.3)
             ax4.axhline(y=0.5, color='gray', linestyle='-', alpha=0.2)
             
+            # FTMaverick como área sombreada
             trend_strength = np.array(ftm_data['trend_strength'][-50:])
             ax4.fill_between(dates_matplotlib, trend_strength, 0, 
                            where=trend_strength > 0, color='green', alpha=0.2, label='Fuerza Alcista')
@@ -2469,29 +2214,21 @@ class TradingIndicator:
         except Exception as e:
             print(f"Error generando gráfico MACD Histogram: {e}")
             return None
-
+    
     # ==============================================
-    # ESTRATEGIA: VOLUME SPIKE MOMENTUM (MODIFICADA CON MEMORIA)
+    # ESTRATEGIA: VOLUME SPIKE MOMENTUM
     # ==============================================
     def check_volume_spike_momentum_signal(self, symbol, interval):
-        """Estrategia Volume Spike Momentum para scalping - MODIFICADA CON MEMORIA"""
+        """Estrategia Volume Spike Momentum para scalping"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Volume Spike Momentum']:
             return None
+        # Solo verificar sábados
+        if interval in ['15m', '30m'] and not self.is_scalping_time():
+            return None
         
         try:
-            # Verificar momento de alerta
-            current_time = self.get_bolivia_time()
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if not is_alert_time:
-                memory = self.get_confirmation_memory(symbol, interval, 'VolumeSpikeMomentum')
-                if memory['first_half_confirmed']:
-                    print(f"Volume Spike Momentum - Memoria activa: {symbol} {interval} {memory['signal_type']}")
-                return None
-            
             df = self.get_kucoin_data(symbol, interval, 100)
             if df is None or len(df) < 50:
                 return None
@@ -2513,7 +2250,7 @@ class TradingIndicator:
             if ftm_data['no_trade_zones'][-1]:
                 return None
             
-            # Verificar cluster de volumen
+            # Verificar cluster de volumen (mínimo 2 anomalías en 5 velas)
             recent_clusters = volume_data['volume_clusters'][-5:]
             has_cluster = sum(recent_clusters) >= 2
             
@@ -2523,34 +2260,17 @@ class TradingIndicator:
             # Determinar señal basada en último volumen signal
             last_signal = volume_data['volume_signal'][-1]
             
-            signal_type = None
             if last_signal == 'COMPRA' and close[-1] > ma21[-1] and 0.3 < rsi_maverick[-1] < 0.7:
                 signal_type = 'LONG'
             elif last_signal == 'VENTA' and close[-1] < ma21[-1] and 0.3 < rsi_maverick[-1] < 0.7:
                 signal_type = 'SHORT'
-            
-            if signal_type is None:
+            else:
                 return None
             
             # Verificar FTMaverick en dirección correcta
             if signal_type == 'LONG' and ftm_data['strength_signals'][-1] not in ['STRONG_UP', 'WEAK_UP']:
                 return None
             if signal_type == 'SHORT' and ftm_data['strength_signals'][-1] not in ['STRONG_DOWN', 'WEAK_DOWN']:
-                return None
-            
-            # Verificar condición de volumen con memoria
-            current_condition = (
-                (has_cluster and last_signal == 'COMPRA' and signal_type == 'LONG') or
-                (has_cluster and last_signal == 'VENTA' and signal_type == 'SHORT')
-            )
-            
-            # Usar memoria de confirmación
-            confirmed = self.check_confirmation_with_memory(
-                symbol, interval, 'VolumeSpikeMomentum', current_condition, signal_type
-            )
-            
-            if not confirmed:
-                print(f"Volume Spike Momentum - No confirmado por memoria: {symbol} {interval} {signal_type}")
                 return None
             
             # Calcular niveles
@@ -2580,24 +2300,23 @@ class TradingIndicator:
                     f'Volumen signal: {last_signal}',
                     f'Precio {" > " if signal_type == "LONG" else " < "} MA21',
                     f'RSI Maverick neutral: {rsi_maverick[-1]:.2f}',
-                    f'FTMaverick: {ftm_data["strength_signals"][-1]}',
-                    f'Memoria de confirmación: ACTIVA'
+                    f'FTMaverick: {ftm_data["strength_signals"][-1]}'
                 ]
             }
             
-            print(f"Volume Spike Momentum - Señal emitida: {symbol} {interval} {signal_type}")
             return signal_data
             
         except Exception as e:
             print(f"Error en check_volume_spike_momentum_signal para {symbol} {interval}: {e}")
             return None
-
+    
     def generate_volume_spike_chart(self, symbol, interval, df, volume_data, ma21, rsi_maverick, 
                                    ftm_data, signal_type):
         """Generar gráfico para Volume Spike Momentum"""
         try:
             fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 14))
             
+            # Gráfico 1: Precio con MA21
             dates = df['timestamp'].iloc[-50:].values
             closes = df['close'].iloc[-50:].values
             dates_matplotlib = mdates.date2num(dates)
@@ -2617,6 +2336,7 @@ class TradingIndicator:
             ax1.legend()
             ax1.grid(True, alpha=0.3)
             
+            # Gráfico 2: Volumen
             volume = df['volume'].iloc[-50:].values
             colors_vol = []
             for i, signal in enumerate(volume_data['volume_signal'][-50:]):
@@ -2625,6 +2345,7 @@ class TradingIndicator:
             ax2.bar(dates_matplotlib, volume, color=colors_vol, alpha=0.6, label='Volumen')
             ax2.plot(dates_matplotlib, volume_data['volume_ma'][-50:], 'orange', linewidth=1, label='MA Volumen')
             
+            # Marcar anomalías
             anomaly_indices = [i for i, anomaly in enumerate(volume_data['volume_anomaly'][-50:]) if anomaly]
             if anomaly_indices:
                 for idx in anomaly_indices:
@@ -2634,6 +2355,7 @@ class TradingIndicator:
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             
+            # Gráfico 3: RSI Maverick
             ax3.plot(dates_matplotlib, rsi_maverick[-50:], 'blue', linewidth=2, label='RSI Maverick')
             ax3.axhline(y=0.8, color='red', linestyle='--', alpha=0.3)
             ax3.axhline(y=0.2, color='green', linestyle='--', alpha=0.3)
@@ -2642,6 +2364,7 @@ class TradingIndicator:
             ax3.legend()
             ax3.grid(True, alpha=0.3)
             
+            # Gráfico 4: FTMaverick
             trend_strength = ftm_data['trend_strength'][-50:]
             colors = ftm_data['colors'][-50:]
             for i in range(len(dates_matplotlib)):
@@ -2662,29 +2385,18 @@ class TradingIndicator:
         except Exception as e:
             print(f"Error generando gráfico Volume Spike: {e}")
             return None
-
+    
     # ==============================================
-    # ESTRATEGIA: DOUBLE CONFIRMATION RSI (MODIFICADA CON MEMORIA)
+    # ESTRATEGIA: DOUBLE CONFIRMATION RSI
     # ==============================================
     def check_double_confirmation_rsi_signal(self, symbol, interval):
-        """Estrategia Double Confirmation RSI para intraday - MODIFICADA CON MEMORIA"""
+        """Estrategia Double Confirmation RSI para intraday"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Double Confirmation RSI']:
             return None
         
         try:
-            # Verificar momento de alerta
-            current_time = self.get_bolivia_time()
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if not is_alert_time:
-                memory = self.get_confirmation_memory(symbol, interval, 'DoubleConfirmationRSI')
-                if memory['first_half_confirmed']:
-                    print(f"Double Confirmation RSI - Memoria activa: {symbol} {interval} {memory['signal_type']}")
-                return None
-            
             df = self.get_kucoin_data(symbol, interval, 100)
             if df is None or len(df) < 50:
                 return None
@@ -2705,38 +2417,22 @@ class TradingIndicator:
             if ftm_data['no_trade_zones'][-1]:
                 return None
             
-            # Determinar señal potencial
-            signal_type = None
-            if (rsi_traditional[-1] < 30 and rsi_traditional[-2] >= 30 and
-                rsi_maverick[-1] < 0.2 and rsi_maverick[-2] >= 0.2 and
-                close[-1] <= bb_lower[-1] * 1.02 and
+            # Condiciones para LONG (sobreventa)
+            if (rsi_traditional[-1] < 30 and rsi_traditional[-2] >= 30 and  # RSI sale de sobreventa
+                rsi_maverick[-1] < 0.2 and rsi_maverick[-2] >= 0.2 and      # RSI Maverick sale de sobreventa
+                close[-1] <= bb_lower[-1] * 1.02 and                       # Precio cerca banda inferior
                 ftm_data['strength_signals'][-1] in ['STRONG_UP', 'WEAK_UP']):
                 
                 signal_type = 'LONG'
                 
-            elif (rsi_traditional[-1] > 70 and rsi_traditional[-2] <= 70 and
-                  rsi_maverick[-1] > 0.8 and rsi_maverick[-2] <= 0.8 and
-                  close[-1] >= bb_upper[-1] * 0.98 and
+            # Condiciones para SHORT (sobrecompra)
+            elif (rsi_traditional[-1] > 70 and rsi_traditional[-2] <= 70 and  # RSI sale de sobrecompra
+                  rsi_maverick[-1] > 0.8 and rsi_maverick[-2] <= 0.8 and      # RSI Maverick sale de sobrecompra
+                  close[-1] >= bb_upper[-1] * 0.98 and                       # Precio cerca banda superior
                   ftm_data['strength_signals'][-1] in ['STRONG_DOWN', 'WEAK_DOWN']):
                 
                 signal_type = 'SHORT'
-            
-            if signal_type is None:
-                return None
-            
-            # Verificar condición de RSI con memoria
-            current_condition = (
-                (rsi_traditional[-1] < 30 and rsi_maverick[-1] < 0.2 and signal_type == 'LONG') or
-                (rsi_traditional[-1] > 70 and rsi_maverick[-1] > 0.8 and signal_type == 'SHORT')
-            )
-            
-            # Usar memoria de confirmación
-            confirmed = self.check_confirmation_with_memory(
-                symbol, interval, 'DoubleConfirmationRSI', current_condition, signal_type
-            )
-            
-            if not confirmed:
-                print(f"Double Confirmation RSI - No confirmado por memoria: {symbol} {interval} {signal_type}")
+            else:
                 return None
             
             # Calcular niveles
@@ -2766,24 +2462,23 @@ class TradingIndicator:
                     f'RSI Tradicional {"sale de sobreventa" if signal_type == "LONG" else "sale de sobrecompra"}',
                     f'RSI Maverick {"sale de sobreventa" if signal_type == "LONG" else "sale de sobrecompra"}',
                     f'Precio cerca banda {"inferior" if signal_type == "LONG" else "superior"} BB',
-                    f'FTMaverick: {ftm_data["strength_signals"][-1]}',
-                    f'Memoria de confirmación: ACTIVA'
+                    f'FTMaverick: {ftm_data["strength_signals"][-1]}'
                 ]
             }
             
-            print(f"Double Confirmation RSI - Señal emitida: {symbol} {interval} {signal_type}")
             return signal_data
             
         except Exception as e:
             print(f"Error en check_double_confirmation_rsi_signal para {symbol} {interval}: {e}")
             return None
-
+    
     def generate_double_rsi_chart(self, symbol, interval, df, rsi_traditional, rsi_maverick, 
                                  bb_upper, bb_middle, bb_lower, ftm_data, signal_type):
         """Generar gráfico para Double Confirmation RSI"""
         try:
             fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 14))
             
+            # Gráfico 1: Precio con Bollinger Bands
             dates = df['timestamp'].iloc[-50:].values
             closes = df['close'].iloc[-50:].values
             dates_matplotlib = mdates.date2num(dates)
@@ -2807,6 +2502,7 @@ class TradingIndicator:
             ax1.legend()
             ax1.grid(True, alpha=0.3)
             
+            # Gráfico 2: RSI Tradicional
             ax2.plot(dates_matplotlib, rsi_traditional[-50:], 'cyan', linewidth=2, label='RSI Tradicional')
             ax2.axhline(y=70, color='red', linestyle='--', alpha=0.7, label='Sobrecompra')
             ax2.axhline(y=30, color='green', linestyle='--', alpha=0.7, label='Sobreventa')
@@ -2815,6 +2511,7 @@ class TradingIndicator:
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             
+            # Gráfico 3: RSI Maverick
             ax3.plot(dates_matplotlib, rsi_maverick[-50:], 'blue', linewidth=2, label='RSI Maverick')
             ax3.axhline(y=0.8, color='red', linestyle='--', alpha=0.7, label='Sobrecompra')
             ax3.axhline(y=0.2, color='green', linestyle='--', alpha=0.7, label='Sobreventa')
@@ -2823,6 +2520,7 @@ class TradingIndicator:
             ax3.legend()
             ax3.grid(True, alpha=0.3)
             
+            # Gráfico 4: FTMaverick
             trend_strength = ftm_data['trend_strength'][-50:]
             colors = ftm_data['colors'][-50:]
             for i in range(len(dates_matplotlib)):
@@ -2843,29 +2541,18 @@ class TradingIndicator:
         except Exception as e:
             print(f"Error generando gráfico Double RSI: {e}")
             return None
-
+    
     # ==============================================
-    # ESTRATEGIA: TREND STRENGTH MAVERICK (MODIFICADA CON MEMORIA)
+    # ESTRATEGIA: TREND STRENGTH MAVERICK
     # ==============================================
     def check_trend_strength_maverick_signal(self, symbol, interval):
-        """Estrategia Trend Strength Maverick para swing trading - MODIFICADA CON MEMORIA"""
+        """Estrategia Trend Strength Maverick para swing trading"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Trend Strength Maverick']:
             return None
         
         try:
-            # Verificar momento de alerta
-            current_time = self.get_bolivia_time()
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if not is_alert_time:
-                memory = self.get_confirmation_memory(symbol, interval, 'TrendStrengthMaverick')
-                if memory['first_half_confirmed']:
-                    print(f"Trend Strength Maverick - Memoria activa: {symbol} {interval} {memory['signal_type']}")
-                return None
-            
             df = self.get_kucoin_data(symbol, interval, 100)
             if df is None or len(df) < 50:
                 return None
@@ -2892,7 +2579,6 @@ class TradingIndicator:
                 return None
             
             # Determinar señal
-            signal_type = None
             if (ftm_data['strength_signals'][-1] == 'STRONG_UP' and
                 close[-1] > ma50[-1] and
                 volume_confirmation):
@@ -2904,23 +2590,7 @@ class TradingIndicator:
                   volume_confirmation):
                 
                 signal_type = 'SHORT'
-            
-            if signal_type is None:
-                return None
-            
-            # Verificar condición de fuerza con memoria
-            current_condition = (
-                (ftm_data['strength_signals'][-1] == 'STRONG_UP' and signal_type == 'LONG') or
-                (ftm_data['strength_signals'][-1] == 'STRONG_DOWN' and signal_type == 'SHORT')
-            )
-            
-            # Usar memoria de confirmación
-            confirmed = self.check_confirmation_with_memory(
-                symbol, interval, 'TrendStrengthMaverick', current_condition, signal_type
-            )
-            
-            if not confirmed:
-                print(f"Trend Strength Maverick - No confirmado por memoria: {symbol} {interval} {signal_type}")
+            else:
                 return None
             
             # Calcular niveles
@@ -2948,23 +2618,22 @@ class TradingIndicator:
                     f'FTMaverick: {ftm_data["strength_signals"][-1]}',
                     f'Precio {" > " if signal_type == "LONG" else " < "} MA50',
                     'Volumen > MA Volumen confirmado',
-                    'Zona No-Operar evitada',
-                    f'Memoria de confirmación: ACTIVA'
+                    'Zona No-Operar evitada'
                 ]
             }
             
-            print(f"Trend Strength Maverick - Señal emitida: {symbol} {interval} {signal_type}")
             return signal_data
             
         except Exception as e:
             print(f"Error en check_trend_strength_maverick_signal para {symbol} {interval}: {e}")
             return None
-
+    
     def generate_trend_strength_chart(self, symbol, interval, df, ftm_data, ma50, signal_type):
         """Generar gráfico para Trend Strength Maverick"""
         try:
             fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 12))
             
+            # Gráfico 1: Precio con MA50
             dates = df['timestamp'].iloc[-50:].values
             closes = df['close'].iloc[-50:].values
             dates_matplotlib = mdates.date2num(dates)
@@ -2984,15 +2653,18 @@ class TradingIndicator:
             ax1.legend()
             ax1.grid(True, alpha=0.3)
             
+            # Gráfico 2: Fuerza de Tendencia Maverick
             trend_strength = ftm_data['trend_strength'][-50:]
             colors = ftm_data['colors'][-50:]
             for i in range(len(dates_matplotlib)):
                 ax2.bar(dates_matplotlib[i], trend_strength[i], color=colors[i], alpha=0.7, width=0.8)
             
+            # Líneas de umbral
             ax2.axhline(y=ftm_data['high_zone_threshold'], color='orange', linestyle='--', 
                        alpha=0.7, label='Umbral Alto')
             ax2.axhline(y=-ftm_data['high_zone_threshold'], color='orange', linestyle='--', alpha=0.7)
             
+            # Zonas No-Operar
             no_trade_zones = ftm_data['no_trade_zones'][-50:]
             for i, no_trade in enumerate(no_trade_zones):
                 if no_trade:
@@ -3002,12 +2674,14 @@ class TradingIndicator:
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             
+            # Gráfico 3: Bandas FTMaverick
             ax3.plot(dates_matplotlib, ftm_data['upper_band'][-50:], 'orange', alpha=0.5, linewidth=1, label='Banda Superior')
             ax3.plot(dates_matplotlib, ftm_data['basis'][-50:], 'orange', alpha=0.7, linewidth=1, label='Base')
             ax3.plot(dates_matplotlib, ftm_data['lower_band'][-50:], 'orange', alpha=0.5, linewidth=1, label='Banda Inferior')
             ax3.fill_between(dates_matplotlib, ftm_data['lower_band'][-50:], ftm_data['upper_band'][-50:], 
                            color='orange', alpha=0.1)
             
+            # Precio
             ax3.plot(dates_matplotlib, closes, 'blue', alpha=0.7, linewidth=1, label='Precio')
             
             ax3.set_ylabel('Bandas FTMaverick')
@@ -3025,29 +2699,18 @@ class TradingIndicator:
         except Exception as e:
             print(f"Error generando gráfico Trend Strength: {e}")
             return None
-
+    
     # ==============================================
-    # ESTRATEGIA: WHALE FOLLOWING (MODIFICADA CON MEMORIA)
+    # ESTRATEGIA: WHALE FOLLOWING
     # ==============================================
     def check_whale_following_signal(self, symbol, interval):
-        """Estrategia Whale Following para swing largo - MODIFICADA CON MEMORIA"""
+        """Estrategia Whale Following para swing largo"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Whale Following']:
             return None
         
         try:
-            # Verificar momento de alerta
-            current_time = self.get_bolivia_time()
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if not is_alert_time:
-                memory = self.get_confirmation_memory(symbol, interval, 'WhaleFollowing')
-                if memory['first_half_confirmed']:
-                    print(f"Whale Following - Memoria activa: {symbol} {interval} {memory['signal_type']}")
-                return None
-            
             df = self.get_kucoin_data(symbol, interval, 100)
             if df is None or len(df) < 50:
                 return None
@@ -3073,36 +2736,20 @@ class TradingIndicator:
             # Condición obligatoria cruce DMI
             di_cross_bullish, di_cross_bearish = self.check_di_crossover(plus_di, minus_di)
             
-            # Determinar señal
-            signal_type = None
+            # Condiciones para LONG
             if (whale_data['confirmed_buy'][-1] and whale_data['whale_pump'][-1] > 20 and
                 close[-1] > ma200[-1] and adx[-1] > 25 and di_cross_bullish[-1] and
                 ftm_data['strength_signals'][-1] in ['STRONG_UP', 'WEAK_UP']):
                 
                 signal_type = 'LONG'
                 
+            # Condiciones para SHORT
             elif (whale_data['confirmed_sell'][-1] and whale_data['whale_dump'][-1] > 20 and
                   close[-1] < ma200[-1] and adx[-1] > 25 and di_cross_bearish[-1] and
                   ftm_data['strength_signals'][-1] in ['STRONG_DOWN', 'WEAK_DOWN']):
                 
                 signal_type = 'SHORT'
-            
-            if signal_type is None:
-                return None
-            
-            # Verificar condición de ballenas con memoria
-            current_condition = (
-                (whale_data['confirmed_buy'][-1] and signal_type == 'LONG') or
-                (whale_data['confirmed_sell'][-1] and signal_type == 'SHORT')
-            )
-            
-            # Usar memoria de confirmación
-            confirmed = self.check_confirmation_with_memory(
-                symbol, interval, 'WhaleFollowing', current_condition, signal_type
-            )
-            
-            if not confirmed:
-                print(f"Whale Following - No confirmado por memoria: {symbol} {interval} {signal_type}")
+            else:
                 return None
             
             # Calcular niveles
@@ -3130,24 +2777,23 @@ class TradingIndicator:
                     f'Precio {" > " if signal_type == "LONG" else " < "} MA200',
                     f'ADX > 25: {adx[-1]:.1f}',
                     f'{"+DI > -DI" if signal_type == "LONG" else "-DI > +DI"} cruce confirmado',
-                    f'FTMaverick: {ftm_data["strength_signals"][-1]}',
-                    f'Memoria de confirmación: ACTIVA'
+                    f'FTMaverick: {ftm_data["strength_signals"][-1]}'
                 ]
             }
             
-            print(f"Whale Following - Señal emitida: {symbol} {interval} {signal_type}")
             return signal_data
             
         except Exception as e:
             print(f"Error en check_whale_following_signal para {symbol} {interval}: {e}")
             return None
-
+    
     def generate_whale_following_chart(self, symbol, interval, df, whale_data, ma200, 
                                       adx, plus_di, minus_di, ftm_data, signal_type):
         """Generar gráfico para Whale Following"""
         try:
             fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 14))
             
+            # Gráfico 1: Precio con MA200
             dates = df['timestamp'].iloc[-50:].values
             closes = df['close'].iloc[-50:].values
             dates_matplotlib = mdates.date2num(dates)
@@ -3167,11 +2813,13 @@ class TradingIndicator:
             ax1.legend()
             ax1.grid(True, alpha=0.3)
             
+            # Gráfico 2: Señales de Ballenas
             ax2.bar(dates_matplotlib, whale_data['whale_pump'][-50:], 
                    color='green', alpha=0.6, label='Ballenas Compradoras')
             ax2.bar(dates_matplotlib, [-x for x in whale_data['whale_dump'][-50:]], 
                    color='red', alpha=0.6, label='Ballenas Vendedoras')
             
+            # Marcar señales confirmadas
             confirmed_buy_indices = [i for i, confirmed in enumerate(whale_data['confirmed_buy'][-50:]) if confirmed]
             confirmed_sell_indices = [i for i, confirmed in enumerate(whale_data['confirmed_sell'][-50:]) if confirmed]
             
@@ -3189,6 +2837,7 @@ class TradingIndicator:
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             
+            # Gráfico 3: ADX y DMI
             ax3.plot(dates_matplotlib, adx[-50:], 'black', linewidth=2, label='ADX')
             ax3.plot(dates_matplotlib, plus_di[-50:], 'green', linewidth=1, label='+DI')
             ax3.plot(dates_matplotlib, minus_di[-50:], 'red', linewidth=1, label='-DI')
@@ -3197,6 +2846,7 @@ class TradingIndicator:
             ax3.legend()
             ax3.grid(True, alpha=0.3)
             
+            # Gráfico 4: FTMaverick
             trend_strength = ftm_data['trend_strength'][-50:]
             colors = ftm_data['colors'][-50:]
             for i in range(len(dates_matplotlib)):
@@ -3217,29 +2867,18 @@ class TradingIndicator:
         except Exception as e:
             print(f"Error generando gráfico Whale Following: {e}")
             return None
-
+    
     # ==============================================
-    # ESTRATEGIA: MA CONVERGENCE DIVERGENCE (MODIFICADA CON MEMORIA)
+    # ESTRATEGIA: MA CONVERGENCE DIVERGENCE
     # ==============================================
     def check_ma_convergence_signal(self, symbol, interval):
-        """Estrategia MA Convergence Divergence para swing trading - MODIFICADA CON MEMORIA"""
+        """Estrategia MA Convergence Divergence para swing trading"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['MA Convergence Divergence']:
             return None
         
         try:
-            # Verificar momento de alerta
-            current_time = self.get_bolivia_time()
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if not is_alert_time:
-                memory = self.get_confirmation_memory(symbol, interval, 'MAConvergenceDivergence')
-                if memory['first_half_confirmed']:
-                    print(f"MA Convergence Divergence - Memoria activa: {symbol} {interval} {memory['signal_type']}")
-                return None
-            
             df = self.get_kucoin_data(symbol, interval, 100)
             if df is None or len(df) < 50:
                 return None
@@ -3267,36 +2906,20 @@ class TradingIndicator:
             separation_ok_bullish = (ma9[-1] - ma21[-1]) > close[-1] * 0.01 and (ma21[-1] - ma50[-1]) > close[-1] * 0.01
             separation_ok_bearish = (ma21[-1] - ma9[-1]) > close[-1] * 0.01 and (ma50[-1] - ma21[-1]) > close[-1] * 0.01
             
-            # Determinar señal
-            signal_type = None
+            # Condiciones para LONG
             if (ma_aligned_bullish and separation_ok_bullish and
                 histogram[-1] > 0 and histogram[-2] <= 0 and
                 ftm_data['strength_signals'][-1] in ['STRONG_UP', 'WEAK_UP']):
                 
                 signal_type = 'LONG'
                 
+            # Condiciones para SHORT
             elif (ma_aligned_bearish and separation_ok_bearish and
                   histogram[-1] < 0 and histogram[-2] >= 0 and
                   ftm_data['strength_signals'][-1] in ['STRONG_DOWN', 'WEAK_DOWN']):
                 
                 signal_type = 'SHORT'
-            
-            if signal_type is None:
-                return None
-            
-            # Verificar condición de alineación con memoria
-            current_condition = (
-                (ma_aligned_bullish and separation_ok_bullish and signal_type == 'LONG') or
-                (ma_aligned_bearish and separation_ok_bearish and signal_type == 'SHORT')
-            )
-            
-            # Usar memoria de confirmación
-            confirmed = self.check_confirmation_with_memory(
-                symbol, interval, 'MAConvergenceDivergence', current_condition, signal_type
-            )
-            
-            if not confirmed:
-                print(f"MA Convergence Divergence - No confirmado por memoria: {symbol} {interval} {signal_type}")
+            else:
                 return None
             
             # Calcular niveles
@@ -3325,24 +2948,23 @@ class TradingIndicator:
                     f'Alineación MA9 > MA21 > MA50 confirmada',
                     f'Separación >1% entre medias',
                     f'Histograma MACD positivo para LONG/negativo para SHORT',
-                    f'FTMaverick: {ftm_data["strength_signals"][-1]}',
-                    f'Memoria de confirmación: ACTIVA'
+                    f'FTMaverick: {ftm_data["strength_signals"][-1]}'
                 ]
             }
             
-            print(f"MA Convergence Divergence - Señal emitida: {symbol} {interval} {signal_type}")
             return signal_data
             
         except Exception as e:
             print(f"Error en check_ma_convergence_signal para {symbol} {interval}: {e}")
             return None
-
+    
     def generate_ma_convergence_chart(self, symbol, interval, df, ma9, ma21, ma50, 
                                      macd, histogram, ftm_data, signal_type):
         """Generar gráfico para MA Convergence"""
         try:
             fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 12))
             
+            # Gráfico 1: Precio con MAs
             dates = df['timestamp'].iloc[-50:].values
             closes = df['close'].iloc[-50:].values
             dates_matplotlib = mdates.date2num(dates)
@@ -3365,12 +2987,14 @@ class TradingIndicator:
             ax1.legend()
             ax1.grid(True, alpha=0.3)
             
+            # Gráfico 2: MACD Histogram
             colors_hist = ['green' if x > 0 else 'red' for x in histogram[-50:]]
             ax2.bar(dates_matplotlib, histogram[-50:], color=colors_hist, alpha=0.6)
             ax2.axhline(y=0, color='gray', linestyle='-', alpha=0.5)
             ax2.set_ylabel('MACD Histogram')
             ax2.grid(True, alpha=0.3)
             
+            # Gráfico 3: FTMaverick
             trend_strength = ftm_data['trend_strength'][-50:]
             colors = ftm_data['colors'][-50:]
             for i in range(len(dates_matplotlib)):
@@ -3391,29 +3015,18 @@ class TradingIndicator:
         except Exception as e:
             print(f"Error generando gráfico MA Convergence: {e}")
             return None
-
+    
     # ==============================================
-    # ESTRATEGIA: RSI MAVERICK EXTREME (MODIFICADA CON MEMORIA)
+    # ESTRATEGIA: RSI MAVERICK EXTREME
     # ==============================================
     def check_rsi_maverick_extreme_signal(self, symbol, interval):
-        """Estrategia RSI Maverick Extreme para intraday - MODIFICADA CON MEMORIA"""
+        """Estrategia RSI Maverick Extreme para intraday"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['RSI Maverick Extreme']:
             return None
         
         try:
-            # Verificar momento de alerta
-            current_time = self.get_bolivia_time()
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if not is_alert_time:
-                memory = self.get_confirmation_memory(symbol, interval, 'RSIMaverickExtreme')
-                if memory['first_half_confirmed']:
-                    print(f"RSI Maverick Extreme - Memoria activa: {symbol} {interval} {memory['signal_type']}")
-                return None
-            
             df = self.get_kucoin_data(symbol, interval, 100)
             if df is None or len(df) < 50:
                 return None
@@ -3439,34 +3052,18 @@ class TradingIndicator:
             price_near_bb_lower = close[-1] <= bb_lower[-1] * 1.02
             price_near_bb_upper = close[-1] >= bb_upper[-1] * 0.98
             
-            # Determinar señal
-            signal_type = None
+            # Condiciones para LONG
             if (extreme_bullish and price_near_bb_lower and
                 ftm_data['strength_signals'][-1] in ['STRONG_UP', 'WEAK_UP']):
                 
                 signal_type = 'LONG'
                 
+            # Condiciones para SHORT
             elif (extreme_bearish and price_near_bb_upper and
                   ftm_data['strength_signals'][-1] in ['STRONG_DOWN', 'WEAK_DOWN']):
                 
                 signal_type = 'SHORT'
-            
-            if signal_type is None:
-                return None
-            
-            # Verificar condición de extremo con memoria
-            current_condition = (
-                (extreme_bullish and signal_type == 'LONG') or
-                (extreme_bearish and signal_type == 'SHORT')
-            )
-            
-            # Usar memoria de confirmación
-            confirmed = self.check_confirmation_with_memory(
-                symbol, interval, 'RSIMaverickExtreme', current_condition, signal_type
-            )
-            
-            if not confirmed:
-                print(f"RSI Maverick Extreme - No confirmado por memoria: {symbol} {interval} {signal_type}")
+            else:
                 return None
             
             # Calcular niveles
@@ -3494,24 +3091,23 @@ class TradingIndicator:
                 'filters': [
                     f'RSI Maverick extremo {"sobreventa" if signal_type == "LONG" else "sobrecompra"} (3 velas)',
                     f'Precio cerca banda {"inferior" if signal_type == "LONG" else "superior"} BB',
-                    f'FTMaverick: {ftm_data["strength_signals"][-1]}',
-                    f'Memoria de confirmación: ACTIVA'
+                    f'FTMaverick: {ftm_data["strength_signals"][-1]}'
                 ]
             }
             
-            print(f"RSI Maverick Extreme - Señal emitida: {symbol} {interval} {signal_type}")
             return signal_data
             
         except Exception as e:
             print(f"Error en check_rsi_maverick_extreme_signal para {symbol} {interval}: {e}")
             return None
-
+    
     def generate_rsi_extreme_chart(self, symbol, interval, df, rsi_maverick, bb_upper, bb_lower, 
                                   ftm_data, signal_type):
         """Generar gráfico para RSI Maverick Extreme"""
         try:
             fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 12))
             
+            # Gráfico 1: Precio con Bollinger Bands
             dates = df['timestamp'].iloc[-50:].values
             closes = df['close'].iloc[-50:].values
             dates_matplotlib = mdates.date2num(dates)
@@ -3526,6 +3122,7 @@ class TradingIndicator:
                 ax1.plot([dates_matplotlib[i], dates_matplotlib[i]], [low_price, high_price], color='black', linewidth=1)
                 ax1.plot([dates_matplotlib[i], dates_matplotlib[i]], [open_price, close_price], color=color, linewidth=3)
             
+            # Bandas extremas
             ax1.axhline(y=bb_upper[-1], color='red', linestyle='--', alpha=0.7, label='BB Superior')
             ax1.axhline(y=bb_lower[-1], color='green', linestyle='--', alpha=0.7, label='BB Inferior')
             
@@ -3533,11 +3130,14 @@ class TradingIndicator:
             ax1.legend()
             ax1.grid(True, alpha=0.3)
             
+            # Gráfico 2: RSI Maverick con zonas extremas
             ax2.plot(dates_matplotlib, rsi_maverick[-50:], 'blue', linewidth=2, label='RSI Maverick')
             
+            # Zonas extremas sombreadas
             ax2.axhspan(0, 0.15, alpha=0.2, color='green', label='Sobreventa Extrema')
             ax2.axhspan(0.85, 1, alpha=0.2, color='red', label='Sobrecompra Extrema')
             
+            # Líneas de referencia
             ax2.axhline(y=0.15, color='darkgreen', linestyle='--', alpha=0.5)
             ax2.axhline(y=0.85, color='darkred', linestyle='--', alpha=0.5)
             ax2.axhline(y=0.5, color='gray', linestyle='-', alpha=0.3)
@@ -3546,6 +3146,7 @@ class TradingIndicator:
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             
+            # Gráfico 3: FTMaverick
             trend_strength = ftm_data['trend_strength'][-50:]
             colors = ftm_data['colors'][-50:]
             for i in range(len(dates_matplotlib)):
@@ -3566,29 +3167,18 @@ class TradingIndicator:
         except Exception as e:
             print(f"Error generando gráfico RSI Extreme: {e}")
             return None
-
+    
     # ==============================================
-    # ESTRATEGIA: VOLUME-PRICE DIVERGENCE (MODIFICADA CON MEMORIA)
+    # ESTRATEGIA: VOLUME-PRICE DIVERGENCE
     # ==============================================
     def check_volume_price_divergence_signal(self, symbol, interval):
-        """Estrategia Volume-Price Divergence para intraday - MODIFICADA CON MEMORIA"""
+        """Estrategia Volume-Price Divergence para intraday"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Volume-Price Divergence']:
             return None
         
         try:
-            # Verificar momento de alerta
-            current_time = self.get_bolivia_time()
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if not is_alert_time:
-                memory = self.get_confirmation_memory(symbol, interval, 'VolumePriceDivergence')
-                if memory['first_half_confirmed']:
-                    print(f"Volume-Price Divergence - Memoria activa: {symbol} {interval} {memory['signal_type']}")
-                return None
-            
             df = self.get_kucoin_data(symbol, interval, 100)
             if df is None or len(df) < 50:
                 return None
@@ -3621,82 +3211,65 @@ class TradingIndicator:
                 # Divergencia RSI Maverick
                 rsi_bullish, rsi_bearish = self.detect_divergence(close, rsi_maverick, lookback=lookback)
                 
-                # Determinar señal
-                signal_type = None
+                # Condiciones para LONG
                 if (new_price_low and volume_decreasing and rsi_bullish[-1] and
                     ftm_data['strength_signals'][-1] in ['STRONG_UP', 'WEAK_UP']):
                     
                     signal_type = 'LONG'
                     
+                # Condiciones para SHORT
                 elif (new_price_high and volume_decreasing and rsi_bearish[-1] and
                       ftm_data['strength_signals'][-1] in ['STRONG_DOWN', 'WEAK_DOWN']):
                     
                     signal_type = 'SHORT'
-                
-                if signal_type is None:
+                else:
                     return None
-                
-                # Verificar condición de divergencia con memoria
-                current_condition = (
-                    (new_price_low and volume_decreasing and signal_type == 'LONG') or
-                    (new_price_high and volume_decreasing and signal_type == 'SHORT')
-                )
-                
-                # Usar memoria de confirmación
-                confirmed = self.check_confirmation_with_memory(
-                    symbol, interval, 'VolumePriceDivergence', current_condition, signal_type
-                )
-                
-                if not confirmed:
-                    print(f"Volume-Price Divergence - No confirmado por memoria: {symbol} {interval} {signal_type}")
-                    return None
-                
-                # Calcular niveles
-                support_levels, resistance_levels = self.calculate_dynamic_support_resistance(
-                    df['high'].values, df['low'].values, close
-                )
-                levels_data = self.calculate_optimal_entry_exit(df, signal_type, 15, support_levels, resistance_levels)
-                
-                # Generar gráfico
-                chart_buffer = self.generate_volume_price_div_chart(symbol, interval, df, volume, 
-                                                                   rsi_maverick, ftm_data, signal_type)
-                
-                signal_data = {
-                    'symbol': symbol,
-                    'interval': interval,
-                    'signal': signal_type,
-                    'current_price': close[-1],
-                    'entry': levels_data['entry'],
-                    'stop_loss': levels_data['stop_loss'],
-                    'take_profit': levels_data['take_profit'],
-                    'support_levels': support_levels[:3],
-                    'resistance_levels': resistance_levels[:3],
-                    'strategy': 'VOLUME-PRICE DIVERGENCE',
-                    'chart': chart_buffer,
-                    'filters': [
-                        f'Divergencia precio/volumen confirmada',
-                        f'Divergencia RSI Maverick confirmada',
-                        f'FTMaverick: {ftm_data["strength_signals"][-1]}',
-                        f'Memoria de confirmación: ACTIVA'
-                    ]
-                }
-                
-                print(f"Volume-Price Divergence - Señal emitida: {symbol} {interval} {signal_type}")
-                return signal_data
             else:
                 return None
+            
+            # Calcular niveles
+            support_levels, resistance_levels = self.calculate_dynamic_support_resistance(
+                df['high'].values, df['low'].values, close
+            )
+            levels_data = self.calculate_optimal_entry_exit(df, signal_type, 15, support_levels, resistance_levels)
+            
+            # Generar gráfico
+            chart_buffer = self.generate_volume_price_div_chart(symbol, interval, df, volume, 
+                                                               rsi_maverick, ftm_data, signal_type)
+            
+            signal_data = {
+                'symbol': symbol,
+                'interval': interval,
+                'signal': signal_type,
+                'current_price': close[-1],
+                'entry': levels_data['entry'],
+                'stop_loss': levels_data['stop_loss'],
+                'take_profit': levels_data['take_profit'],
+                'support_levels': support_levels[:3],
+                'resistance_levels': resistance_levels[:3],
+                'strategy': 'VOLUME-PRICE DIVERGENCE',
+                'chart': chart_buffer,
+                'filters': [
+                    f'Divergencia precio/volumen confirmada',
+                    f'Divergencia RSI Maverick confirmada',
+                    f'FTMaverick: {ftm_data["strength_signals"][-1]}'
+                ]
+            }
+            
+            return signal_data
             
         except Exception as e:
             print(f"Error en check_volume_price_divergence_signal para {symbol} {interval}: {e}")
             return None
-
+    
     def generate_volume_price_div_chart(self, symbol, interval, df, volume, rsi_maverick, 
                                        ftm_data, signal_type):
         """Generar gráfico para Volume-Price Divergence"""
         try:
             fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(14, 10))
             
-            dates = df['timestamp'].iloc[-20:].values
+            # Gráfico 1: Precio
+            dates = df['timestamp'].iloc[-20:].values  # Solo últimas 20 velas para claridad
             closes = df['close'].iloc[-20:].values
             dates_matplotlib = mdates.date2num(dates)
             
@@ -3713,6 +3286,7 @@ class TradingIndicator:
             ax1.set_title(f'Precio - {symbol} - {interval}')
             ax1.grid(True, alpha=0.3)
             
+            # Gráfico 2: Volumen
             volume_vals = volume[-20:]
             colors_vol = []
             for i in range(len(closes)):
@@ -3725,6 +3299,7 @@ class TradingIndicator:
             ax2.set_title('Volumen')
             ax2.grid(True, alpha=0.3)
             
+            # Gráfico 3: RSI Maverick
             ax3.plot(dates_matplotlib, rsi_maverick[-20:], 'blue', linewidth=2)
             ax3.axhline(y=0.8, color='red', linestyle='--', alpha=0.3)
             ax3.axhline(y=0.2, color='green', linestyle='--', alpha=0.3)
@@ -3732,6 +3307,7 @@ class TradingIndicator:
             ax3.set_title('RSI Maverick')
             ax3.grid(True, alpha=0.3)
             
+            # Gráfico 4: FTMaverick
             trend_strength = ftm_data['trend_strength'][-20:]
             colors = ftm_data['colors'][-20:]
             for i in range(len(dates_matplotlib)):
@@ -3754,29 +3330,21 @@ class TradingIndicator:
         except Exception as e:
             print(f"Error generando gráfico Volume-Price Divergence: {e}")
             return None
-
+    
     # ==============================================
-    # ESTRATEGIA: DESPLOME DE VOLUMEN (MODIFICADA CON MEMORIA)
+    # ESTRATEGIA: DESPLOME DE VOLUMEN (MEJORADA)
     # ==============================================
     def check_desplome_volumen_signal(self, symbol, interval):
-        """Estrategia Desplome de Volumen mejorada - MODIFICADA CON MEMORIA"""
+        """Estrategia Desplome de Volumen mejorada"""
         if symbol not in TOP_CRYPTO_SYMBOLS:
             return None
         if interval not in STRATEGY_TIMEFRAMES['Desplome de Volumen']:
             return None
+        # Solo verificar sábados
+        if interval in ['15m', '30m'] and not self.is_scalping_time():
+            return None
         
         try:
-            # Verificar momento de alerta
-            current_time = self.get_bolivia_time()
-            alert_percentage = self.get_alert_percentage(interval)
-            is_alert_time = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
-            if not is_alert_time:
-                memory = self.get_confirmation_memory(symbol, interval, 'DesplomeVolumen')
-                if memory['first_half_confirmed']:
-                    print(f"Desplome de Volumen - Memoria activa: {symbol} {interval} {memory['signal_type']}")
-                return None
-            
             df = self.get_kucoin_data(symbol, interval, 100)
             if df is None or len(df) < 50:
                 return None
@@ -3803,6 +3371,7 @@ class TradingIndicator:
             
             # MA200 filter (temporalidad 1D)
             if interval in ['15m', '30m', '1h', '4h', '12h', '1D']:
+                # Para intervalos cortos, usar 1D para MA200
                 day_df = self.get_kucoin_data(symbol, '1D', 200)
                 if day_df is not None and len(day_df) >= 200:
                     day_close = day_df['close'].values
@@ -3836,8 +3405,7 @@ class TradingIndicator:
                   ftm_data['strength_signals'][-1] in ['STRONG_DOWN', 'WEAK_DOWN']):
                 
                 signal_type = 'SHORT'
-            
-            if signal_type is None:
+            else:
                 return None
             
             # Multi-Timeframe para intervalos <=4H
@@ -3868,23 +3436,6 @@ class TradingIndicator:
                     
                     if not (mayor_ok and menor_ok):
                         return None
-            
-            # Verificar condición de volumen con memoria
-            current_condition = (
-                volume_condition and has_cluster and (
-                    (signal_type == 'LONG' and close[-1] > ema_21[-1]) or
-                    (signal_type == 'SHORT' and close[-1] < ema_21[-1])
-                )
-            )
-            
-            # Usar memoria de confirmación
-            confirmed = self.check_confirmation_with_memory(
-                symbol, interval, 'DesplomeVolumen', current_condition, signal_type
-            )
-            
-            if not confirmed:
-                print(f"Desplome de Volumen - No confirmado por memoria: {symbol} {interval} {signal_type}")
-                return None
             
             # Calcular niveles
             support_levels, resistance_levels = self.calculate_dynamic_support_resistance(
@@ -3924,24 +3475,23 @@ class TradingIndicator:
                     f'RSI Maverick neutral: {rsi_maverick[-1]:.2f}',
                     f'FTMaverick: {ftm_data["strength_signals"][-1]}',
                     f'Filtro MA200: {" > " if signal_type == "LONG" else " < "} en 1D' if ma200_current > 0 else 'Filtro MA200: N/A',
-                    f'Multi-TF: {mayor_trend}/{menor_trend}' if interval in ['15m', '30m', '1h', '4h'] else 'Multi-TF: N/A',
-                    f'Memoria de confirmación: ACTIVA'
+                    f'Multi-TF: {mayor_trend}/{menor_trend}' if interval in ['15m', '30m', '1h', '4h'] else 'Multi-TF: N/A'
                 ]
             }
             
-            print(f"Desplome de Volumen - Señal emitida: {symbol} {interval} {signal_type}")
             return signal_data
             
         except Exception as e:
             print(f"Error en check_desplome_volumen_signal para {symbol} {interval}: {e}")
             return None
-
+    
     def generate_desplome_volumen_chart(self, symbol, interval, df, ema_21, volume_ma_21, 
                                        volume_data, rsi_maverick, ftm_data, signal_type):
         """Generar gráfico para Desplome de Volumen mejorado"""
         try:
             fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 14))
             
+            # Gráfico 1: Precio con EMA21
             dates = df['timestamp'].iloc[-50:].values
             closes = df['close'].iloc[-50:].values
             dates_matplotlib = mdates.date2num(dates)
@@ -3961,6 +3511,7 @@ class TradingIndicator:
             ax1.legend()
             ax1.grid(True, alpha=0.3)
             
+            # Gráfico 2: Volumen y anomalías
             volume = df['volume'].iloc[-50:].values
             colors_vol = []
             for i, signal in enumerate(volume_data['volume_signal'][-50:]):
@@ -3969,12 +3520,14 @@ class TradingIndicator:
             ax2.bar(dates_matplotlib, volume, color=colors_vol, alpha=0.6, label='Volumen')
             ax2.plot(dates_matplotlib, volume_ma_21[-50:], 'orange', linewidth=2, label='Volume MA21')
             
+            # Marcar anomalías
             anomaly_indices = [i for i, anomaly in enumerate(volume_data['volume_anomaly'][-50:]) if anomaly]
             if anomaly_indices:
                 for idx in anomaly_indices:
                     ax2.scatter(dates_matplotlib[idx], volume[idx], color='purple', s=50, marker='x', 
                               label='Anomalías' if idx == anomaly_indices[0] else "")
             
+            # Marcar clusters
             cluster_indices = [i for i, cluster in enumerate(volume_data['volume_clusters'][-50:]) if cluster]
             if cluster_indices:
                 for idx in cluster_indices:
@@ -3984,15 +3537,18 @@ class TradingIndicator:
             ax2.legend()
             ax2.grid(True, alpha=0.3)
             
+            # Gráfico 3: RSI Maverick
             ax3.plot(dates_matplotlib, rsi_maverick[-50:], 'blue', linewidth=2, label='RSI Maverick')
             ax3.axhline(y=0.8, color='red', linestyle='--', alpha=0.3)
             ax3.axhline(y=0.2, color='green', linestyle='--', alpha=0.3)
             ax3.axhline(y=0.5, color='gray', linestyle='-', alpha=0.2)
+            # Zona neutral sombreada
             ax3.axhspan(0.3, 0.7, alpha=0.1, color='blue', label='Zona Neutral')
             ax3.set_ylabel('RSI Maverick')
             ax3.legend()
             ax3.grid(True, alpha=0.3)
             
+            # Gráfico 4: FTMaverick
             trend_strength = ftm_data['trend_strength'][-50:]
             colors = ftm_data['colors'][-50:]
             for i in range(len(dates_matplotlib)):
@@ -4015,14 +3571,11 @@ class TradingIndicator:
             return None
     
     # ==============================================
-    # SISTEMA DE GENERACIÓN DE SEÑALES COMPLETO (MODIFICADO)
+    # SISTEMA DE GENERACIÓN DE SEÑALES COMPLETO
     # ==============================================
     def generate_strategy_signals(self):
-        """Generar señales para todas las estrategias y símbolos - MODIFICADO"""
+        """Generar señales para todas las estrategias y símbolos"""
         all_signals = []
-        
-        # Limpiar memoria expirada antes de comenzar
-        self.clean_expired_memory()
         
         # Intervalos a verificar
         intervals_to_check = ['15m', '30m', '1h', '2h', '4h', '8h', '12h', '1D', '1W']
@@ -4030,10 +3583,8 @@ class TradingIndicator:
         current_time = self.get_bolivia_time()
         
         for interval in intervals_to_check:
-            # Verificar si es momento de revisar este intervalo (usando porcentaje de alerta)
-            alert_percentage = self.get_alert_percentage(interval)
-            should_check = self.calculate_remaining_time(interval, current_time, alert_percentage)
-            
+            # Verificar si es momento de revisar este intervalo
+            should_check = self.calculate_remaining_time(interval, current_time)
             if not should_check:
                 continue
             
@@ -4053,6 +3604,9 @@ class TradingIndicator:
                     
                     # Estrategia 3: Bollinger Squeeze Breakout
                     if interval in STRATEGY_TIMEFRAMES['Bollinger Squeeze Breakout']:
+                        # Solo verificar sábados
+                        if interval in ['15m', '30m'] and not self.is_scalping_time():
+                            continue
                         signal = self.check_bollinger_squeeze_signal(symbol, interval)
                         if signal:
                             all_signals.append(signal)
@@ -4071,6 +3625,9 @@ class TradingIndicator:
                     
                     # Estrategia 6: Volume Spike Momentum
                     if interval in STRATEGY_TIMEFRAMES['Volume Spike Momentum']:
+                        # Solo verificar sábados
+                        if interval in ['15m', '30m'] and not self.is_scalping_time():
+                            continue
                         signal = self.check_volume_spike_momentum_signal(symbol, interval)
                         if signal:
                             all_signals.append(signal)
@@ -4113,6 +3670,9 @@ class TradingIndicator:
                     
                     # Estrategia 13: Desplome de Volumen (mejorada)
                     if interval in STRATEGY_TIMEFRAMES['Desplome de Volumen']:
+                        # Solo verificar sábados
+                        if interval in ['15m', '30m'] and not self.is_scalping_time():
+                            continue
                         signal = self.check_desplome_volumen_signal(symbol, interval)
                         if signal:
                             all_signals.append(signal)
@@ -4121,11 +3681,10 @@ class TradingIndicator:
                     print(f"Error generando señales para {symbol} {interval}: {e}")
                     continue
         
-        print(f"Total señales generadas: {len(all_signals)}")
         return all_signals
 
     # ==============================================
-    # MÉTODOS EXISTENTES DEL SISTEMA (SIN MODIFICAR)
+    # MÉTODOS EXISTENTES DEL SISTEMA (CON CAMBIOS EN FRECUENCIAS)
     # ==============================================
     
     def generate_signals_improved(self, symbol, interval, di_period=14, adx_threshold=25, 
@@ -4182,7 +3741,7 @@ class TradingIndicator:
             # Indicador de volumen
             volume_data = self.calculate_volume_anomaly(volume, close)
             
-            # Verificar condiciones multi-timeframe obligatorias (MODIFICADO CON MEMORIA)
+            # Verificar condiciones multi-timeframe obligatorias
             multi_timeframe_long = self.check_multi_timeframe_obligatory(symbol, interval, 'LONG')
             multi_timeframe_short = self.check_multi_timeframe_obligatory(symbol, interval, 'SHORT')
             
@@ -4286,6 +3845,7 @@ class TradingIndicator:
                 pattern_name = chart_patterns['pattern_name'][current_idx]
                 if pattern_name:
                     chart_pattern_desc = f" ({pattern_name})"
+                    # Reemplazar en fulfilled_conditions
                     for i, cond in enumerate(fulfilled_conditions):
                         if 'Patrón Chartista' in cond:
                             fulfilled_conditions[i] = f"Patrón Chartista: {pattern_name}"
@@ -4411,16 +3971,18 @@ class TradingIndicator:
         }
 
     def generate_scalping_alerts(self):
-        """Generar alertas de trading - MODIFICADO CON MEMORIA"""
+        """Generar alertas de trading - MÉTODO EXISTENTE"""
         alerts = []
         telegram_intervals = ['15m', '30m', '1h', '2h', '4h', '8h', '12h', '1D', '1W']
         
         current_time = self.get_bolivia_time()
         
         for interval in telegram_intervals:
-            # Verificar momento de alerta
-            alert_percentage = self.get_alert_percentage(interval)
-            should_send_alert = self.calculate_remaining_time(interval, current_time, alert_percentage)
+            # Solo verificar sábados
+            if interval in ['15m', '30m'] and not self.is_scalping_time():
+                continue
+                
+            should_send_alert = self.calculate_remaining_time(interval, current_time)
             
             if not should_send_alert:
                 continue
@@ -4475,6 +4037,7 @@ def send_telegram_alert(alert_data, alert_type='entry'):
 Entrada: ${alert_data['close_price']:.6f} | Vol: {alert_data['volume_ratio']:.1f}x
 Filtros: FTMaverick OK | MF: {alert_data['mayor_trend']}/{alert_data['menor_trend']}
 """
+            # Enviar imagen
             if 'chart' in alert_data and alert_data['chart']:
                 asyncio.run(bot.send_photo(
                     chat_id=TELEGRAM_CHAT_ID,
@@ -4499,6 +4062,7 @@ MA200: {alert_data['ma200_condition'].upper()}
 Condiciones cumplidas:
 {chr(10).join(['• ' + cond for cond in alert_data.get('fulfilled_conditions', [])])}
 """
+            # Generar gráfico para MULTIFRAME
             signal_data = indicator.generate_signals_improved(
                 alert_data['symbol'], 
                 alert_data['interval']
@@ -4532,6 +4096,7 @@ Condiciones cumplidas:
             # Mensaje para las 13 estrategias nuevas
             filters_text = '\n'.join(['• ' + f for f in alert_data.get('filters', [])])
             
+            # Determinar recomendación según estrategia y temporalidad
             recommendation = "Scalping"
             if alert_data['interval'] in ['4h', '8h', '12h']:
                 recommendation = "Swing Trading"
@@ -4547,6 +4112,7 @@ Filtros:
 Recomendación: {recommendation}.
 """
             
+            # Enviar imagen
             if 'chart' in alert_data and alert_data['chart']:
                 asyncio.run(bot.send_photo(
                     chat_id=TELEGRAM_CHAT_ID,
@@ -4565,20 +4131,20 @@ Recomendación: {recommendation}.
         print(f"Error enviando alerta a Telegram: {e}")
 
 def background_strategy_checker():
-    """Verificador de estrategias en segundo plano - MODIFICADO"""
-    print("Background strategy checker iniciado con sistema de memoria...")
+    """Verificador de estrategias en segundo plano - CON NUEVAS FRECUENCIAS"""
+    print("Background strategy checker iniciado...")
     
-    # Tiempos de espera por intervalo (segundos)
+    # NUEVAS FRECUENCIAS DE REVISIÓN (segundos)
     interval_wait_times = {
-        '15m': 60,
-        '30m': 120,
-        '1h': 300,
-        '2h': 420,
-        '4h': 420,
-        '8h': 600,
-        '12h': 900,
-        '1D': 3600,
-        '1W': 10000
+        '15m': 180,   # 3 minutos (antes: 60s)
+        '30m': 180,   # 3 minutos (antes: 120s)
+        '1h': 240,    # 4 minutos (antes: 300s)
+        '2h': 540,    # 9 minutos (antes: 420s)
+        '4h': 660,    # 11 minutos (antes: 420s)
+        '8h': 900,    # 15 minutos (antes: 600s)
+        '12h': 1380,  # 23 minutos (antes: 900s)
+        '1D': 1380,   # 23 minutos (antes: 3600s)
+        '1W': 1920    # 32 minutos (antes: 10000s)
     }
     
     # Última verificación por intervalo
@@ -4593,12 +4159,8 @@ def background_strategy_checker():
                 if (current_time - last_checks[interval]).seconds >= wait_time:
                     print(f"Verificando estrategias para intervalo {interval}...")
                     
-                    # Limpiar memoria expirada
-                    indicator.clean_expired_memory()
-                    
-                    # Verificar si es momento de la vela para este intervalo
-                    alert_percentage = indicator.get_alert_percentage(interval)
-                    if indicator.calculate_remaining_time(interval, current_time, alert_percentage):
+                    # Verificar si es momento de la vela para este intervalo (con los nuevos porcentajes)
+                    if indicator.calculate_remaining_time(interval, current_time):
                         # Generar señales para todas las estrategias
                         signals = indicator.generate_strategy_signals()
                         
@@ -4641,7 +4203,7 @@ def background_strategy_checker():
 try:
     strategy_thread = Thread(target=background_strategy_checker, daemon=True)
     strategy_thread.start()
-    print("Background strategy checker iniciado correctamente con sistema de memoria")
+    print("Background strategy checker iniciado correctamente")
 except Exception as e:
     print(f"Error iniciando background strategy checker: {e}")
 
@@ -4751,6 +4313,7 @@ def get_scatter_data_improved():
                 signal_data = indicator.generate_signals_improved(symbol, interval, di_period, adx_threshold)
                 if signal_data and signal_data['current_price'] > 0:
                     
+                    # Calcular presiones basadas en indicadores reales
                     buy_pressure = min(100, max(0,
                         (signal_data['whale_pump'] / 100 * 25) +
                         (1 if signal_data['plus_di'] > signal_data['minus_di'] else 0) * 20 +
@@ -4767,6 +4330,7 @@ def get_scatter_data_improved():
                         (min(1, signal_data['volume'] / max(1, signal_data['volume_ma'])) * 20)
                     ))
                     
+                    # Ajustar según señal
                     if signal_data['signal'] == 'LONG':
                         buy_pressure = min(100, buy_pressure * 1.3)
                         sell_pressure = max(0, sell_pressure * 0.7)
@@ -4856,11 +4420,13 @@ def generate_report():
                 ax1.plot([dates_matplotlib[i], dates_matplotlib[i]], [lows[i], highs[i]], color='black', linewidth=1)
                 ax1.plot([dates_matplotlib[i], dates_matplotlib[i]], [opens[i], closes[i]], color=color, linewidth=3)
             
+            # Niveles de trading
             ax1.axhline(y=signal_data['entry'], color='blue', linestyle='--', alpha=0.7, label='Entrada')
             ax1.axhline(y=signal_data['stop_loss'], color='red', linestyle='--', alpha=0.7, label='Stop Loss')
             for i, tp in enumerate(signal_data['take_profit']):
                 ax1.axhline(y=tp, color='green', linestyle='--', alpha=0.7, label=f'TP{i+1}')
             
+            # Soportes y resistencias
             if 'support_levels' in signal_data:
                 for level in signal_data['support_levels'][:3]:
                     ax1.axhline(y=level, color='orange', linestyle=':', alpha=0.5)
@@ -4951,6 +4517,7 @@ def generate_report():
         if 'indicators' in signal_data:
             volume_dates = dates_matplotlib[-len(signal_data['indicators']['volume_ratio']):]
             
+            # Colores según señal de volumen
             colors = []
             volume_signal = signal_data['indicators'].get('volume_signal', ['NEUTRAL'] * 50)
             for i, signal in enumerate(volume_signal[-50:]):
@@ -4961,9 +4528,11 @@ def generate_report():
                 else:
                     colors.append('gray')
             
+            # Volumen
             volumes = [d['volume'] for d in signal_data['data'][-50:]]
             ax7.bar(volume_dates, volumes, color=colors, alpha=0.6, label='Volumen')
             
+            # MA de volumen
             ax7.plot(volume_dates, signal_data['indicators']['volume_ma'][-50:], 
                     'yellow', linewidth=1, label='MA Volumen')
         
