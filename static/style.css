@@ -676,37 +676,6 @@ body {
     margin: 0.5rem 0;
 }
 
-.scatter-opportunity-high {
-    background: linear-gradient(135deg, rgba(0, 200, 83, 0.1), rgba(0, 200, 83, 0.05));
-    border: 1px solid rgba(0, 200, 83, 0.3);
-}
-
-.scatter-opportunity-medium {
-    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05));
-    border: 1px solid rgba(255, 193, 7, 0.3);
-}
-
-.scatter-opportunity-low {
-    background: linear-gradient(135deg, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.05));
-    border: 1px solid rgba(108, 117, 125, 0.3);
-}
-
-.volume-anomaly-indicator {
-    background: linear-gradient(135deg, rgba(13, 202, 240, 0.1), rgba(13, 202, 240, 0.05));
-    border: 1px solid rgba(13, 202, 240, 0.3);
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 0.5rem 0;
-}
-
-.volume-cluster-indicator {
-    background: linear-gradient(135deg, rgba(111, 66, 193, 0.1), rgba(111, 66, 193, 0.05));
-    border: 1px solid rgba(111, 66, 193, 0.3);
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 0.5rem 0;
-}
-
 .hover-row:hover {
     background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.05)) !important;
     cursor: pointer;
@@ -916,4 +885,171 @@ body {
         --bs-table-bg: white !important;
         --bs-table-color: black !important;
     }
+}
+
+/* Nuevas clases para el sistema de indicadores reordenables */
+.indicator-card {
+    transition: all 0.3s ease;
+}
+
+.indicator-card.collapsed {
+    opacity: 0.8;
+}
+
+.indicator-card.collapsed .card-header {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.indicator-card .btn-group {
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.indicator-card:hover .btn-group {
+    opacity: 1;
+}
+
+.indicator-card .btn-outline-secondary {
+    border-color: #555;
+    color: #aaa;
+}
+
+.indicator-card .btn-outline-secondary:hover {
+    background-color: #333;
+    border-color: #777;
+    color: #fff;
+}
+
+.indicator-card .btn-outline-secondary:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Animación para reordenamiento */
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.indicator-card {
+    animation: slideUp 0.3s ease;
+}
+
+/* Estilos para el RSI Estocástico */
+.stoch-rsi-legend {
+    background: rgba(156, 39, 176, 0.1);
+    border: 1px solid rgba(156, 39, 176, 0.3);
+    border-radius: 6px;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.stoch-rsi-legend .legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.stoch-rsi-legend .color-box {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 0.5rem;
+}
+
+.stoch-rsi-k {
+    background-color: #00C853;
+}
+
+.stoch-rsi-d {
+    background-color: #FF1744;
+}
+
+.stoch-rsi-line {
+    background-color: #9C27B0;
+}
+
+/* Mejoras para la responsividad de los controles de indicadores */
+@media (max-width: 768px) {
+    .indicator-card .btn-group {
+        flex-wrap: wrap;
+    }
+    
+    .indicator-card .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .indicator-card .card-header h6 {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .indicator-card .btn-group .btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.75rem;
+    }
+    
+    .indicator-card .card-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .indicator-card .card-body {
+        padding: 1rem;
+    }
+}
+
+/* Efectos de transición suave */
+.transition-all {
+    transition: all 0.3s ease;
+}
+
+/* Estilos para estados de carga de gráficos */
+.chart-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+
+/* Estilos para tooltips mejorados */
+.tooltip-indicator {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip-indicator::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bs-dark);
+    color: var(--bs-body-color);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid var(--bs-border-color);
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.tooltip-indicator:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-5px);
 }
