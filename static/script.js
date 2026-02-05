@@ -8,10 +8,25 @@ let currentRsiMaverickChart = null;
 let currentMacdChart = null;
 let currentTrendStrengthChart = null;
 let currentVolumeChart = null;
+let currentStochRsiChart = null;
 let currentSymbol = 'BTC-USDT';
 let currentData = null;
 let allCryptos = [];
 let updateInterval = null;
+let indicatorOrder = [
+    'adx', 'trend-strength', 'volume', 'whale', 'rsi-maverick', 
+    'rsi-traditional', 'macd', 'stoch-rsi'
+];
+let indicatorStates = {
+    'adx': { expanded: true },
+    'trend-strength': { expanded: true },
+    'volume': { expanded: true },
+    'whale': { expanded: true },
+    'rsi-maverick': { expanded: true },
+    'rsi-traditional': { expanded: true },
+    'macd': { expanded: true },
+    'stoch-rsi': { expanded: true }
+};
 
 // Inicialización cuando el DOM está listo
 document.addEventListener('DOMContentLoaded', function() {
@@ -301,12 +316,6 @@ function updateCharts() {
     
     // Actualizar gráfico principal
     updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
-    
-    // Actualizar gráfico de dispersión
-    updateScatterChartImproved(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
-    
-    // Actualizar señales múltiples
-    updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage);
 }
 
 function updateMarketIndicators() {
@@ -330,13 +339,7 @@ function updateMainChart(symbol, interval, diPeriod, adxThreshold, srPeriod, rsi
             }
             currentData = data;
             renderCandleChart(data);
-            renderAdxChartImproved(data);
-            renderTrendStrengthChart(data);
-            renderVolumeChart(data);
-            renderWhaleChartImproved(data);
-            renderRsiMaverickChart(data);
-            renderRsiTraditionalChart(data);
-            renderMacdChart(data);
+            renderAllIndicators(data);
             updateMarketSummary(data);
             updateSignalAnalysis(data);
         })
@@ -375,6 +378,215 @@ function showSampleData(symbol) {
     
     updateMarketSummary(sampleData);
     updateSignalAnalysis(sampleData);
+}
+
+function renderAllIndicators(data) {
+    renderIndicatorsContainer();
+    
+    // Renderizar cada indicador según el orden actual
+    indicatorOrder.forEach(indicatorId => {
+        if (indicatorStates[indicatorId].expanded) {
+            switch(indicatorId) {
+                case 'adx':
+                    renderAdxChartImproved(data);
+                    break;
+                case 'trend-strength':
+                    renderTrendStrengthChart(data);
+                    break;
+                case 'volume':
+                    renderVolumeChart(data);
+                    break;
+                case 'whale':
+                    renderWhaleChartImproved(data);
+                    break;
+                case 'rsi-maverick':
+                    renderRsiMaverickChart(data);
+                    break;
+                case 'rsi-traditional':
+                    renderRsiTraditionalChart(data);
+                    break;
+                case 'macd':
+                    renderMacdChart(data);
+                    break;
+                case 'stoch-rsi':
+                    renderStochRsiChart(data);
+                    break;
+            }
+        }
+    });
+}
+
+function renderIndicatorsContainer() {
+    const container = document.getElementById('indicators-container');
+    container.innerHTML = '';
+    
+    // Crear tarjetas para cada indicador en el orden actual
+    indicatorOrder.forEach(indicatorId => {
+        const indicator = getIndicatorConfig(indicatorId);
+        const state = indicatorStates[indicatorId];
+        
+        let cardClass = 'card bg-dark border-secondary mb-4';
+        if (!state.expanded) {
+            cardClass += ' collapsed';
+        }
+        
+        const cardHTML = `
+            <div class="${cardClass}" id="indicator-${indicatorId}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="${indicator.icon} me-2"></i>${indicator.title}
+                    </h6>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" onclick="moveIndicatorUp('${indicatorId}')" ${indicatorOrder.indexOf(indicatorId) === 0 ? 'disabled' : ''}>
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="moveIndicatorDown('${indicatorId}')" ${indicatorOrder.indexOf(indicatorId) === indicatorOrder.length - 1 ? 'disabled' : ''}>
+                            <i class="fas fa-arrow-down"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="toggleIndicator('${indicatorId}')">
+                            <i class="fas ${state.expanded ? 'fa-compress' : 'fa-expand'}"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body ${state.expanded ? '' : 'd-none'}" id="indicator-body-${indicatorId}" style="height: ${indicator.height}px;">
+                    <div id="${indicator.chartId}"></div>
+                </div>
+            </div>
+        `;
+        
+        container.innerHTML += cardHTML;
+    });
+}
+
+function getIndicatorConfig(indicatorId) {
+    const configs = {
+        'adx': {
+            title: 'ADX con DMI (+DI y -DI)',
+            icon: 'fas fa-chart-line',
+            chartId: 'adx-chart',
+            height: 300
+        },
+        'trend-strength': {
+            title: 'Fuerza de Tendencia Maverick',
+            icon: 'fas fa-chart-line',
+            chartId: 'trend-strength-chart',
+            height: 300
+        },
+        'volume': {
+            title: 'Indicador de Volumen con Anomalías y Clusters',
+            icon: 'fas fa-chart-bar',
+            chartId: 'volume-chart',
+            height: 300
+        },
+        'whale': {
+            title: 'Indicador Ballenas Compradoras/Vendedoras',
+            icon: 'fas fa-whale',
+            chartId: 'whale-chart',
+            height: 300
+        },
+        'rsi-maverick': {
+            title: 'RSI Modificado Maverick (%B)',
+            icon: 'fas fa-wave-square',
+            chartId: 'rsi-maverick-chart',
+            height: 300
+        },
+        'rsi-traditional': {
+            title: 'RSI Tradicional con Divergencias',
+            icon: 'fas fa-chart-area',
+            chartId: 'rsi-traditional-chart',
+            height: 300
+        },
+        'macd': {
+            title: 'MACD con Histograma',
+            icon: 'fas fa-chart-line',
+            chartId: 'macd-chart',
+            height: 300
+        },
+        'stoch-rsi': {
+            title: 'RSI Estocástico',
+            icon: 'fas fa-exchange-alt',
+            chartId: 'stoch-rsi-chart',
+            height: 300
+        }
+    };
+    
+    return configs[indicatorId];
+}
+
+function moveIndicatorUp(indicatorId) {
+    const currentIndex = indicatorOrder.indexOf(indicatorId);
+    if (currentIndex > 0) {
+        // Intercambiar con el anterior
+        [indicatorOrder[currentIndex], indicatorOrder[currentIndex - 1]] = 
+        [indicatorOrder[currentIndex - 1], indicatorOrder[currentIndex]];
+        
+        // Re-renderizar contenedor
+        if (currentData) {
+            renderIndicatorsContainer();
+            renderAllIndicators(currentData);
+        }
+    }
+}
+
+function moveIndicatorDown(indicatorId) {
+    const currentIndex = indicatorOrder.indexOf(indicatorId);
+    if (currentIndex < indicatorOrder.length - 1) {
+        // Intercambiar con el siguiente
+        [indicatorOrder[currentIndex], indicatorOrder[currentIndex + 1]] = 
+        [indicatorOrder[currentIndex + 1], indicatorOrder[currentIndex]];
+        
+        // Re-renderizar contenedor
+        if (currentData) {
+            renderIndicatorsContainer();
+            renderAllIndicators(currentData);
+        }
+    }
+}
+
+function toggleIndicator(indicatorId) {
+    indicatorStates[indicatorId].expanded = !indicatorStates[indicatorId].expanded;
+    
+    const indicatorBody = document.getElementById(`indicator-body-${indicatorId}`);
+    const toggleButton = document.querySelector(`#indicator-${indicatorId} .btn-group .btn:last-child i`);
+    
+    if (indicatorBody) {
+        if (indicatorStates[indicatorId].expanded) {
+            indicatorBody.classList.remove('d-none');
+            toggleButton.className = 'fas fa-compress';
+            // Re-renderizar el gráfico si hay datos
+            if (currentData) {
+                switch(indicatorId) {
+                    case 'adx':
+                        renderAdxChartImproved(currentData);
+                        break;
+                    case 'trend-strength':
+                        renderTrendStrengthChart(currentData);
+                        break;
+                    case 'volume':
+                        renderVolumeChart(currentData);
+                        break;
+                    case 'whale':
+                        renderWhaleChartImproved(currentData);
+                        break;
+                    case 'rsi-maverick':
+                        renderRsiMaverickChart(currentData);
+                        break;
+                    case 'rsi-traditional':
+                        renderRsiTraditionalChart(currentData);
+                        break;
+                    case 'macd':
+                        renderMacdChart(currentData);
+                        break;
+                    case 'stoch-rsi':
+                        renderStochRsiChart(currentData);
+                        break;
+                }
+            }
+        } else {
+            indicatorBody.classList.add('d-none');
+            toggleButton.className = 'fas fa-expand';
+        }
+    }
 }
 
 function renderCandleChart(data, indicatorOptions = {}) {
@@ -660,8 +872,6 @@ function renderAdxChartImproved(data) {
     const adx = data.indicators.adx || [];
     const plusDi = data.indicators.plus_di || [];
     const minusDi = data.indicators.minus_di || [];
-    const diCrossBullish = data.indicators.di_cross_bullish || [];
-    const diCrossBearish = data.indicators.di_cross_bearish || [];
     
     const traces = [
         {
@@ -687,30 +897,10 @@ function renderAdxChartImproved(data) {
             mode: 'lines',
             name: '-DI',
             line: {color: '#FF1744', width: 1.5}
-        },
-        {
-            x: dates.filter((_, i) => diCrossBullish[i]),
-            y: adx.filter((_, i) => diCrossBullish[i]),
-            type: 'scatter',
-            mode: 'markers',
-            name: 'Cruce Alcista',
-            marker: {color: '#00FF00', size: 8, symbol: 'star'}
-        },
-        {
-            x: dates.filter((_, i) => diCrossBearish[i]),
-            y: adx.filter((_, i) => diCrossBearish[i]),
-            type: 'scatter',
-            mode: 'markers',
-            name: 'Cruce Bajista',
-            marker: {color: '#FF0000', size: 8, symbol: 'star'}
         }
     ];
     
     const layout = {
-        title: {
-            text: 'ADX con Indicadores Direccionales (+DI / -DI) y Cruces',
-            font: {color: '#ffffff', size: 14}
-        },
         xaxis: {
             title: 'Fecha/Hora',
             type: 'date',
@@ -733,7 +923,7 @@ function renderAdxChartImproved(data) {
             font: {color: '#ffffff'},
             bgcolor: 'rgba(0,0,0,0)'
         },
-        margin: {t: 60, r: 50, b: 50, l: 50}
+        margin: {t: 30, r: 50, b: 50, l: 50}
     };
     
     const config = {
@@ -841,10 +1031,6 @@ function renderTrendStrengthChart(data) {
     }
     
     const layout = {
-        title: {
-            text: 'Fuerza de Tendencia Maverick - Ancho Bandas Bollinger %',
-            font: {color: '#ffffff', size: 14}
-        },
         xaxis: {
             title: 'Fecha/Hora',
             type: 'date',
@@ -867,22 +1053,7 @@ function renderTrendStrengthChart(data) {
             font: {color: '#ffffff'},
             bgcolor: 'rgba(0,0,0,0)'
         },
-        margin: {t: 60, r: 50, b: 50, l: 50},
-        annotations: [
-            {
-                x: 0.02,
-                y: 0.98,
-                xref: 'paper',
-                yref: 'paper',
-                text: '🟢 Verde: Fuerza creciente | 🔴 Rojo: Fuerza decreciente',
-                showarrow: false,
-                font: {color: 'white', size: 10},
-                bgcolor: 'rgba(0,0,0,0.7)',
-                bordercolor: 'rgba(255,255,255,0.5)',
-                borderwidth: 1,
-                borderpad: 4
-            }
-        ]
+        margin: {t: 30, r: 50, b: 50, l: 50}
     };
     
     const config = {
@@ -950,10 +1121,6 @@ function renderWhaleChartImproved(data) {
     ];
     
     const layout = {
-        title: {
-            text: 'Indicador Ballenas Compradoras/Vendedoras',
-            font: {color: '#ffffff', size: 14}
-        },
         xaxis: {
             title: 'Fecha/Hora',
             type: 'date',
@@ -978,7 +1145,7 @@ function renderWhaleChartImproved(data) {
         },
         barmode: 'overlay',
         bargap: 0,
-        margin: {t: 60, r: 50, b: 50, l: 50}
+        margin: {t: 30, r: 50, b: 50, l: 50}
     };
     
     const config = {
@@ -1008,25 +1175,6 @@ function renderRsiMaverickChart(data) {
 
     const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
     const rsiMaverick = data.indicators.rsi_maverick || [];
-    const bullishDivergence = data.indicators.rsi_maverick_bullish_divergence || [];
-    const bearishDivergence = data.indicators.rsi_maverick_bearish_divergence || [];
-    
-    // Preparar datos para divergencias
-    const bullishDates = [];
-    const bullishValues = [];
-    const bearishDates = [];
-    const bearishValues = [];
-    
-    dates.forEach((date, i) => {
-        if (bullishDivergence[i]) {
-            bullishDates.push(date);
-            bullishValues.push(rsiMaverick[i]);
-        }
-        if (bearishDivergence[i]) {
-            bearishDates.push(date);
-            bearishValues.push(rsiMaverick[i]);
-        }
-    });
     
     const traces = [
         {
@@ -1036,40 +1184,10 @@ function renderRsiMaverickChart(data) {
             mode: 'lines',
             name: 'RSI Maverick (%B)',
             line: {color: '#FF6B6B', width: 2}
-        },
-        {
-            x: bullishDates,
-            y: bullishValues,
-            type: 'scatter',
-            mode: 'markers',
-            name: 'Divergencia Alcista',
-            marker: {
-                color: '#00FF00',
-                size: 12,
-                symbol: 'triangle-up',
-                line: {color: 'white', width: 1}
-            }
-        },
-        {
-            x: bearishDates,
-            y: bearishValues,
-            type: 'scatter',
-            mode: 'markers',
-            name: 'Divergencia Bajista',
-            marker: {
-                color: '#FF0000',
-                size: 12,
-                symbol: 'triangle-down',
-                line: {color: 'white', width: 1}
-            }
         }
     ];
     
     const layout = {
-        title: {
-            text: 'RSI Modificado Maverick - Bandas de Bollinger %B',
-            font: {color: '#ffffff', size: 14}
-        },
         xaxis: {
             title: 'Fecha/Hora',
             type: 'date',
@@ -1120,36 +1238,18 @@ function renderRsiMaverickChart(data) {
                 }
             }
         ],
-        annotations: [
-            {
-                x: dates[dates.length - 1],
-                y: 0.8,
-                xanchor: 'left',
-                text: 'Sobrecompra',
-                showarrow: false,
-                font: {color: 'red', size: 10}
-            },
-            {
-                x: dates[dates.length - 1],
-                y: 0.2,
-                xanchor: 'left',
-                text: 'Sobreventa',
-                showarrow: false,
-                font: {color: 'green', size: 10}
-            }
-        ],
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'rgba(0,0,0,0)',
         font: {color: '#ffffff'},
         showlegend: true,
         legend: {
             x: 0,
-            y: -0.2,
+            y: 1.1,
             orientation: 'h',
             font: {color: '#ffffff'},
             bgcolor: 'rgba(0,0,0,0)'
         },
-        margin: {t: 60, r: 50, b: 80, l: 50}
+        margin: {t: 30, r: 50, b: 50, l: 50}
     };
     
     const config = {
@@ -1179,25 +1279,6 @@ function renderRsiTraditionalChart(data) {
 
     const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
     const rsiTraditional = data.indicators.rsi_traditional || [];
-    const bullishDivergence = data.indicators.rsi_bullish_divergence || [];
-    const bearishDivergence = data.indicators.rsi_bearish_divergence || [];
-    
-    // Preparar datos para divergencias
-    const bullishDates = [];
-    const bullishValues = [];
-    const bearishDates = [];
-    const bearishValues = [];
-    
-    dates.forEach((date, i) => {
-        if (bullishDivergence[i]) {
-            bullishDates.push(date);
-            bullishValues.push(rsiTraditional[i]);
-        }
-        if (bearishDivergence[i]) {
-            bearishDates.push(date);
-            bearishValues.push(rsiTraditional[i]);
-        }
-    });
     
     const traces = [
         {
@@ -1207,40 +1288,10 @@ function renderRsiTraditionalChart(data) {
             mode: 'lines',
             name: 'RSI Tradicional',
             line: {color: '#2196F3', width: 2}
-        },
-        {
-            x: bullishDates,
-            y: bullishValues,
-            type: 'scatter',
-            mode: 'markers',
-            name: 'Divergencia Alcista',
-            marker: {
-                color: '#00FF00',
-                size: 12,
-                symbol: 'triangle-up',
-                line: {color: 'white', width: 1}
-            }
-        },
-        {
-            x: bearishDates,
-            y: bearishValues,
-            type: 'scatter',
-            mode: 'markers',
-            name: 'Divergencia Bajista',
-            marker: {
-                color: '#FF0000',
-                size: 12,
-                symbol: 'triangle-down',
-                line: {color: 'white', width: 1}
-            }
         }
     ];
     
     const layout = {
-        title: {
-            text: 'RSI Tradicional con Divergencias (14 Periodos)',
-            font: {color: '#ffffff', size: 14}
-        },
         xaxis: {
             title: 'Fecha/Hora',
             type: 'date',
@@ -1291,36 +1342,18 @@ function renderRsiTraditionalChart(data) {
                 }
             }
         ],
-        annotations: [
-            {
-                x: dates[dates.length - 1],
-                y: 80,
-                xanchor: 'left',
-                text: 'Sobrecompra',
-                showarrow: false,
-                font: {color: 'red', size: 10}
-            },
-            {
-                x: dates[dates.length - 1],
-                y: 20,
-                xanchor: 'left',
-                text: 'Sobreventa',
-                showarrow: false,
-                font: {color: 'green', size: 10}
-            }
-        ],
         plot_bgcolor: 'rgba(0,0,0,0)',
         paper_bgcolor: 'rgba(0,0,0,0)',
         font: {color: '#ffffff'},
         showlegend: true,
         legend: {
             x: 0,
-            y: -0.2,
+            y: 1.1,
             orientation: 'h',
             font: {color: '#ffffff'},
             bgcolor: 'rgba(0,0,0,0)'
         },
-        margin: {t: 60, r: 50, b: 80, l: 50}
+        margin: {t: 30, r: 50, b: 50, l: 50}
     };
     
     const config = {
@@ -1385,10 +1418,6 @@ function renderMacdChart(data) {
     ];
     
     const layout = {
-        title: {
-            text: 'MACD con Histograma',
-            font: {color: '#ffffff', size: 14}
-        },
         xaxis: {
             title: 'Fecha/Hora',
             type: 'date',
@@ -1411,7 +1440,7 @@ function renderMacdChart(data) {
             font: {color: '#ffffff'},
             bgcolor: 'rgba(0,0,0,0)'
         },
-        margin: {t: 60, r: 50, b: 50, l: 50}
+        margin: {t: 30, r: 50, b: 50, l: 50}
     };
     
     const config = {
@@ -1425,6 +1454,128 @@ function renderMacdChart(data) {
     }
     
     currentMacdChart = Plotly.newPlot('macd-chart', traces, layout, config);
+}
+
+function renderStochRsiChart(data) {
+    const chartElement = document.getElementById('stoch-rsi-chart');
+    
+    if (!data.indicators || !data.data) {
+        chartElement.innerHTML = `
+            <div class="alert alert-warning text-center">
+                <p class="mb-0">No hay datos de RSI Estocástico disponibles</p>
+            </div>
+        `;
+        return;
+    }
+
+    const dates = data.data.slice(-50).map(d => new Date(d.timestamp));
+    const stochRsi = data.indicators.stoch_rsi || [];
+    const kLine = data.indicators.stoch_k || [];
+    const dLine = data.indicators.stoch_d || [];
+    
+    const traces = [
+        {
+            x: dates,
+            y: stochRsi,
+            type: 'scatter',
+            mode: 'lines',
+            name: 'RSI Estocástico',
+            line: {color: '#9C27B0', width: 2}
+        },
+        {
+            x: dates,
+            y: kLine,
+            type: 'scatter',
+            mode: 'lines',
+            name: '%K',
+            line: {color: '#00C853', width: 1.5}
+        },
+        {
+            x: dates,
+            y: dLine,
+            type: 'scatter',
+            mode: 'lines',
+            name: '%D',
+            line: {color: '#FF1744', width: 1.5}
+        }
+    ];
+    
+    const layout = {
+        xaxis: {
+            title: 'Fecha/Hora',
+            type: 'date',
+            gridcolor: '#444',
+            zerolinecolor: '#444'
+        },
+        yaxis: {
+            title: 'Valor',
+            range: [0, 100],
+            gridcolor: '#444',
+            zerolinecolor: '#444'
+        },
+        shapes: [
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 80,
+                y1: 80,
+                line: {
+                    color: 'red',
+                    width: 1,
+                    dash: 'dash'
+                }
+            },
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 20,
+                y1: 20,
+                line: {
+                    color: 'green',
+                    width: 1,
+                    dash: 'dash'
+                }
+            },
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 50,
+                y1: 50,
+                line: {
+                    color: 'white',
+                    width: 1,
+                    dash: 'solid'
+                }
+            }
+        ],
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        font: {color: '#ffffff'},
+        showlegend: true,
+        legend: {
+            x: 0,
+            y: 1.1,
+            orientation: 'h',
+            font: {color: '#ffffff'},
+            bgcolor: 'rgba(0,0,0,0)'
+        },
+        margin: {t: 30, r: 50, b: 50, l: 50}
+    };
+    
+    const config = {
+        responsive: true,
+        displayModeBar: true,
+        displaylogo: false
+    };
+    
+    if (currentStochRsiChart) {
+        Plotly.purge('stoch-rsi-chart');
+    }
+    
+    currentStochRsiChart = Plotly.newPlot('stoch-rsi-chart', traces, layout, config);
 }
 
 function renderVolumeChart(data) {
@@ -1443,7 +1594,6 @@ function renderVolumeChart(data) {
     const volumes = data.data.slice(-50).map(d => parseFloat(d.volume));
     const volumeAnomaly = data.indicators.volume_anomaly || [];
     const volumeClusters = data.indicators.volume_clusters || [];
-    const volumeRatio = data.indicators.volume_ratio || [];
     const volumeMa = data.indicators.volume_ma || [];
     const volumeSignal = data.indicators.volume_signal || [];
     
@@ -1528,10 +1678,6 @@ function renderVolumeChart(data) {
     }
     
     const layout = {
-        title: {
-            text: 'Indicador de Volumen con Anomalías y Clusters',
-            font: {color: '#ffffff', size: 14}
-        },
         xaxis: {
             title: 'Fecha/Hora',
             type: 'date',
@@ -1554,22 +1700,7 @@ function renderVolumeChart(data) {
             font: {color: '#ffffff'},
             bgcolor: 'rgba(0,0,0,0)'
         },
-        margin: {t: 60, r: 50, b: 50, l: 50},
-        annotations: [
-            {
-                x: 0.02,
-                y: 0.98,
-                xref: 'paper',
-                yref: 'paper',
-                text: '🟢 Barras verdes: Volumen de COMPRA | 🔴 Barras rojas: Volumen de VENTA',
-                showarrow: false,
-                font: {color: 'white', size: 10},
-                bgcolor: 'rgba(0,0,0,0.7)',
-                bordercolor: 'rgba(255,255,255,0.5)',
-                borderwidth: 1,
-                borderpad: 4
-            }
-        ]
+        margin: {t: 30, r: 50, b: 50, l: 50}
     };
     
     const config = {
@@ -1701,169 +1832,6 @@ function getVolumeLevel(currentVolume, averageVolume) {
     if (ratio > 1.0) return { text: 'MEDIO', class: 'bg-warning' };
     if (ratio > 0.5) return { text: 'BAJO', class: 'bg-secondary' };
     return { text: 'MUY BAJO', class: 'bg-dark' };
-}
-
-function updateScatterChartImproved(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage) {
-    const url = `/api/scatter_data_improved?interval=${interval}&di_period=${diPeriod}&adx_threshold=${adxThreshold}&sr_period=${srPeriod}&rsi_length=${rsiLength}&bb_multiplier=${bbMultiplier}&volume_filter=${volumeFilter}&leverage=${leverage}`;
-    
-    fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(scatterData => {
-            renderScatterChartImproved(scatterData);
-        })
-        .catch(error => {
-            console.error('Error cargando datos de scatter:', error);
-        });
-}
-
-function renderScatterChartImproved(scatterData) {
-    const scatterElement = document.getElementById('scatter-chart');
-    
-    if (!scatterData || scatterData.length === 0) {
-        scatterElement.innerHTML = `
-            <div class="alert alert-warning text-center">
-                <p class="mb-0">No hay datos disponibles para el mapa de oportunidades</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Calcular valores para colores basados en señal real
-    const traces = [{
-        x: scatterData.map(d => d.x),
-        y: scatterData.map(d => d.y),
-        text: scatterData.map(d => 
-            `${d.symbol}<br>Score: ${d.signal_score.toFixed(1)}%<br>Señal: ${d.signal}<br>Precio: $${formatPriceForDisplay(d.current_price)}<br>Riesgo: ${d.risk_category}`
-        ),
-        mode: 'markers',
-        marker: {
-            size: scatterData.map(d => 8 + (d.signal_score / 15)),
-            color: scatterData.map(d => {
-                if (d.signal === 'LONG') {
-                    return d.risk_category === 'bajo' ? '#00C853' : 
-                           d.risk_category === 'medio' ? '#FFC107' : 
-                           d.risk_category === 'alto' ? '#FF9800' : '#9C27B0';
-                }
-                if (d.signal === 'SHORT') {
-                    return d.risk_category === 'bajo' ? '#FF1744' : 
-                           d.risk_category === 'medio' ? '#FF5252' : 
-                           d.risk_category === 'alto' ? '#F44336' : '#E91E63';
-                }
-                return '#9E9E9E';
-            }),
-            opacity: scatterData.map(d => 0.6 + (d.signal_score / 250)),
-            line: {
-                color: 'white',
-                width: 1
-            },
-            symbol: scatterData.map(d => {
-                if (d.risk_category === 'bajo') return 'circle';
-                if (d.risk_category === 'medio') return 'square';
-                if (d.risk_category === 'alto') return 'diamond';
-                return 'star';
-            })
-        },
-        type: 'scatter',
-        hovertemplate: '%{text}<extra></extra>'
-    }];
-    
-    const layout = {
-        title: {
-            text: 'Mapa de Oportunidades - Análisis Multi-Indicador (40 Criptomonedas)',
-            font: {color: '#ffffff', size: 16}
-        },
-        xaxis: {
-            title: 'Presión Compradora (%)',
-            range: [0, 100],
-            gridcolor: '#444',
-            zerolinecolor: '#444',
-            showgrid: true
-        },
-        yaxis: {
-            title: 'Presión Vendedora (%)',
-            range: [0, 100],
-            gridcolor: '#444',
-            zerolinecolor: '#444',
-            showgrid: true
-        },
-        shapes: [
-            {type: 'line', x0: 33.3, x1: 33.3, y0: 0, y1: 100, line: {color: 'gray', width: 1, dash: 'dash'}},
-            {type: 'line', x0: 66.6, x1: 66.6, y0: 0, y1: 100, line: {color: 'gray', width: 1, dash: 'dash'}},
-            {type: 'line', x0: 0, x1: 100, y0: 33.3, y1: 33.3, line: {color: 'gray', width: 1, dash: 'dash'}},
-            {type: 'line', x0: 0, x1: 100, y0: 66.6, y1: 66.6, line: {color: 'gray', width: 1, dash: 'dash'}},
-            
-            {
-                type: 'rect', x0: 0, x1: 33.3, y0: 66.6, y1: 100,
-                fillcolor: 'rgba(255, 0, 0, 0.15)',
-                line: {width: 0}
-            },
-            {
-                type: 'rect', x0: 66.6, x1: 100, y0: 0, y1: 33.3,
-                fillcolor: 'rgba(0, 255, 0, 0.15)',
-                line: {width: 0}
-            }
-        ],
-        annotations: [
-            {
-                x: 16.65, y: 83.3,
-                text: 'Zona VENTA',
-                showarrow: false,
-                font: {color: 'red', size: 12, weight: 'bold'},
-                bgcolor: 'rgba(255, 0, 0, 0.3)',
-                bordercolor: 'red'
-            },
-            {
-                x: 83.3, y: 16.65,
-                text: 'Zona COMPRA',
-                showarrow: false,
-                font: {color: 'green', size: 12, weight: 'bold'},
-                bgcolor: 'rgba(0, 255, 0, 0.3)',
-                bordercolor: 'green'
-            }
-        ],
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        font: {color: '#ffffff'},
-        showlegend: false,
-        margin: {t: 80, r: 50, b: 50, l: 50}
-    };
-    
-    const config = {
-        responsive: true,
-        displayModeBar: true,
-        displaylogo: false,
-        toImageButtonOptions: {
-            format: 'png',
-            filename: 'scatter_opportunities',
-            height: 600,
-            width: 800,
-            scale: 2
-        }
-    };
-    
-    // Destruir gráfico existente
-    if (currentScatterChart) {
-        Plotly.purge('scatter-chart');
-    }
-    
-    currentScatterChart = Plotly.newPlot('scatter-chart', traces, layout, config);
-}
-
-function formatPriceForDisplay(price) {
-    if (price >= 1000) {
-        return price.toFixed(2);
-    } else if (price >= 1) {
-        return price.toFixed(4);
-    } else if (price >= 0.01) {
-        return price.toFixed(6);
-    } else {
-        return price.toFixed(8);
-    }
 }
 
 function updateMultipleSignals(interval, diPeriod, adxThreshold, srPeriod, rsiLength, bbMultiplier, volumeFilter, leverage) {
@@ -2152,32 +2120,14 @@ function showError(message) {
     });
 }
 
-function updateBoliviaClock() {
-    fetch('/api/bolivia_time')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('bolivia-clock').textContent = data.time;
-            document.getElementById('bolivia-date').textContent = data.date;
-        })
-        .catch(error => {
-            console.error('Error actualizando reloj:', error);
-            const now = new Date();
-            document.getElementById('bolivia-clock').textContent = now.toLocaleTimeString('es-BO');
-            document.getElementById('bolivia-date').textContent = now.toLocaleDateString('es-BO');
-        });
+function formatPriceForDisplay(price) {
+    if (price >= 1000) {
+        return price.toFixed(2);
+    } else if (price >= 1) {
+        return price.toFixed(4);
+    } else if (price >= 0.01) {
+        return price.toFixed(6);
+    } else {
+        return price.toFixed(8);
+    }
 }
-
-function downloadStrategicReport() {
-    const symbol = document.getElementById('selected-crypto').textContent;
-    const interval = document.getElementById('interval-select').value;
-    const leverage = document.getElementById('leverage').value;
-    
-    const url = `/api/generate_report?symbol=${symbol}&interval=${interval}&leverage=${leverage}`;
-    window.open(url, '_blank');
-}
-
-setInterval(updateBoliviaClock, 1000);
-
-document.addEventListener('DOMContentLoaded', function() {
-    updateBoliviaClock();
-});
