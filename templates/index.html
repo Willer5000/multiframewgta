@@ -201,17 +201,7 @@
 
             <!-- Contenido Principal -->
             <div class="col-lg-8">
-                <!-- Mapa de Oportunidades -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Mapa de Oportunidades - Análisis Multi-Temporalidad (40 Criptomonedas)</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="scatter-chart" style="height: 400px;"></div>
-                    </div>
-                </div>
-
-                <!-- Gráfico de Velas -->
+                <!-- Gráfico de Velas (ESTÁTICO - No se comprime) -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0" id="chart-title">Gráfico de Velas con Indicadores</h5>
@@ -226,96 +216,9 @@
                     </div>
                 </div>
 
-                <!-- Gráfico ADX + DMI -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">ADX con DMI (+DI y -DI)</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="adx-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Indicador de Volumen con Anomalías y Clusters -->
-                <div class="card bg-dark border-info mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-chart-bar me-2"></i>
-                            Indicador de Volumen con Anomalías y Clusters
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="volume-chart" style="height: 300px;"></div>
-                        <div class="mt-2">
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Compra anómala | 
-                                <strong>🔴 ROJO:</strong> Venta anómala |
-                                <strong>📊 GRIS:</strong> Volumen normal
-                            </small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gráfico Fuerza de Tendencia Maverick -->
-                <div class="card bg-dark border-warning mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-chart-line me-2"></i>
-                            Fuerza de Tendencia Maverick - Ancho Bandas Bollinger %
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="trend-strength-chart" style="height: 300px;"></div>
-                        <div class="mt-2">
-                            <small class="text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                <strong>🟢 VERDE:</strong> Fuerza creciente (Operar) | 
-                                <strong>🔴 ROJO:</strong> Fuerza decreciente (Evitar) |
-                                <strong>❌ X ROJO:</strong> Zona de NO OPERAR
-                            </small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Gráfico de Ballenas -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="whale-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Gráfico RSI Maverick -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">RSI Modificado Maverick (%B)</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="rsi-maverick-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Gráfico RSI Tradicional -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">RSI Tradicional con Divergencias</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="rsi-traditional-chart" style="height: 300px;"></div>
-                    </div>
-                </div>
-
-                <!-- Gráfico MACD -->
-                <div class="card bg-dark border-secondary mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">MACD con Histograma</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="macd-chart" style="height: 300px;"></div>
-                    </div>
+                <!-- Contenedor de Indicadores Reordenables -->
+                <div id="indicators-container">
+                    <!-- Los indicadores se cargarán aquí dinámicamente -->
                 </div>
             </div>
 
