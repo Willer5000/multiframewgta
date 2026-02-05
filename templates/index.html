@@ -44,6 +44,12 @@
                 <a class="nav-link" href="/manual">
                     <i class="fas fa-book me-1"></i>Manual
                 </a>
+                <a class="nav-link" href="#" onclick="toggleAllIndicators(true)">
+                    <i class="fas fa-expand me-1"></i>Expandir Todo
+                </a>
+                <a class="nav-link" href="#" onclick="toggleAllIndicators(false)">
+                    <i class="fas fa-compress me-1"></i>Comprimir Todo
+                </a>
             </div>
         </div>
     </nav>
@@ -80,12 +86,7 @@
                         <div class="mb-3">
                             <label class="form-label">Temporalidad</label>
                             <select class="form-select bg-dark text-white" id="interval-select">
-                                <option value="15m">15 Minutos</option>
-                                <option value="30m">30 Minutos</option>
-                                <option value="1h">1 Hora</option>
-                                <option value="2h">2 Horas</option>
                                 <option value="4h" selected>4 Horas</option>
-                                <option value="8h">8 Horas</option>
                                 <option value="12h">12 Horas</option>
                                 <option value="1D">1 Día</option>
                                 <option value="1W">1 Semana</option>
@@ -201,7 +202,7 @@
 
             <!-- Contenido Principal -->
             <div class="col-lg-8">
-                <!-- Gráfico de Velas (ESTÁTICO - No se comprime) -->
+                <!-- Gráfico de Velas (ESTÁTICO) -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0" id="chart-title">Gráfico de Velas con Indicadores</h5>
@@ -216,9 +217,9 @@
                     </div>
                 </div>
 
-                <!-- Contenedor de Indicadores Reordenables -->
+                <!-- Contenedor de Indicadores Ordenables -->
                 <div id="indicators-container">
-                    <!-- Los indicadores se cargarán aquí dinámicamente -->
+                    <!-- Los indicadores se agregarán dinámicamente aquí -->
                 </div>
             </div>
 
@@ -250,23 +251,6 @@
                         <div id="signal-analysis">
                             <div class="text-center py-3">
                                 <p class="text-muted mb-0">Esperando datos para análisis...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Alertas de Entrada -->
-                <div class="card bg-dark border-warning mb-4">
-                    <div class="card-header bg-warning bg-opacity-25">
-                        <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Alertas de Entrada</h5>
-                    </div>
-                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                        <div id="scalping-alerts">
-                            <div class="text-center py-2">
-                                <div class="spinner-border spinner-border-sm text-warning" role="status">
-                                    <span class="visually-hidden">Cargando...</span>
-                                </div>
-                                <p class="mt-2 mb-0 small">Buscando oportunidades...</p>
                             </div>
                         </div>
                     </div>
@@ -366,8 +350,20 @@
                 });
         }
 
+        // Función para expandir/comprimir todos los indicadores
+        function toggleAllIndicators(expand) {
+            const indicators = document.querySelectorAll('.indicator-card');
+            indicators.forEach(card => {
+                if (expand) {
+                    card.classList.remove('compressed');
+                } else {
+                    card.classList.add('compressed');
+                }
+            });
+        }
+
         // Función para descargar reporte estratégico
-        function downloadStrategicReport() {
+        function downloadReport() {
             const symbol = document.getElementById('selected-crypto').textContent;
             const interval = document.getElementById('interval-select').value;
             const leverage = document.getElementById('leverage').value;
@@ -382,6 +378,7 @@
         // Inicializar el reloj al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             updateBoliviaClock();
+            initializeIndicators();
         });
     </script>
 </body>
