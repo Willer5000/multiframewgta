@@ -3208,16 +3208,10 @@ def manual():
 
 @app.route('/api/signals')
 def get_signals():
-    """Endpoint para obtener señales de trading"""
+    """Endpoint para obtener señales de trading - CORREGIDO"""
     try:
         symbol = request.args.get('symbol', 'BTC-USDT')
         interval = request.args.get('interval', '4h')
-        di_period = int(request.args.get('di_period', 14))
-        adx_threshold = int(request.args.get('adx_threshold', 25))
-        sr_period = int(request.args.get('sr_period', 50))
-        rsi_length = int(request.args.get('rsi_length', 14))
-        bb_multiplier = float(request.args.get('bb_multiplier', 2.0))
-        volume_filter = request.args.get('volume_filter', 'Todos')
         leverage = int(request.args.get('leverage', 15))
         
         # Obtener datos básicos
@@ -3232,8 +3226,8 @@ def get_signals():
         
         # Calcular todos los indicadores necesarios
         whale_data = indicator.calculate_whale_signals_improved(df)
-        adx, plus_di, minus_di = indicator.calculate_adx(high, low, close, di_period)
-        rsi_traditional = indicator.calculate_rsi(close, rsi_length)
+        adx, plus_di, minus_di = indicator.calculate_adx(high, low, close, 14)
+        rsi_traditional = indicator.calculate_rsi(close, 14)
         rsi_maverick = indicator.calculate_rsi_maverick(close)
         stoch_rsi_data = indicator.calculate_stochastic_rsi(close)
         
@@ -3258,76 +3252,60 @@ def get_signals():
         # Soporte/Resistencia
         support_levels, resistance_levels = indicator.calculate_dynamic_support_resistance(high, low, close)
         
-        # Determinar señal basada en múltiples condiciones
-        current_price = close[-1]
+        # Determinar señal basada en condiciones simples
+        current_price = float(close[-1])
         signal_type = 'NEUTRAL'
         signal_score = 0
         
-        # Calcular score simple basado en indicadores
-        score_components = []
+        # Condiciones simples para señales
+        bullish_conditions = 0
+        bearish_conditions = 0
         
-        # Componente 1: FTMaverick
-        if not ftm_data['no_trade_zones'][-1]:
-            score_components.append(20)
+        # Condición 1: RSI
+        if rsi_traditional[-1] < 30:
+            bullish_conditions += 1
+        elif rsi_traditional[-1] > 70:
+            bearish_conditions += 1
         
-        # Componente 2: RSI Estocástico en zona favorable
-        stoch_rsi = stoch_rsi_data['stoch_rsi'][-1]
-        if stoch_rsi < 30 or stoch_rsi > 70:
-            score_components.append(15)
+        # Condición 2: ADX
+        if adx[-1] > 25 and plus_di[-1] > minus_di[-1]:
+            bullish_conditions += 1
+        elif adx[-1] > 25 and minus_di[-1] > plus_di[-1]:
+            bearish_conditions += 1
         
-        # Componente 3: Volumen anómalo
-        if volume_data['volume_clusters'][-1]:
-            score_components.append(15)
+        # Condición 3: MACD
+        if macd[-1] > macd_signal[-1]:
+            bullish_conditions += 1
+        elif macd[-1] < macd_signal[-1]:
+            bearish_conditions += 1
         
-        # Componente 4: Posición respecto a MA200
-        if current_price > ma_200[-1]:
-            score_components.append(10)
+        # Calcular score
+        signal_score = min(100, max(bullish_conditions, bearish_conditions) * 33.3)
         
-        # Calcular score total
-        if score_components:
-            signal_score = min(100, sum(score_components))
-        
-        # Asignar señal si score es suficientemente alto
-        if signal_score >= 60:
-            # Determinar dirección basada en múltiples factores
-            bullish_factors = 0
-            bearish_factors = 0
-            
-            if stoch_rsi < 30:
-                bullish_factors += 1
-            if stoch_rsi > 70:
-                bearish_factors += 1
-            if plus_di[-1] > minus_di[-1]:
-                bullish_factors += 1
-            if minus_di[-1] > plus_di[-1]:
-                bearish_factors += 1
-            if rsi_maverick[-1] < 0.3:
-                bullish_factors += 1
-            if rsi_maverick[-1] > 0.7:
-                bearish_factors += 1
-            
-            if bullish_factors > bearish_factors:
-                signal_type = 'LONG'
-            elif bearish_factors > bullish_factors:
-                signal_type = 'SHORT'
+        # Asignar señal
+        if bullish_conditions > bearish_conditions and signal_score >= 65:
+            signal_type = 'LONG'
+        elif bearish_conditions > bullish_conditions and signal_score >= 65:
+            signal_type = 'SHORT'
         
         # Calcular niveles de trading
         levels_data = indicator.calculate_optimal_entry_exit(
             df, signal_type, leverage, support_levels, resistance_levels
         )
         
-        return jsonify({
+        # Preparar respuesta con conversión explícita a tipos Python
+        response_data = {
             'symbol': symbol,
-            'current_price': float(current_price),
+            'current_price': current_price,
             'signal': signal_type,
             'signal_score': float(signal_score),
-            'entry': levels_data['entry'],
-            'stop_loss': levels_data['stop_loss'],
-            'take_profit': levels_data['take_profit'],
-            'support_levels': levels_data['support_levels'][:3],
-            'resistance_levels': levels_data['resistance_levels'][:3],
-            'atr': levels_data['atr'],
-            'atr_percentage': levels_data['atr_percentage'],
+            'entry': float(levels_data['entry']),
+            'stop_loss': float(levels_data['stop_loss']),
+            'take_profit': [float(tp) for tp in levels_data['take_profit'][:3]],
+            'support_levels': [float(s) for s in support_levels[:3]],
+            'resistance_levels': [float(r) for r in resistance_levels[:3]],
+            'atr': float(levels_data['atr']),
+            'atr_percentage': float(levels_data['atr_percentage']),
             'volume': float(volume[-1]),
             'volume_ma': float(np.mean(volume[-20:])),
             'adx': float(adx[-1]),
@@ -3337,49 +3315,65 @@ def get_signals():
             'whale_dump': float(whale_data['whale_dump'][-1]),
             'rsi_maverick': float(rsi_maverick[-1]),
             'rsi_traditional': float(rsi_traditional[-1]),
-            'stoch_rsi': float(stoch_rsi),
+            'stoch_rsi': float(stoch_rsi_data['stoch_rsi'][-1]),
             'stoch_k': float(stoch_rsi_data['k_line'][-1]),
             'stoch_d': float(stoch_rsi_data['d_line'][-1]),
-            'ma200_condition': 'above' if current_price > ma_200[-1] else 'below',
-            'data': df.tail(50).to_dict('records'),
+            'ma200_condition': 'above' if current_price > float(ma_200[-1]) else 'below',
+            'data': [],
             'indicators': {
-                'whale_pump': whale_data['whale_pump'][-50:],
-                'whale_dump': whale_data['whale_dump'][-50:],
-                'adx': adx[-50:].tolist(),
-                'plus_di': plus_di[-50:].tolist(),
-                'minus_di': minus_di[-50:].tolist(),
-                'rsi_traditional': rsi_traditional[-50:],
-                'rsi_maverick': rsi_maverick[-50:],
-                'stoch_rsi': stoch_rsi_data['stoch_rsi'][-50:],
-                'stoch_k': stoch_rsi_data['k_line'][-50:],
-                'stoch_d': stoch_rsi_data['d_line'][-50:],
-                'ma_9': ma_9[-50:].tolist(),
-                'ma_21': ma_21[-50:].tolist(),
-                'ma_50': ma_50[-50:].tolist(),
-                'ma_200': ma_200[-50:].tolist(),
-                'macd': macd[-50:].tolist(),
-                'macd_signal': macd_signal[-50:].tolist(),
-                'macd_histogram': macd_histogram[-50:].tolist(),
-                'bb_upper': bb_upper[-50:].tolist(),
-                'bb_middle': bb_middle[-50:].tolist(),
-                'bb_lower': bb_lower[-50:].tolist(),
-                'volume_anomaly': volume_data['volume_anomaly'][-50:],
-                'volume_clusters': volume_data['volume_clusters'][-50:],
-                'volume_ratio': volume_data['volume_ratio'][-50:],
-                'volume_ma': volume_data['volume_ma'][-50:],
+                'whale_pump': [float(x) for x in whale_data['whale_pump'][-50:]],
+                'whale_dump': [float(x) for x in whale_data['whale_dump'][-50:]],
+                'adx': [float(x) for x in adx[-50:]],
+                'plus_di': [float(x) for x in plus_di[-50:]],
+                'minus_di': [float(x) for x in minus_di[-50:]],
+                'rsi_traditional': [float(x) for x in rsi_traditional[-50:]],
+                'rsi_maverick': [float(x) for x in rsi_maverick[-50:]],
+                'stoch_rsi': [float(x) for x in stoch_rsi_data['stoch_rsi'][-50:]],
+                'stoch_k': [float(x) for x in stoch_rsi_data['k_line'][-50:]],
+                'stoch_d': [float(x) for x in stoch_rsi_data['d_line'][-50:]],
+                'ma_9': [float(x) for x in ma_9[-50:]],
+                'ma_21': [float(x) for x in ma_21[-50:]],
+                'ma_50': [float(x) for x in ma_50[-50:]],
+                'ma_200': [float(x) for x in ma_200[-50:]],
+                'macd': [float(x) for x in macd[-50:]],
+                'macd_signal': [float(x) for x in macd_signal[-50:]],
+                'macd_histogram': [float(x) for x in macd_histogram[-50:]],
+                'bb_upper': [float(x) for x in bb_upper[-50:]],
+                'bb_middle': [float(x) for x in bb_middle[-50:]],
+                'bb_lower': [float(x) for x in bb_lower[-50:]],
+                'volume_anomaly': [bool(x) for x in volume_data['volume_anomaly'][-50:]],
+                'volume_clusters': [bool(x) for x in volume_data['volume_clusters'][-50:]],
+                'volume_ratio': [float(x) for x in volume_data['volume_ratio'][-50:]],
+                'volume_ma': [float(x) for x in volume_data['volume_ma'][-50:]],
                 'volume_signal': volume_data['volume_signal'][-50:],
-                'trend_strength': ftm_data['trend_strength'][-50:],
-                'bb_width': ftm_data['bb_width'][-50:],
-                'no_trade_zones': ftm_data['no_trade_zones'][-50:],
+                'trend_strength': [float(x) for x in ftm_data['trend_strength'][-50:]],
+                'bb_width': [float(x) for x in ftm_data['bb_width'][-50:]],
+                'no_trade_zones': [bool(x) for x in ftm_data['no_trade_zones'][-50:]],
                 'strength_signals': ftm_data['strength_signals'][-50:],
-                'high_zone_threshold': ftm_data['high_zone_threshold'],
+                'high_zone_threshold': float(ftm_data['high_zone_threshold']),
                 'colors': ftm_data['colors'][-50:]
             }
-        })
+        }
+        
+        # Agregar datos de velas
+        for i in range(max(0, len(df) - 50), len(df)):
+            candle = df.iloc[i]
+            response_data['data'].append({
+                'timestamp': candle['timestamp'].strftime('%Y-%m-%d %H:%M:%S'),
+                'open': float(candle['open']),
+                'high': float(candle['high']),
+                'low': float(candle['low']),
+                'close': float(candle['close']),
+                'volume': float(candle['volume'])
+            })
+        
+        return jsonify(response_data)
         
     except Exception as e:
-        print(f"Error en /api/signals: {e}")
-        return jsonify({'error': 'Error interno del servidor'}), 500
+        print(f"Error en /api/signals: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Error interno del servidor: {str(e)}'}), 500
 
 @app.route('/api/strategy_signals')
 def get_strategy_signals():
