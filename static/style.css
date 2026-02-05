@@ -57,6 +57,17 @@ body {
     padding: 1.25rem;
 }
 
+.indicator-content {
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.indicator-content.collapsed {
+    height: 0;
+    padding: 0;
+    opacity: 0;
+}
+
 .table {
     --bs-table-color: #ffffff;
     --bs-table-bg: transparent;
@@ -193,49 +204,10 @@ body {
     text-align: center;
 }
 
-.dropdown-menu {
-    background-color: var(--bs-dark);
-    border: 1px solid var(--bs-border-color);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.dropdown-item {
-    color: var(--bs-body-color);
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-}
-
-.dropdown-item:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--bs-body-color);
-}
-
-.dropdown-header {
-    font-size: 0.8rem;
-    font-weight: 600;
-    padding: 0.5rem 1rem;
-}
-
-.dropdown-divider {
-    border-color: var(--bs-border-color);
-    margin: 0.25rem 0;
-}
-
 .badge {
     font-size: 0.75em;
     font-weight: 600;
     padding: 0.35em 0.65em;
-}
-
-.progress {
-    background-color: var(--bs-border-color);
-    border-radius: 10px;
-    height: 8px;
-}
-
-.progress-bar {
-    border-radius: 10px;
-    transition: width 0.6s ease;
 }
 
 .alert {
@@ -323,16 +295,25 @@ body {
     color: #ccc;
 }
 
-.scalping-alert {
-    border-left: 4px solid var(--bs-warning);
-    animation: pulse 2s infinite;
-    margin-bottom: 0.75rem;
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
 }
 
-@keyframes pulse {
-    0% { background-color: rgba(255, 193, 7, 0.1); }
-    50% { background-color: rgba(255, 193, 7, 0.2); }
-    100% { background-color: rgba(255, 193, 7, 0.1); }
+.btn-move {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-move:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.btn-collapse {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-collapse:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .table-responsive {
@@ -402,6 +383,25 @@ body {
     to { transform: rotate(360deg); }
 }
 
+/* Animaciones para los indicadores */
+.indicator-card {
+    transition: all 0.3s ease;
+}
+
+.indicator-card.moving {
+    opacity: 0.7;
+    transform: scale(0.98);
+}
+
+.indicator-placeholder {
+    height: 100px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px dashed var(--bs-border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
 @media (max-width: 768px) {
     .container-fluid {
         padding-left: 10px;
@@ -441,6 +441,11 @@ body {
         transform: scale(0.8) !important;
         transform-origin: top center !important;
     }
+    
+    .btn-group-sm .btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.7rem;
+    }
 }
 
 @media (max-width: 576px) {
@@ -474,9 +479,17 @@ body {
         font-size: 0.8rem;
     }
     
-    .table-responsive th:nth-child(3),
-    .table-responsive td:nth-child(3) {
-        display: none;
+    .indicator-card .card-header {
+        padding: 0.75rem;
+    }
+    
+    .indicator-card .card-header h5 {
+        font-size: 0.85rem;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.15rem 0.3rem;
+        font-size: 0.65rem;
     }
 }
 
@@ -523,46 +536,86 @@ body {
     color: #28a745;
 }
 
-.risk-low {
-    color: #28a745 !important;
+/* Estilos específicos para gráficos */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
 }
 
-.risk-medium {
-    color: #ffc107 !important;
+.chart-container canvas {
+    border-radius: 8px;
 }
 
-.risk-high {
-    color: #dc3545 !important;
+/* Estilos para la gestión de indicadores */
+.indicator-management {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
 }
 
-.risk-memecoin {
-    color: #e83e8c !important;
+.indicator-management h6 {
+    margin-bottom: 1rem;
+    color: #ccc;
 }
 
-.badge-risk-low {
-    background-color: rgba(40, 167, 69, 0.2);
-    color: #28a745;
-    border: 1px solid rgba(40, 167, 69, 0.3);
+.indicator-list {
+    max-height: 200px;
+    overflow-y: auto;
 }
 
-.badge-risk-medium {
-    background-color: rgba(255, 193, 7, 0.2);
-    color: #ffc107;
-    border: 1px solid rgba(255, 193, 7, 0.3);
+.indicator-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    cursor: move;
+    transition: all 0.3s ease;
 }
 
-.badge-risk-high {
-    background-color: rgba(220, 53, 69, 0.2);
-    color: #dc3545;
-    border: 1px solid rgba(220, 53, 69, 0.3);
+.indicator-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
 }
 
-.badge-risk-memecoin {
-    background-color: rgba(232, 62, 140, 0.2);
-    color: #e83e8c;
-    border: 1px solid rgba(232, 62, 140, 0.3);
+.indicator-item.dragging {
+    opacity: 0.5;
 }
 
+.indicator-item .drag-handle {
+    cursor: move;
+    color: #ccc;
+    margin-right: 0.5rem;
+}
+
+.indicator-item .indicator-name {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.indicator-item .indicator-controls {
+    display: flex;
+    gap: 0.25rem;
+}
+
+/* Estilos para estado colapsado */
+.indicator-card.collapsed {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.indicator-card.collapsed .card-header {
+    border-bottom: none;
+}
+
+.indicator-card.collapsed .btn-collapse {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Mejoras de accesibilidad */
 @media (prefers-reduced-motion: reduce) {
     * {
         animation-duration: 0.01ms !important;
@@ -575,6 +628,10 @@ body {
     }
     
     .btn:hover {
+        transform: none;
+    }
+    
+    .indicator-item:hover {
         transform: none;
     }
 }
@@ -596,7 +653,7 @@ body {
 }
 
 @media print {
-    .navbar, .btn, .dropdown, .toast-container {
+    .navbar, .btn, .btn-group, .toast-container, .indicator-card .btn-group {
         display: none !important;
     }
     
@@ -610,105 +667,37 @@ body {
         background: white !important;
         color: black !important;
     }
+    
+    .indicator-content {
+        display: block !important;
+        height: auto !important;
+    }
 }
 
-.plot-container {
-    will-change: transform;
+/* Estilos para gráficos específicos */
+#candle-chart {
+    height: 400px !important;
 }
 
-.trend-strength-legend {
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 0.75rem;
-    margin-top: 0.5rem;
-    font-size: 0.8rem;
+#adx-chart, #stoch-rsi-chart, #trend-strength-chart,
+#volume-chart, #whale-chart, #rsi-maverick-chart,
+#rsi-traditional-chart, #macd-chart {
+    height: 300px !important;
 }
 
-.trend-strength-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.25rem;
+/* Estilos para el orden de indicadores */
+.indicator-order-save {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
 }
 
-.trend-strength-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-    margin-right: 0.5rem;
+.indicator-order-save .btn {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.trend-strength-strong-up {
-    background-color: #00C853;
-}
-
-.trend-strength-weak-up {
-    background-color: #FFC107;
-}
-
-.trend-strength-strong-down {
-    background-color: #FF1744;
-}
-
-.trend-strength-weak-down {
-    background-color: #FF9800;
-}
-
-.trend-strength-neutral {
-    background-color: #9E9E9E;
-}
-
-.trend-strength-no-trade {
-    background-color: #F44336;
-    animation: pulse-red 2s infinite;
-}
-
-@keyframes pulse-red {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
-}
-
-.no-trade-alert {
-    background: linear-gradient(135deg, rgba(244, 67, 54, 0.1), rgba(244, 67, 54, 0.05));
-    border: 1px solid rgba(244, 67, 54, 0.3);
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 0.5rem 0;
-}
-
-.hover-row:hover {
-    background: linear-gradient(135deg, rgba(13, 110, 253, 0.1), rgba(13, 110, 253, 0.05)) !important;
-    cursor: pointer;
-    transform: translateX(2px);
-    transition: all 0.2s ease;
-}
-
-.card-border-success {
-    border-left: 4px solid var(--bs-success) !important;
-}
-
-.card-border-warning {
-    border-left: 4px solid var(--bs-warning) !important;
-}
-
-.card-border-danger {
-    border-left: 4px solid var(--bs-danger) !important;
-}
-
-.card-border-info {
-    border-left: 4px solid var(--bs-info) !important;
-}
-
-@keyframes highlight {
-    0% { background-color: rgba(255, 193, 7, 0.1); }
-    50% { background-color: rgba(255, 193, 7, 0.3); }
-    100% { background-color: rgba(255, 193, 7, 0.1); }
-}
-
-.highlight-alert {
-    animation: highlight 2s infinite;
-}
-
+/* Tooltips personalizados */
 .custom-tooltip {
     position: relative;
     display: inline-block;
@@ -738,14 +727,7 @@ body {
     opacity: 1;
 }
 
-.signal-details-modal .modal-content {
-    background: linear-gradient(135deg, var(--bs-dark), var(--bs-darker));
-}
-
-.signal-details-modal .modal-header {
-    border-bottom: 2px solid var(--bs-primary);
-}
-
+/* Efectos de transición */
 .fade-in {
     animation: fadeIn 0.5s ease-in;
 }
@@ -755,6 +737,7 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Estilos para botones de acción */
 .btn-action {
     position: relative;
     overflow: hidden;
@@ -775,24 +758,7 @@ body {
     left: 100%;
 }
 
-.chart-container {
-    position: relative;
-    height: 400px;
-    width: 100%;
-}
-
-@media (max-width: 768px) {
-    .chart-container {
-        height: 300px;
-    }
-}
-
-@media (max-width: 576px) {
-    .chart-container {
-        height: 250px;
-    }
-}
-
+/* Mejoras de sombra */
 .shadow-custom {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
 }
@@ -801,6 +767,7 @@ body {
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4) !important;
 }
 
+/* Gradientes de fondo */
 .gradient-bg {
     background: linear-gradient(135deg, var(--bs-darker), var(--bs-dark)) !important;
 }
@@ -817,13 +784,7 @@ body {
     background: linear-gradient(135deg, var(--bs-danger), #b02a37) !important;
 }
 
-.footer-custom {
-    background: linear-gradient(135deg, var(--bs-darker), #000000);
-    border-top: 1px solid var(--bs-border-color);
-    padding: 2rem 0;
-    margin-top: 3rem;
-}
-
+/* Efecto de brillo al pasar el mouse */
 .glow-on-hover {
     transition: all 0.3s ease;
 }
@@ -832,224 +793,48 @@ body {
     box-shadow: 0 0 15px rgba(13, 110, 253, 0.5);
 }
 
-.notification-system {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1060;
-    max-width: 350px;
+/* Estilos para modales de señal */
+.signal-details-modal .modal-content {
+    background: linear-gradient(135deg, var(--bs-dark), var(--bs-darker));
 }
 
-.notification {
-    background: var(--bs-dark);
-    border: 1px solid var(--bs-border-color);
-    border-radius: 8px;
+.signal-details-modal .modal-header {
+    border-bottom: 2px solid var(--bs-primary);
+}
+
+/* Estilos para tablas responsivas */
+.table-responsive-sm {
+    font-size: 0.85rem;
+}
+
+/* Estilos para mensajes de estado */
+.status-message {
     padding: 1rem;
-    margin-bottom: 0.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    animation: slideInRight 0.3s ease;
-}
-
-@keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@media print {
-    .no-print {
-        display: none !important;
-    }
-    
-    .print-full-width {
-        width: 100% !important;
-    }
-    
-    .card {
-        break-inside: avoid;
-        box-shadow: none !important;
-        border: 1px solid #000 !important;
-    }
-    
-    .table {
-        background: white !important;
-        color: black !important;
-    }
-    
-    .table-dark {
-        --bs-table-bg: white !important;
-        --bs-table-color: black !important;
-    }
-}
-
-/* Nuevas clases para el sistema de indicadores reordenables */
-.indicator-card {
-    transition: all 0.3s ease;
-}
-
-.indicator-card.collapsed {
-    opacity: 0.8;
-}
-
-.indicator-card.collapsed .card-header {
-    background-color: rgba(255, 255, 255, 0.03);
-}
-
-.indicator-card .btn-group {
-    opacity: 0.7;
-    transition: opacity 0.3s ease;
-}
-
-.indicator-card:hover .btn-group {
-    opacity: 1;
-}
-
-.indicator-card .btn-outline-secondary {
-    border-color: #555;
-    color: #aaa;
-}
-
-.indicator-card .btn-outline-secondary:hover {
-    background-color: #333;
-    border-color: #777;
-    color: #fff;
-}
-
-.indicator-card .btn-outline-secondary:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
-
-/* Animación para reordenamiento */
-@keyframes slideUp {
-    from {
-        transform: translateY(20px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-.indicator-card {
-    animation: slideUp 0.3s ease;
-}
-
-/* Estilos para el RSI Estocástico */
-.stoch-rsi-legend {
-    background: rgba(156, 39, 176, 0.1);
-    border: 1px solid rgba(156, 39, 176, 0.3);
-    border-radius: 6px;
-    padding: 0.5rem;
-    margin-top: 0.5rem;
-    font-size: 0.8rem;
-}
-
-.stoch-rsi-legend .legend-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.25rem;
-}
-
-.stoch-rsi-legend .color-box {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-    margin-right: 0.5rem;
-}
-
-.stoch-rsi-k {
-    background-color: #00C853;
-}
-
-.stoch-rsi-d {
-    background-color: #FF1744;
-}
-
-.stoch-rsi-line {
-    background-color: #9C27B0;
-}
-
-/* Mejoras para la responsividad de los controles de indicadores */
-@media (max-width: 768px) {
-    .indicator-card .btn-group {
-        flex-wrap: wrap;
-    }
-    
-    .indicator-card .btn-group .btn {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.8rem;
-    }
-    
-    .indicator-card .card-header h6 {
-        font-size: 0.9rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .indicator-card .btn-group .btn {
-        padding: 0.2rem 0.4rem;
-        font-size: 0.75rem;
-    }
-    
-    .indicator-card .card-header {
-        padding: 0.75rem 1rem;
-    }
-    
-    .indicator-card .card-body {
-        padding: 1rem;
-    }
-}
-
-/* Efectos de transición suave */
-.transition-all {
-    transition: all 0.3s ease;
-}
-
-/* Estilos para estados de carga de gráficos */
-.chart-loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 200px;
-    background: rgba(0, 0, 0, 0.1);
     border-radius: 8px;
+    margin-bottom: 1rem;
+    text-align: center;
 }
 
-/* Estilos para tooltips mejorados */
-.tooltip-indicator {
-    position: relative;
-    cursor: help;
+.status-message.info {
+    background: rgba(13, 202, 240, 0.1);
+    border: 1px solid rgba(13, 202, 240, 0.3);
+    color: #79dfc1;
 }
 
-.tooltip-indicator::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--bs-dark);
-    color: var(--bs-body-color);
-    padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    border: 1px solid var(--bs-border-color);
-    z-index: 1000;
-    pointer-events: none;
+.status-message.warning {
+    background: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    color: #ffda6a;
 }
 
-.tooltip-indicator:hover::after {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(-5px);
+.status-message.error {
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    color: #ea868f;
+}
+
+.status-message.success {
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    color: #75b798;
 }
