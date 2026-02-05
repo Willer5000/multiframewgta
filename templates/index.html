@@ -44,12 +44,6 @@
                 <a class="nav-link" href="/manual">
                     <i class="fas fa-book me-1"></i>Manual
                 </a>
-                <a class="nav-link" href="#" onclick="toggleAllIndicators(true)">
-                    <i class="fas fa-expand me-1"></i>Expandir Todo
-                </a>
-                <a class="nav-link" href="#" onclick="toggleAllIndicators(false)">
-                    <i class="fas fa-compress me-1"></i>Comprimir Todo
-                </a>
             </div>
         </div>
     </nav>
@@ -65,22 +59,14 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label class="form-label">Crypto</label>
-                            <div class="dropdown">
-                                <button class="btn btn-outline-secondary w-100 text-start dropdown-toggle" type="button" 
-                                        id="cryptoDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <span id="selected-crypto">BTC-USDT</span>
-                                </button>
-                                <div class="dropdown-menu dropdown-menu-dark w-100 p-2" id="crypto-dropdown-menu">
-                                    <div class="mb-2">
-                                        <input type="text" class="form-control form-control-sm bg-dark text-white" 
-                                               id="crypto-search" placeholder="Buscar crypto...">
-                                    </div>
-                                    <div class="dropdown-divider"></div>
-                                    <div id="crypto-list" style="max-height: 300px; overflow-y: auto;">
-                                        <!-- Las opciones se cargan dinámicamente desde JavaScript -->
-                                    </div>
-                                </div>
-                            </div>
+                            <select class="form-select bg-dark text-white" id="symbol-select">
+                                <option value="BTC-USDT" selected>BTC-USDT</option>
+                                <option value="ETH-USDT">ETH-USDT</option>
+                                <option value="SOL-USDT">SOL-USDT</option>
+                                <option value="ADA-USDT">ADA-USDT</option>
+                                <option value="XRP-USDT">XRP-USDT</option>
+                                <option value="XAUT-USDT">XAUT-USDT</option>
+                            </select>
                         </div>
 
                         <div class="mb-3">
@@ -90,43 +76,6 @@
                                 <option value="12h">12 Horas</option>
                                 <option value="1D">1 Día</option>
                                 <option value="1W">1 Semana</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Periodo D+/D-</label>
-                            <input type="number" class="form-control bg-dark text-white" id="di-period" min="3" max="21" value="14">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">ADX Mínimo</label>
-                            <input type="number" class="form-control bg-dark text-white" id="adx-threshold" min="5" max="95" value="25">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Soportes/Resistencias</label>
-                            <input type="number" class="form-control bg-dark text-white" id="sr-period" min="10" max="200" value="50">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">RSI Length</label>
-                            <input type="number" class="form-control bg-dark text-white" id="rsi-length" min="10" max="50" value="14">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">BB Multiplier</label>
-                            <input type="number" class="form-control bg-dark text-white" id="bb-multiplier" min="1.0" max="3.0" step="0.1" value="2.0">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Filtro Volumen</label>
-                            <select class="form-select bg-dark text-white" id="volume-filter">
-                                <option value="Todos">Todos</option>
-                                <option value="Muy Alto">Muy Alto</option>
-                                <option value="Alto">Alto</option>
-                                <option value="Medio">Medio</option>
-                                <option value="Bajo">Bajo</option>
-                                <option value="Muy Bajo">Muy Bajo</option>
                             </select>
                         </div>
 
@@ -146,29 +95,33 @@
                         <div class="mb-3">
                             <label class="form-label">Indicadores en Gráfico</label>
                             <div class="form-check form-switch">
-                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma9">
+                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma9" checked>
                                 <label class="form-check-label" for="show-ma9">MA 9</label>
                             </div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma21">
+                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma21" checked>
                                 <label class="form-check-label" for="show-ma21">MA 21</label>
                             </div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma50">
+                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma50" checked>
                                 <label class="form-check-label" for="show-ma50">MA 50</label>
                             </div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma200">
+                                <input class="form-check-input indicator-control" type="checkbox" id="show-ma200" checked>
                                 <label class="form-check-label" for="show-ma200">MA 200</label>
                             </div>
                             <div class="form-check form-switch">
-                                <input class="form-check-input indicator-control" type="checkbox" id="show-bollinger">
+                                <input class="form-check-input indicator-control" type="checkbox" id="show-bollinger" checked>
                                 <label class="form-check-label" for="show-bollinger">Bandas Bollinger</label>
                             </div>
                         </div>
 
                         <button class="btn btn-primary w-100" onclick="updateCharts()">
                             <i class="fas fa-sync-alt me-2"></i>Actualizar
+                        </button>
+                        
+                        <button class="btn btn-outline-secondary w-100 mt-2" onclick="downloadReport()">
+                            <i class="fas fa-download me-2"></i>Descargar Reporte
                         </button>
                     </div>
                 </div>
@@ -186,9 +139,6 @@
                             <h6>Willer Gianni Torrico Arispe</h6>
                             <p class="small text-muted">Especialista en Análisis Multi-Temporalidad</p>
                             <p class="small text-muted">© 2025 MULTI-TIMEFRAME WGTA PRO</p>
-                            <a href="https://github.com/Willer5000" target="_blank" class="btn btn-outline-light btn-sm">
-                                <i class="fab fa-github me-1"></i>GitHub
-                            </a>
                         </div>
                         <div class="mt-3">
                             <p class="small">
@@ -202,7 +152,7 @@
 
             <!-- Contenido Principal -->
             <div class="col-lg-8">
-                <!-- Gráfico de Velas (ESTÁTICO) -->
+                <!-- Gráfico de Velas (ESTÁTICO - No se puede comprimir) -->
                 <div class="card bg-dark border-secondary mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0" id="chart-title">Gráfico de Velas con Indicadores</h5>
@@ -217,9 +167,181 @@
                     </div>
                 </div>
 
-                <!-- Contenedor de Indicadores Ordenables -->
+                <!-- Contenedor para indicadores plegables -->
                 <div id="indicators-container">
-                    <!-- Los indicadores se agregarán dinámicamente aquí -->
+                    <!-- ADX + DMI -->
+                    <div class="card bg-dark border-secondary mb-4 indicator-card" data-indicator="adx">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">ADX con DMI (+DI y -DI)</h5>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary btn-move" data-direction="up">
+                                    <i class="fas fa-arrow-up"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-move" data-direction="down">
+                                    <i class="fas fa-arrow-down"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-collapse" data-collapsed="false">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body indicator-content">
+                            <div id="adx-chart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- RSI Estocástico -->
+                    <div class="card bg-dark border-secondary mb-4 indicator-card" data-indicator="stoch_rsi">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">RSI Estocástico</h5>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary btn-move" data-direction="up">
+                                    <i class="fas fa-arrow-up"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-move" data-direction="down">
+                                    <i class="fas fa-arrow-down"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-collapse" data-collapsed="false">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body indicator-content">
+                            <div id="stoch-rsi-chart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Fuerza de Tendencia Maverick -->
+                    <div class="card bg-dark border-warning mb-4 indicator-card" data-indicator="trend_strength">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>
+                                Fuerza de Tendencia Maverick
+                            </h5>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary btn-move" data-direction="up">
+                                    <i class="fas fa-arrow-up"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-move" data-direction="down">
+                                    <i class="fas fa-arrow-down"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-collapse" data-collapsed="false">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body indicator-content">
+                            <div id="trend-strength-chart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Indicador de Volumen -->
+                    <div class="card bg-dark border-info mb-4 indicator-card" data-indicator="volume">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Indicador de Volumen con Anomalías
+                            </h5>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary btn-move" data-direction="up">
+                                    <i class="fas fa-arrow-up"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-move" data-direction="down">
+                                    <i class="fas fa-arrow-down"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-collapse" data-collapsed="false">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body indicator-content">
+                            <div id="volume-chart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico de Ballenas -->
+                    <div class="card bg-dark border-secondary mb-4 indicator-card" data-indicator="whale">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Indicador Ballenas Compradoras/Vendedoras</h5>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary btn-move" data-direction="up">
+                                    <i class="fas fa-arrow-up"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-move" data-direction="down">
+                                    <i class="fas fa-arrow-down"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-collapse" data-collapsed="false">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body indicator-content">
+                            <div id="whale-chart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- RSI Maverick -->
+                    <div class="card bg-dark border-secondary mb-4 indicator-card" data-indicator="rsi_maverick">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">RSI Modificado Maverick (%B)</h5>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary btn-move" data-direction="up">
+                                    <i class="fas fa-arrow-up"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-move" data-direction="down">
+                                    <i class="fas fa-arrow-down"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-collapse" data-collapsed="false">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body indicator-content">
+                            <div id="rsi-maverick-chart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- RSI Tradicional -->
+                    <div class="card bg-dark border-secondary mb-4 indicator-card" data-indicator="rsi_traditional">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">RSI Tradicional con Divergencias</h5>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary btn-move" data-direction="up">
+                                    <i class="fas fa-arrow-up"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-move" data-direction="down">
+                                    <i class="fas fa-arrow-down"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-collapse" data-collapsed="false">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body indicator-content">
+                            <div id="rsi-traditional-chart" style="height: 300px;"></div>
+                        </div>
+                    </div>
+
+                    <!-- MACD -->
+                    <div class="card bg-dark border-secondary mb-4 indicator-card" data-indicator="macd">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">MACD con Histograma</h5>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary btn-move" data-direction="up">
+                                    <i class="fas fa-arrow-up"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-move" data-direction="down">
+                                    <i class="fas fa-arrow-down"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-collapse" data-collapsed="false">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body indicator-content">
+                            <div id="macd-chart" style="height: 300px;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -256,6 +378,31 @@
                     </div>
                 </div>
 
+                <!-- Señales de Estrategias -->
+                <div class="card bg-dark border-warning mb-4">
+                    <div class="card-header bg-warning bg-opacity-25">
+                        <h5 class="mb-0"><i class="fas fa-chess me-2"></i>Señales de Estrategias</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Estrategia</th>
+                                        <th>Señal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="strategies-table">
+                                    <tr>
+                                        <td colspan="3" class="text-center py-3">Cargando estrategias...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Señales LONG -->
                 <div class="card bg-dark border-success mb-4">
                     <div class="card-header bg-success bg-opacity-25">
@@ -268,13 +415,12 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Crypto</th>
-                                        <th>Score</th>
-                                        <th>Entrada</th>
+                                        <th>TF</th>
                                     </tr>
                                 </thead>
                                 <tbody id="long-table">
                                     <tr>
-                                        <td colspan="4" class="text-center py-3">Cargando señales...</td>
+                                        <td colspan="3" class="text-center py-3">Cargando señales...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -294,13 +440,12 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Crypto</th>
-                                        <th>Score</th>
-                                        <th>Entrada</th>
+                                        <th>TF</th>
                                     </tr>
                                 </thead>
                                 <tbody id="short-table">
                                     <tr>
-                                        <td colspan="4" class="text-center py-3">Cargando señales...</td>
+                                        <td colspan="3" class="text-center py-3">Cargando señales...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -350,21 +495,9 @@
                 });
         }
 
-        // Función para expandir/comprimir todos los indicadores
-        function toggleAllIndicators(expand) {
-            const indicators = document.querySelectorAll('.indicator-card');
-            indicators.forEach(card => {
-                if (expand) {
-                    card.classList.remove('compressed');
-                } else {
-                    card.classList.add('compressed');
-                }
-            });
-        }
-
-        // Función para descargar reporte estratégico
+        // Función para descargar reporte
         function downloadReport() {
-            const symbol = document.getElementById('selected-crypto').textContent;
+            const symbol = document.getElementById('symbol-select').value;
             const interval = document.getElementById('interval-select').value;
             const leverage = document.getElementById('leverage').value;
             
@@ -378,7 +511,6 @@
         // Inicializar el reloj al cargar la página
         document.addEventListener('DOMContentLoaded', function() {
             updateBoliviaClock();
-            initializeIndicators();
         });
     </script>
 </body>
