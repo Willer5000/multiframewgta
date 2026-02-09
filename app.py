@@ -73,86 +73,63 @@ class TradingIndicator:
         return True  # Trading 24/7
 
     def calculate_remaining_time(self, interval, current_time):
-    """Calcular tiempo restante para el cierre de la vela - VERSIÓN CORREGIDA"""
-    # Definir los minutos ANTES del cierre que queremos revisar
-    minutes_before_close = {
-        '4h': 3,   # 3 minutos antes del cierre de vela 4h
-        '12h': 5,  # 5 minutos antes del cierre de vela 12h
-        '1D': 7,   # 7 minutos antes del cierre de vela 1D
-        '1W': 10   # 10 minutos antes del cierre de vela 1W
-    }
-    
-    # Duración de cada intervalo EN SEGUNDOS
-    interval_seconds = {
-        '4h': 14400,   # 4 horas
-        '12h': 43200,  # 12 horas
-        '1D': 86400,   # 1 día
-        '1W': 604800   # 1 semana (7 días)
-    }
-    
-    if interval not in interval_seconds:
-        return False
-    
-    total_seconds = interval_seconds[interval]
-    seconds_before_close = minutes_before_close.get(interval, 3) * 60
-    
-    # Calcular cuántos segundos han pasado desde el inicio de la vela actual
-    # Usamos timestamp UNIX para calcular el ciclo de velas
-    current_timestamp = current_time.timestamp()
-    
-    # Encontrar el inicio de la vela actual
-    # Para velas de 4h, 12h, 1D, 1W que comienzan en horas específicas
-    if interval == '4h':
-        # Velas 4h: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 (hora Bolivia)
-        hour = current_time.hour
-        start_hour = (hour // 4) * 4
-        start_time = current_time.replace(minute=0, second=0, microsecond=0, hour=start_hour)
+        """Calcular tiempo restante para el cierre de la vela - VERSIÓN CORREGIDA"""
+        # Definir los minutos ANTES del cierre que queremos revisar
+        minutes_before_close = {
+            '4h': 3,   # 3 minutos antes del cierre de vela 4h
+            '12h': 5,  # 5 minutos antes del cierre de vela 12h
+            '1D': 7,   # 7 minutos antes del cierre de vela 1D
+            '1W': 10   # 10 minutos antes del cierre de vela 1W
+        }
         
-    elif interval == '12h':
-        # Velas 12h: 00:00 y 12:00 (hora Bolivia)
-        hour = current_time.hour
-        start_hour = 0 if hour < 12 else 12
-        start_time = current_time.replace(minute=0, second=0, microsecond=0, hour=start_hour)
+        # Duración de cada intervalo EN SEGUNDOS
+        interval_seconds = {
+            '4h': 14400,   # 4 horas
+            '12h': 43200,  # 12 horas
+            '1D': 86400,   # 1 día
+            '1W': 604800   # 1 semana (7 días)
+        }
         
-    elif interval == '1D':
-        # Velas 1D: 00:00 (hora Bolivia)
-        start_time = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
+        if interval not in interval_seconds:
+            return False
         
-    elif interval == '1W':
-        # Velas 1W: Domingo 00:00 (hora Bolivia)
-        # Encuentra el último domingo
-        days_since_sunday = (current_time.weekday() + 1) % 7  # 0 = Domingo
-        start_time = current_time - timedelta(days=days_since_sunday)
-        start_time = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
-    
-    # Calcular segundos transcurridos en esta vela
-    seconds_passed = (current_time - start_time).total_seconds()
-    
-    # Verificar si estamos en los últimos X minutos de la vela
-    return seconds_passed >= (total_seconds - seconds_before_close)
-
-#    def calculate_remaining_time(self, interval, current_time):
- #       """Calcular tiempo restante para el cierre de la vela"""
-  #      interval_seconds = {
-   #         '4h': 14400, '12h': 43200, '1D': 86400, '1W': 604800
-    #    }
+        total_seconds = interval_seconds[interval]
+        seconds_before_close = minutes_before_close.get(interval, 3) * 60
         
-   #     seconds = interval_seconds.get(interval, 3600)
+        # Calcular cuántos segundos han pasado desde el inicio de la vela actual
+        # Usamos timestamp UNIX para calcular el ciclo de velas
+        current_timestamp = current_time.timestamp()
         
-        # PORCENTAJES DE FORMACIÓN DE VELA
-    #    if interval == '4h':
-     #       percent = 85
-      #  elif interval == '12h':
-        #    percent = 90
-       # elif interval == '1D':
-        #    percent = 95
-     #   elif interval == '1W':
-    #        percent = 99
-   #     else:
-   #         percent = 50
+        # Encontrar el inicio de la vela actual
+        # Para velas de 4h, 12h, 1D, 1W que comienzan en horas específicas
+        if interval == '4h':
+            # Velas 4h: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 (hora Bolivia)
+            hour = current_time.hour
+            start_hour = (hour // 4) * 4
+            start_time = current_time.replace(minute=0, second=0, microsecond=0, hour=start_hour)
+            
+        elif interval == '12h':
+            # Velas 12h: 00:00 y 12:00 (hora Bolivia)
+            hour = current_time.hour
+            start_hour = 0 if hour < 12 else 12
+            start_time = current_time.replace(minute=0, second=0, microsecond=0, hour=start_hour)
+            
+        elif interval == '1D':
+            # Velas 1D: 00:00 (hora Bolivia)
+            start_time = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
+            
+        elif interval == '1W':
+            # Velas 1W: Domingo 00:00 (hora Bolivia)
+            # Encuentra el último domingo
+            days_since_sunday = (current_time.weekday() + 1) % 7  # 0 = Domingo
+            start_time = current_time - timedelta(days=days_since_sunday)
+            start_time = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
         
-    #    seconds_passed = current_time.timestamp() % seconds
-     #   return seconds_passed >= (seconds * percent / 100)
+        # Calcular segundos transcurridos en esta vela
+        seconds_passed = (current_time - start_time).total_seconds()
+        
+        # Verificar si estamos en los últimos X minutos de la vela
+        return seconds_passed >= (total_seconds - seconds_before_close)
 
     def get_kucoin_data(self, symbol, interval, limit=100):
         """Obtener datos de KuCoin con manejo robusto de errores"""
@@ -3260,6 +3237,14 @@ def background_strategy_checker():
             import traceback
             traceback.print_exc()
             time.sleep(60)
+
+# Iniciar verificador de estrategias en segundo plano
+try:
+    strategy_thread = Thread(target=background_strategy_checker, daemon=True)
+    strategy_thread.start()
+    print("✅ Background strategy checker iniciado correctamente")
+except Exception as e:
+    print(f"❌ Error iniciando background strategy checker: {e}")
 
 @app.route('/')
 def index():
