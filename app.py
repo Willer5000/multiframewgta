@@ -73,27 +73,86 @@ class TradingIndicator:
         return True  # Trading 24/7
 
     def calculate_remaining_time(self, interval, current_time):
-        """Calcular tiempo restante para el cierre de la vela"""
-        interval_seconds = {
-            '4h': 14400, '12h': 43200, '1D': 86400, '1W': 604800
-        }
+    """Calcular tiempo restante para el cierre de la vela - VERSIÓN CORREGIDA"""
+    # Definir los minutos ANTES del cierre que queremos revisar
+    minutes_before_close = {
+        '4h': 3,   # 3 minutos antes del cierre de vela 4h
+        '12h': 5,  # 5 minutos antes del cierre de vela 12h
+        '1D': 7,   # 7 minutos antes del cierre de vela 1D
+        '1W': 10   # 10 minutos antes del cierre de vela 1W
+    }
+    
+    # Duración de cada intervalo EN SEGUNDOS
+    interval_seconds = {
+        '4h': 14400,   # 4 horas
+        '12h': 43200,  # 12 horas
+        '1D': 86400,   # 1 día
+        '1W': 604800   # 1 semana (7 días)
+    }
+    
+    if interval not in interval_seconds:
+        return False
+    
+    total_seconds = interval_seconds[interval]
+    seconds_before_close = minutes_before_close.get(interval, 3) * 60
+    
+    # Calcular cuántos segundos han pasado desde el inicio de la vela actual
+    # Usamos timestamp UNIX para calcular el ciclo de velas
+    current_timestamp = current_time.timestamp()
+    
+    # Encontrar el inicio de la vela actual
+    # Para velas de 4h, 12h, 1D, 1W que comienzan en horas específicas
+    if interval == '4h':
+        # Velas 4h: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 (hora Bolivia)
+        hour = current_time.hour
+        start_hour = (hour // 4) * 4
+        start_time = current_time.replace(minute=0, second=0, microsecond=0, hour=start_hour)
         
-        seconds = interval_seconds.get(interval, 3600)
+    elif interval == '12h':
+        # Velas 12h: 00:00 y 12:00 (hora Bolivia)
+        hour = current_time.hour
+        start_hour = 0 if hour < 12 else 12
+        start_time = current_time.replace(minute=0, second=0, microsecond=0, hour=start_hour)
+        
+    elif interval == '1D':
+        # Velas 1D: 00:00 (hora Bolivia)
+        start_time = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+    elif interval == '1W':
+        # Velas 1W: Domingo 00:00 (hora Bolivia)
+        # Encuentra el último domingo
+        days_since_sunday = (current_time.weekday() + 1) % 7  # 0 = Domingo
+        start_time = current_time - timedelta(days=days_since_sunday)
+        start_time = start_time.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Calcular segundos transcurridos en esta vela
+    seconds_passed = (current_time - start_time).total_seconds()
+    
+    # Verificar si estamos en los últimos X minutos de la vela
+    return seconds_passed >= (total_seconds - seconds_before_close)
+
+#    def calculate_remaining_time(self, interval, current_time):
+ #       """Calcular tiempo restante para el cierre de la vela"""
+  #      interval_seconds = {
+   #         '4h': 14400, '12h': 43200, '1D': 86400, '1W': 604800
+    #    }
+        
+   #     seconds = interval_seconds.get(interval, 3600)
         
         # PORCENTAJES DE FORMACIÓN DE VELA
-        if interval == '4h':
-            percent = 85
-        elif interval == '12h':
-            percent = 90
-        elif interval == '1D':
-            percent = 95
-        elif interval == '1W':
-            percent = 99
-        else:
-            percent = 50
+    #    if interval == '4h':
+     #       percent = 85
+      #  elif interval == '12h':
+        #    percent = 90
+       # elif interval == '1D':
+        #    percent = 95
+     #   elif interval == '1W':
+    #        percent = 99
+   #     else:
+   #         percent = 50
         
-        seconds_passed = current_time.timestamp() % seconds
-        return seconds_passed >= (seconds * percent / 100)
+    #    seconds_passed = current_time.timestamp() % seconds
+     #   return seconds_passed >= (seconds * percent / 100)
 
     def get_kucoin_data(self, symbol, interval, limit=100):
         """Obtener datos de KuCoin con manejo robusto de errores"""
@@ -3136,67 +3195,71 @@ Recomendación: {recommendation}.
         print(f"Error enviando alerta a Telegram: {e}")
 
 def background_strategy_checker():
-    """Verificador de estrategias en segundo plano"""
-    print("Background strategy checker iniciado...")
+    """Verificador de estrategias en segundo plano - VERSIÓN CORREGIDA"""
+    print("🚀 Sistema de alertas iniciado - Revisando al final de cada vela")
     
-    # FRECUENCIAS DE REVISIÓN (segundos)
-    interval_wait_times = {
-        '4h': 660,    # 11 minutos
-        '12h': 1380,  # 23 minutos
-        '1D': 1380,   # 23 minutos
-        '1W': 1920    # 32 minutos
-    }
-    
-    # Última verificación por intervalo
-    last_checks = {interval: datetime.now() for interval in interval_wait_times.keys()}
+    # Última revisión por intervalo
+    last_checks = {interval: None for interval in ['4h', '12h', '1D', '1W']}
     
     while True:
         try:
-            current_time = datetime.now()
+            current_time = indicator.get_bolivia_time()
             
-            for interval, wait_time in interval_wait_times.items():
-                # Verificar si es tiempo de revisar este intervalo
-                if (current_time - last_checks[interval]).seconds >= wait_time:
-                    print(f"Verificando estrategias para intervalo {interval}...")
-                    
-                    # Verificar si es momento de la vela para este intervalo
-                    if indicator.calculate_remaining_time(interval, current_time):
-                        # Generar señales para todas las estrategias
+            for interval in ['4h', '12h', '1D', '1W']:
+                # Verificar si estamos en los últimos minutos de la vela
+                should_check = indicator.calculate_remaining_time(interval, current_time)
+                
+                if should_check:
+                    # Verificar si ya revisamos esta vela
+                    if last_checks[interval] is None:
+                        # Primera vez que revisamos esta vela
+                        last_checks[interval] = current_time
+                        print(f"⏰ Revisando {interval} - {current_time.strftime('%H:%M:%S')}")
+                        
+                        # Generar señales para TODOS los símbolos en este intervalo
                         signals = indicator.generate_strategy_signals()
                         
-                        # Filtrar señales para este intervalo
+                        # Filtrar señales solo para este intervalo
                         interval_signals = [s for s in signals if s['interval'] == interval]
                         
-                        # Enviar alertas
+                        # DEBUG: Mostrar cuántas señales encontramos
+                        print(f"📊 {interval}: {len(interval_signals)} señal(es) encontrada(s)")
+                        
+                        # Enviar cada señal (sin duplicados en esta vela)
                         for signal in interval_signals:
-                            signal_key = f"{signal['symbol']}_{signal['interval']}_{signal['strategy']}_{signal['signal']}"
+                            # Crear una clave única para esta vela+estrategia
+                            signal_key = f"{signal['symbol']}_{signal['interval']}_{signal['strategy']}_{signal['signal']}_{current_time.strftime('%Y%m%d%H')}"
                             
-                            # Verificar si ya enviamos esta señal recientemente
                             if signal_key not in indicator.strategy_signals:
+                                print(f"📤 Enviando alerta: {signal['symbol']} {signal['interval']} {signal['strategy']}")
                                 send_telegram_alert(signal)
                                 indicator.strategy_signals[signal_key] = current_time
                             else:
-                                # Eliminar señales antiguas (más de 2 horas)
-                                last_sent = indicator.strategy_signals[signal_key]
-                                if (current_time - last_sent).seconds > 7200:
-                                    send_telegram_alert(signal)
-                                    indicator.strategy_signals[signal_key] = current_time
+                                print(f"⏭️ Señal ya enviada en esta vela: {signal_key}")
                     
-                    last_checks[interval] = current_time
+                    else:
+                        # Ya revisamos esta vela, verificar si pasó el tiempo suficiente
+                        # para considerar una nueva vela (más de 1 minuto desde última revisión)
+                        time_diff = (current_time - last_checks[interval]).total_seconds()
+                        if time_diff > 60:  # Más de 1 minuto desde última revisión
+                            # Resetear para la próxima vela
+                            last_checks[interval] = None
+                            print(f"🔄 Preparando para próxima vela de {interval}")
+                
+                else:
+                    # No es tiempo de revisar, resetear el flag para la próxima vela
+                    if last_checks[interval] is not None:
+                        # Fuera del período de revisión, resetear para la próxima vela
+                        last_checks[interval] = None
             
-            time.sleep(10)
+            # Esperar 30 segundos entre verificaciones (no 10 para evitar carga)
+            time.sleep(30)
             
         except Exception as e:
-            print(f"Error en background_strategy_checker: {e}")
+            print(f"❌ Error en verificador: {e}")
+            import traceback
+            traceback.print_exc()
             time.sleep(60)
-
-# Iniciar verificador de estrategias en segundo plano
-try:
-    strategy_thread = Thread(target=background_strategy_checker, daemon=True)
-    strategy_thread.start()
-    print("Background strategy checker iniciado correctamente")
-except Exception as e:
-    print(f"Error iniciando background strategy checker: {e}")
 
 @app.route('/')
 def index():
